@@ -63,6 +63,18 @@ test("write an entry, ask about it, then delete everything", async ({ page }) =>
   await page.getByRole("link", { name: "Back to your entries" }).click();
   await page.waitForLoadState("networkidle");
 
+  // The chat answers from the same entry, with a source chip.
+  await page.goto("/home/chat");
+  // CopilotKit keeps a connection open, so wait for the input, not network idle.
+  const chatInput = page.getByPlaceholder("When did I last see Riya?");
+  await expect(chatInput).toBeEditable({ timeout: 30_000 });
+  await chatInput.fill("Where did Riya move to?");
+  await chatInput.press("Enter");
+  const chatSources = page.getByRole("list", { name: "Where this answer came from" });
+  await expect(chatSources.getByRole("link", { name: /^Journal, / })).toBeVisible({ timeout: 60_000 });
+  await page.goto("/home");
+  await page.waitForLoadState("networkidle");
+
   // Delete the entry.
   await page.getByRole("button", { name: "Delete this entry" }).click();
   await page.getByRole("button", { name: "Yes, delete it" }).click();
