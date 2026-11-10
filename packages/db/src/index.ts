@@ -39,9 +39,10 @@ export {
  * Neon Auth keeps users in the `neon_auth` schema of our own database. Its
  * foreign keys cascade from `user` to sessions, sign-in accounts and
  * memberships, and ours cascade to sources, chunks, usage and activity.
- * Mem0's tables (made by @debo/memory, no foreign keys) are cleared here by
- * payload.user_id, so deletion is complete even where Mem0 cannot load.
- * Files are deleted separately by @debo/ingest before this runs.
+ * Tables left by the old self-hosted Mem0 (decision 18; no foreign keys) are
+ * cleared here by payload.user_id if they exist. Memories in the hosted Mem0
+ * Platform are deleted by @debo/memory, and files by @debo/ingest, before
+ * this runs.
  *
  * Returns whether a row was deleted.
  */
