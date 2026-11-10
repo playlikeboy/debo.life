@@ -1,6 +1,6 @@
 # Memory
 
-Status: mostly plan. Built so far: keyword search over journal entries (step 2 of the search below) and answers only from those pieces, with source ids, or "I don't have anything about that yet" (steps 4 to 6). Meaning search, memories and Mem0 are not built (decision 17). This is the heart of Debo. If recall is poor, nothing else matters.
+Status: mostly plan. Built so far: meaning and keyword search over journal entries, merged (steps 1 to 3), and answers only from those pieces, with source ids, or "I don't have anything about that yet" (steps 4 to 6). Mem0 is built in `@debo/memory` but not used by the web app yet (decision 18). This is the heart of Debo. If recall is poor, nothing else matters.
 
 ## Two kinds of thing Debo keeps
 

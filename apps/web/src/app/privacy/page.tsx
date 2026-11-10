@@ -68,8 +68,13 @@ export default function PrivacyPage() {
 
       <Section id="who" title="Who else sees pieces of your data">
         <p>
+          When you save or change an entry, its text goes to the Neon AI Gateway, whose models are run by
+          Databricks, to turn it into numbers that let Debo search by meaning. Your questions go there too, for
+          the same reason.
+        </p>
+        <p>
           When you ask a question, the pieces of your entries that match it go to Anthropic, which writes the
-          answer. If Anthropic fails, they go to the Neon AI Gateway instead, whose models are run by Databricks.
+          answer. If Anthropic fails, they go to the Neon AI Gateway instead.
         </p>
         <p className="text-ink-soft">
           Anthropic&rsquo;s terms say they do not train on data sent through their API by default. We are confirming

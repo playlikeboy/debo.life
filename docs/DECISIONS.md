@@ -127,8 +127,25 @@ Why: the gateway has no credits yet, so every call there fails. Our Anthropic ke
 Check before relying on it: Anthropic's API terms say API data is not used for training by default. Confirm that on their current commercial terms before launch, and list Anthropic on the privacy page.
 
 ## 17. Keyword search first, meaning search later
-2026-11-10 · decided
+2026-11-10 · done: meaning search added (see below)
 
 Choice: "Ask" finds the person's pieces with Postgres full-text search only (any word may match, ranked by `ts_rank`). There is no embedding column yet.
 Why: there is no working embedding model. The gateway's `qwen3-embedding-0-6b` needs credits, and Anthropic does not make embeddings.
 Check before relying on it: questions that use different words from the entry ("physician" vs "doctor") will miss. Add embeddings and a pgvector index on `chunks` when the gateway has credits or another embedding provider is chosen, then merge both searches as `docs/MEMORY.md` describes.
+Done 2026-11-10: the gateway has credits. `chunks.embedding vector(1024)` with an HNSW cosine index; `qwen3-embedding-0-6b` through the gateway; keyword and meaning results merged with reciprocal rank fusion; meaning hits beyond cosine distance 0.60 dropped. Entries are embedded after save (Next `after()`); questions are embedded when asked, falling back to keyword search if that fails.
+
+## 18. Mem0 is built, but not in the web app yet
+2026-11-10 · decided
+
+Choice: `@debo/memory` wraps self-hosted Mem0 (`mem0ai/oss` 3.3.1): Anthropic `claude-haiku-5-5` as its model, the gateway's `qwen3-embedding-0-6b` as embedder, pgvector in our Neon Postgres (tables `debo_memories`, `debo_memories_entities`, `memory_migrations`, made by Mem0, not Drizzle). Every memory carries `source_id`; deletes are real (tested on the `dev-ai` branch).
+Why not in the web app: Mem0 imports the native module `better-sqlite3` at load time, which a Cloudflare Worker cannot load, and bundling it pulls in every optional provider (AWS, Azure and more). Rather than risk the live site, memories wait for a Node runtime.
+Already true: deleting an account also deletes the person's rows in Mem0's tables (`deleteAccount`, by `payload.user_id`).
+Exception to one-door rule: Mem0 calls the model and embedder itself, not through `@debo/llm`, so those calls are not in `usage` yet.
+Check before relying on it: pick where memory work runs (a Neon Function, or a Node worker next to `apps/voice-agent`), then build the "What Debo knows" page on `list`, `update` and `forget`.
+
+## 19. Chat is CopilotKit over AG-UI, on our own answer pipeline
+2026-11-10 · decided
+
+Choice: `/home/chat` uses CopilotKit 1.85 (v2 API) with a custom AG-UI agent that calls `answerQuestion` in `apps/web/src/lib/ask.ts`. CopilotKit never calls a model itself. Source chips are a rendered `show_sources` tool call.
+Why: decision 4 chose CopilotKit and AG-UI. Open Intelligent UI is a separate app template (Python backend plus its own frontend), so we use CopilotKit directly instead of hosting it.
+Check before relying on it: the chat sends only the latest question (no follow-up context yet); CopilotKit's runtime is large, so watch the Worker bundle size; CopilotKit telemetry is switched off.

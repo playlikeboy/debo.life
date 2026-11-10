@@ -14,7 +14,7 @@ Do these in order. The first four protect people and our bill, so they come befo
 4. ~~**Publish a privacy page.**~~ Done: `/privacy`. Still to do: confirm Anthropic's training terms. List every company that touches data today: Neon (database, sign-in, files, AI gateway), Databricks (hosts the gateway's models), Cloudflare (hosting) and Anthropic (answers). Confirm Anthropic's current terms on training first (decision 16).
 5. ~~**Journal: edit an entry.**~~ Done: "Edit this entry" replaces the text and its chunks in one transaction. Saving an edit must replace its chunks too.
 6. **Uploads: voice notes, papers and photos.** Store the original in Neon Object Storage under `users/<id>/`, turn it into text with `@debo/ingest` in a background job (Inngest), and make it searchable like entries. Choose a speech-to-text provider first.
-7. **Meaning search.** When the AI gateway has credits (or another embedding provider is chosen), add embeddings and a pgvector index to `chunks`, and merge the results with keyword search (decision 17).
+7. ~~**Meaning search.**~~ Done: embeddings and pgvector on `chunks`, merged with keyword search (decision 17). When the AI gateway has credits (or another embedding provider is chosen), add embeddings and a pgvector index to `chunks`, and merge the results with keyword search (decision 17).
 8. **Recall test set.** Made-up entries and questions with known answers, run before each release, so search changes can be checked.
 9. **Export everything.** A zip with entries as Markdown and the original files. Then Phase 1 is done and Phase 2 starts.
 
