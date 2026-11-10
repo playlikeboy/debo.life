@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
-import { askDebo, removeEntry, saveEntry, type AskState, type SaveState } from "@/app/home/actions";
+import { askDebo, editEntry, removeEntry, saveEntry, type AskState, type SaveState } from "@/app/home/actions";
 
 const box = "mt-2 block w-full rounded-[12px] border-2 border-ink bg-paper px-3 py-2";
 
@@ -93,7 +93,9 @@ export function AskBox() {
             I don&rsquo;t have anything about that yet. Write an entry about it, then ask again.
           </p>
         )}
-        {state.status === "error" && <p className="font-semibold">{state.answer}</p>}
+        {(state.status === "error" || state.status === "limit") && (
+          <p className="font-semibold">{state.answer}</p>
+        )}
       </div>
     </section>
   );
@@ -137,5 +139,89 @@ export function DeleteEntryButton({ id }: { id: string }) {
         {message}
       </span>
     </div>
+  );
+}
+
+/** One entry: read it, edit it, or delete it. */
+export function EntryItem({ id, text, dateLabel }: { id: string; text: string; dateLabel: string }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(text);
+  const [message, setMessage] = useState("");
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+
+  function save() {
+    startTransition(async () => {
+      const result = await editEntry(id, draft);
+      setMessage(result.message);
+      if (result.ok) {
+        setEditing(false);
+        router.refresh();
+      }
+    });
+  }
+
+  return (
+    <li
+      id={`entry-${id}`}
+      className="scroll-mt-6 rounded-[24px] border border-line bg-paper p-6 target:border-2 target:border-ink"
+    >
+      <p className="chip">Journal, {dateLabel}</p>
+      {editing ? (
+        <div className="mt-3">
+          <label htmlFor={`edit-${id}`} className="font-semibold">
+            Edit this entry
+          </label>
+          <textarea
+            id={`edit-${id}`}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setEditing(false);
+            }}
+            rows={5}
+            autoFocus
+            className={`${box} min-h-32`}
+          />
+          <div className="mt-3 flex flex-wrap gap-3">
+            <button type="button" onClick={save} disabled={pending} className="btn btn-quiet">
+              {pending ? "Saving…" : "Save changes"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(text);
+                setEditing(false);
+              }}
+              disabled={pending}
+              className="btn btn-quiet"
+            >
+              Keep as it was
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-3 whitespace-pre-wrap">{text}</p>
+      )}
+      {!editing && (
+        <div className="mt-4 flex flex-wrap items-start gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setDraft(text);
+              setMessage("");
+              setEditing(true);
+            }}
+            className="btn btn-quiet"
+          >
+            Edit this entry
+          </button>
+          <DeleteEntryButton id={id} />
+        </div>
+      )}
+      <p role="status" aria-live="polite" className="mt-2 font-semibold">
+        {message}
+      </p>
+    </li>
   );
 }

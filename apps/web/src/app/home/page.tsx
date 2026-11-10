@@ -2,7 +2,7 @@ import { listEntries } from "@debo/db";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AccountActions } from "@/components/account-actions";
-import { AskBox, DeleteEntryButton, EntryForm } from "@/components/journal";
+import { AskBox, EntryForm, EntryItem } from "@/components/journal";
 import { getAuth } from "@/lib/auth/server";
 import { databaseUrl } from "@/lib/server-env";
 
@@ -41,24 +41,27 @@ export default async function HomePage() {
         ) : (
           <ul className="mt-4 grid gap-4">
             {entries.map((entry) => (
-              <li
-                key={entry.id}
-                id={`entry-${entry.id}`}
-                className="scroll-mt-6 rounded-[24px] border border-line bg-paper p-6 target:border-2 target:border-ink"
-              >
-                <p className="chip">
-                  Journal,{" "}
-                  {entry.happenedAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}
-                </p>
-                <p className="mt-3 whitespace-pre-wrap">{entry.text}</p>
-                <div className="mt-4">
-                  <DeleteEntryButton id={entry.id} />
-                </div>
-              </li>
+              <EntryItem
+                key={`${entry.id}-${entry.text.length}`}
+                id={entry.id}
+                text={entry.text}
+                dateLabel={entry.happenedAt.toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                  timeZone: "UTC",
+                })}
+              />
             ))}
           </ul>
         )}
       </section>
+
+      <p className="mt-10">
+        <a href="/home/activity" className="font-semibold underline underline-offset-4">
+          See everything Debo did for you
+        </a>
+      </p>
 
       <AccountActions />
     </main>
