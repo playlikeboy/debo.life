@@ -1,0 +1,24 @@
+{
+  "name": "@debo/recall",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "recall": "tsx scripts/run.ts"
+  },
+  "dependencies": {
+    "@debo/db": "workspace:*",
+    "@debo/ingest": "workspace:*",
+    "@debo/llm": "workspace:*",
+    "drizzle-orm": "0.45.4"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15"
+  }
+}
