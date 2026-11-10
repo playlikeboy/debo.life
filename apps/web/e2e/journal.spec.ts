@@ -40,6 +40,29 @@ test("write an entry, ask about it, then delete everything", async ({ page }) =>
     timeout: 60_000,
   });
 
+  // Edit the entry; search must find the new words, not the old ones.
+  await page.getByRole("button", { name: "Edit this entry" }).click();
+  await page.getByRole("textbox", { name: "Edit this entry" }).fill(
+    "Riya moved to Mumbai in April. We said goodbye at the airport.",
+  );
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByText("Changes saved.")).toBeVisible();
+  await expect(page.getByText("Riya moved to Mumbai in April.")).toBeVisible();
+  await page.getByRole("textbox", { name: "Ask Debo about your entries" }).fill("Where did Riya move to?");
+  await page.getByRole("button", { name: "Ask Debo" }).click();
+  await expect(page.getByRole("list", { name: "Where this answer came from" })).toBeVisible({ timeout: 60_000 });
+
+  // The activity record shows what happened, without the words.
+  await page.getByRole("link", { name: "See everything Debo did for you" }).click();
+  await expect(page.getByRole("heading", { name: "What Debo did" })).toBeVisible();
+  await expect(page.getByText("You saved an entry.")).toBeVisible();
+  await expect(page.getByText("You changed an entry.")).toBeVisible();
+  await expect(page.getByText("Debo answered a question using 1 entry.").first()).toBeVisible();
+  await expect(page.getByText("Debo had nothing about a question, so it said so.")).toBeVisible();
+  await expect(page.getByText("Mumbai")).toHaveCount(0);
+  await page.getByRole("link", { name: "Back to your entries" }).click();
+  await page.waitForLoadState("networkidle");
+
   // Delete the entry.
   await page.getByRole("button", { name: "Delete this entry" }).click();
   await page.getByRole("button", { name: "Yes, delete it" }).click();
