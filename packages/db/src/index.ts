@@ -9,12 +9,19 @@ export {
   getSources,
   listEntries,
   NewEntry,
+  chunksForSource,
+  chunksMissingEmbeddings,
+  DEFAULT_MAX_DISTANCE,
   searchPieces,
+  setChunkEmbeddings,
+  setEmbeddingById,
   splitIntoChunks,
   updateEntry,
   type Entry,
   type FoundPiece,
+  type SearchOptions,
 } from "./journal";
+export { EMBEDDING_DIMENSIONS } from "./schema";
 export {
   listActivity,
   recordActivity,

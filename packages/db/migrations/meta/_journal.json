@@ -15,6 +15,13 @@
       "when": 1794306306583,
       "tag": "0001_usage_activity",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794308323812,
+      "tag": "0002_embeddings",
+      "breakpoints": true
     }
   ]
 }

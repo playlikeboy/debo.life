@@ -4,7 +4,10 @@
 // foreign key to Neon Auth's user table with ON DELETE CASCADE, so deleting
 // an account deletes every row the person owns.
 import { sql } from "drizzle-orm";
-import { customType, index, integer, pgSchema, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { customType, index, integer, pgSchema, pgTable, text, timestamp, uuid, vector } from "drizzle-orm/pg-core";
+
+/** Size of the vectors from the embedding model (see @debo/llm EMBEDDING_DIMENSIONS). */
+export const EMBEDDING_DIMENSIONS = 1024;
 
 // Neon Auth owns this table. We only point at it; drizzle-kit is limited to
 // the public schema (drizzle.config.ts), so it never tries to change it.
@@ -88,10 +91,13 @@ export const chunks = pgTable(
     position: integer("position").notNull(),
     text: text("text").notNull(),
     search: tsvector("search").generatedAlwaysAs(sql`to_tsvector('english', text)`),
+    // Meaning search. Null until the piece has been embedded.
+    embedding: vector("embedding", { dimensions: EMBEDDING_DIMENSIONS }),
   },
   (t) => [
     index("chunks_user_idx").on(t.userId),
     index("chunks_source_idx").on(t.sourceId),
     index("chunks_search_idx").using("gin", t.search),
+    index("chunks_embedding_idx").using("hnsw", t.embedding.op("vector_cosine_ops")),
   ],
 );

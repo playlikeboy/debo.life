@@ -1,6 +1,6 @@
 // Journal entries and keyword search over them.
 // Every function takes userId and filters by it. Callers cannot skip that.
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, cosineDistance, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import { z } from "zod";
 import { withDb } from "./client";
 import { chunks, sources } from "./schema";
@@ -101,33 +101,164 @@ export async function deleteEntry(connectionString: string, userId: string, sour
 
 export type FoundPiece = { chunkId: string; sourceId: string; title: string; happenedAt: Date; text: string };
 
+export type SearchOptions = {
+  /** The question's embedding. Without it, search is keyword-only. */
+  embedding?: number[];
+  /** How many pieces to return. */
+  limit?: number;
+  /**
+   * Vector matches farther than this cosine distance are dropped, so an
+   * unrelated question finds nothing instead of the "least bad" piece.
+   */
+  maxDistance?: number;
+};
+
 /**
- * Keyword search over the person's pieces. Any word may match (OR), ranked
- * by how well each piece matches. Meaning search joins this later.
+ * Cosine distance cut-off for meaning matches (qwen3-embedding-0-6b).
+ * Measured on dev-ai: "what did the doctor say" vs an entry about seeing
+ * the physician = 0.52; unrelated pairs = 0.71 to 0.88. 0.60 sits between.
+ * The model still decides whether the pieces answer the question.
+ */
+export const DEFAULT_MAX_DISTANCE = 0.6;
+
+const pieceColumns = {
+  chunkId: chunks.id,
+  sourceId: chunks.sourceId,
+  title: sources.title,
+  happenedAt: sources.happenedAt,
+  text: chunks.text,
+};
+
+/**
+ * Search the person's pieces. Two searches, both filtered by user_id:
+ * keyword (any word may match, ranked by ts_rank) and, when an embedding is
+ * given, meaning (cosine distance, within maxDistance). Results are merged
+ * with reciprocal rank fusion and de-duplicated by piece.
  */
 export async function searchPieces(
   connectionString: string,
   userId: string,
   question: string,
-  limit = 6,
+  options: SearchOptions | number = {},
 ): Promise<FoundPiece[]> {
+  const opts = typeof options === "number" ? { limit: options } : options;
+  const limit = opts.limit ?? 6;
+  const maxDistance = opts.maxDistance ?? DEFAULT_MAX_DISTANCE;
+
   return withDb(connectionString, async (db) => {
     const query = sql`nullif(replace(plainto_tsquery('english', ${question})::text, '&', '|'), '')::tsquery`;
-    const rows = await db
-      .select({
-        chunkId: chunks.id,
-        sourceId: chunks.sourceId,
-        title: sources.title,
-        happenedAt: sources.happenedAt,
-        text: chunks.text,
-      })
+    const keyword = await db
+      .select(pieceColumns)
       .from(chunks)
       .innerJoin(sources, eq(sources.id, chunks.sourceId))
       .where(and(eq(chunks.userId, userId), eq(sources.userId, userId), sql`${chunks.search} @@ ${query}`))
       .orderBy(sql`ts_rank(${chunks.search}, ${query}) desc`, desc(sources.happenedAt))
-      .limit(limit);
-    return rows;
+      .limit(limit * 2);
+
+    if (!opts.embedding) return keyword.slice(0, limit);
+
+    const distance = cosineDistance(chunks.embedding, opts.embedding);
+    const meaning = await db
+      .select(pieceColumns)
+      .from(chunks)
+      .innerJoin(sources, eq(sources.id, chunks.sourceId))
+      .where(
+        and(
+          eq(chunks.userId, userId),
+          eq(sources.userId, userId),
+          isNotNull(chunks.embedding),
+          lt(distance, maxDistance),
+        ),
+      )
+      .orderBy(distance)
+      .limit(limit * 2);
+
+    return mergeByRank([keyword, meaning], limit);
   });
+}
+
+/** Reciprocal rank fusion: score = sum of 1 / (60 + rank) across lists. */
+function mergeByRank(lists: FoundPiece[][], limit: number): FoundPiece[] {
+  const scores = new Map<string, { piece: FoundPiece; score: number }>();
+  for (const list of lists) {
+    list.forEach((piece, rank) => {
+      const entry = scores.get(piece.chunkId) ?? { piece, score: 0 };
+      entry.score += 1 / (60 + rank + 1);
+      scores.set(piece.chunkId, entry);
+    });
+  }
+  return [...scores.values()]
+    .sort((a, b) => b.score - a.score || b.piece.happenedAt.getTime() - a.piece.happenedAt.getTime())
+    .slice(0, limit)
+    .map((entry) => entry.piece);
+}
+
+/** The pieces of one source, in order, for embedding. Only this person's. */
+export async function chunksForSource(
+  connectionString: string,
+  userId: string,
+  sourceId: string,
+): Promise<{ id: string; text: string }[]> {
+  return withDb(connectionString, (db) =>
+    db
+      .select({ id: chunks.id, text: chunks.text })
+      .from(chunks)
+      .where(and(eq(chunks.sourceId, sourceId), eq(chunks.userId, userId)))
+      .orderBy(asc(chunks.position)),
+  );
+}
+
+/**
+ * Store embeddings for one source's pieces, in position order.
+ * `vectors[i]` belongs to the piece at position i. Only this person's pieces.
+ */
+export async function setChunkEmbeddings(
+  connectionString: string,
+  userId: string,
+  sourceId: string,
+  vectors: number[][],
+): Promise<number> {
+  return withDb(connectionString, (db) =>
+    db.transaction(async (tx) => {
+      const pieces = await tx
+        .select({ id: chunks.id })
+        .from(chunks)
+        .where(and(eq(chunks.sourceId, sourceId), eq(chunks.userId, userId)))
+        .orderBy(asc(chunks.position));
+      if (pieces.length !== vectors.length) {
+        throw new Error(`Expected ${pieces.length} embeddings for this entry, got ${vectors.length}.`);
+      }
+      for (const [i, piece] of pieces.entries()) {
+        await tx
+          .update(chunks)
+          .set({ embedding: vectors[i] })
+          .where(and(eq(chunks.id, piece.id), eq(chunks.userId, userId)));
+      }
+      return pieces.length;
+    }),
+  );
+}
+
+/**
+ * Pieces that still need an embedding, across all people, for the backfill
+ * job only. Returns ids and text; never log the text.
+ */
+export async function chunksMissingEmbeddings(
+  connectionString: string,
+  limit = 100,
+): Promise<{ id: string; userId: string; text: string }[]> {
+  return withDb(connectionString, (db) =>
+    db
+      .select({ id: chunks.id, userId: chunks.userId, text: chunks.text })
+      .from(chunks)
+      .where(isNull(chunks.embedding))
+      .limit(limit),
+  );
+}
+
+/** Backfill only: set one piece's embedding by id. */
+export async function setEmbeddingById(connectionString: string, chunkId: string, vector: number[]) {
+  await withDb(connectionString, (db) => db.update(chunks).set({ embedding: vector }).where(eq(chunks.id, chunkId)));
 }
 
 /** Look up sources by id, only among this person's own. */

@@ -7,7 +7,7 @@
 // Never log prompts, answers or source text: they hold a person's notes.
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createNeon } from "@neon/ai-sdk-provider";
-import { generateText, Output, type LanguageModel } from "ai";
+import { embedMany, generateText, Output, type LanguageModel } from "ai";
 import { z } from "zod";
 
 const LlmEnv = z.object({
@@ -18,6 +18,13 @@ const LlmEnv = z.object({
 
 /** Small, fast model for everyday answers. Same id on both providers. */
 export const DEFAULT_MODEL = "claude-haiku-5-5";
+
+/** Embedding model on the Neon AI Gateway, and the size of its vectors. */
+export const EMBEDDING_MODEL = "qwen3-embedding-0-6b";
+export const EMBEDDING_DIMENSIONS = 1024;
+
+/** The gateway rejects more inputs than this in one call. */
+const EMBED_BATCH = 100;
 
 type Provider = { name: "anthropic" | "neon"; model: (id: string) => LanguageModel };
 
@@ -74,8 +81,36 @@ Rules:
 
 export function createLlm(env: Record<string, string | undefined>) {
   const providers = providersFrom(env);
+  const gateway = LlmEnv.parse(env);
 
   return {
+    /**
+     * Turn texts into vectors for meaning search, through the Neon AI Gateway.
+     * There is no fallback: Anthropic does not make embeddings. Throws on failure.
+     * Never logs the texts.
+     */
+    async embed(texts: string[]): Promise<{ vectors: number[][]; tokens: number }> {
+      if (texts.length === 0) return { vectors: [], tokens: 0 };
+      if (!gateway.NEON_AI_GATEWAY_BASE_URL || !gateway.NEON_AI_GATEWAY_TOKEN) {
+        throw new Error("Meaning search needs NEON_AI_GATEWAY_BASE_URL and NEON_AI_GATEWAY_TOKEN.");
+      }
+      const neon = createNeon({ baseURL: gateway.NEON_AI_GATEWAY_BASE_URL, apiKey: gateway.NEON_AI_GATEWAY_TOKEN });
+      const model = neon.embeddingModel(EMBEDDING_MODEL);
+      const vectors: number[][] = [];
+      let tokens = 0;
+      for (let i = 0; i < texts.length; i += EMBED_BATCH) {
+        const result = await embedMany({ model, values: texts.slice(i, i + EMBED_BATCH) });
+        for (const vector of result.embeddings) {
+          if (vector.length !== EMBEDDING_DIMENSIONS) {
+            throw new Error(`Expected ${EMBEDDING_DIMENSIONS} numbers per embedding, got ${vector.length}.`);
+          }
+          vectors.push(vector);
+        }
+        tokens += result.usage?.tokens ?? 0;
+      }
+      return { vectors, tokens };
+    },
+
     /** One short text answer. */
     async generate(prompt: string) {
       return withFallback(providers, async (model) => {
