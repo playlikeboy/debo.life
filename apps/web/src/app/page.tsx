@@ -45,7 +45,7 @@ const PROMISES = [
 const QUESTIONS = [
   {
     q: "Can I use Debo today?",
-    a: "Not yet. Debo is being built and is not open. There is no launch date, and we would rather say that than guess. You can follow the work on GitHub.",
+    a: "You can create an account today, but there is not much to do with it yet. Writing, voice notes and asking Debo about your life come next. There is no date for those, and we would rather say that than guess. You can delete your account any time.",
   },
   {
     q: "Who will be able to read my notes?",
@@ -102,8 +102,8 @@ export default function Home() {
               </a>
             </li>
           </ul>
-          <a href={REPO} className="btn btn-quiet">
-            See the code
+          <a href="/auth/sign-in" className="btn btn-quiet">
+            Sign in
           </a>
         </nav>
       </header>
@@ -112,7 +112,7 @@ export default function Home() {
         {/* Hero */}
         <section className="wrap grid items-center gap-10 pb-16 pt-6 md:grid-cols-[1.1fr_0.9fr] md:gap-8 md:pb-24 md:pt-12">
           <div>
-            <p className="chip">Being built. Not open yet.</p>
+            <p className="chip">Early version. Most of Debo is still being built.</p>
             <h1 className="h-hero mt-5">
               Hi, I&rsquo;m Debo. I&rsquo;ll remember your life, so you can stop trying to.
             </h1>
@@ -121,11 +121,11 @@ export default function Home() {
               show you where my answer came from.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <a href={REPO} className="btn btn-primary">
-                Follow the build on GitHub
+              <a href="/auth/sign-up" className="btn btn-primary">
+                Create your account
               </a>
-              <a href="#promises" className="btn btn-quiet">
-                Read our promises
+              <a href="/auth/sign-in" className="btn btn-quiet">
+                Sign in
               </a>
             </div>
           </div>

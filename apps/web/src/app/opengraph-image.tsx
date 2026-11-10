@@ -43,7 +43,7 @@ export default function OpengraphImage() {
               alignSelf: "flex-start",
             }}
           >
-            Being built. Not open yet.
+            Early version. Still being built.
           </div>
         </div>
       </div>
