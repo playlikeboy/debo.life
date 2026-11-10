@@ -11,3 +11,4 @@ export {
   signedFileLink,
   type Storage,
 } from "./storage";
+export { indexSource } from "./index-source";
