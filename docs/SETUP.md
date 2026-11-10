@@ -71,6 +71,10 @@ pnpm dev
 
 The web app runs on Cloudflare Workers through the OpenNext adapter (see decision 11 in `DECISIONS.md`).
 
+**Normally you do not deploy by hand.** Every push to `main` runs `.github/workflows/deploy.yml`, which installs with pnpm, typechecks, then runs `bun run deploy` in `apps/web` on Linux. You can also start it from the Actions tab ("Deploy", then "Run workflow"). It needs three GitHub repository secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `DATABASE_URL_UNPOOLED`.
+
+To deploy by hand (on Windows this needs Developer Mode or WSL, because OpenNext creates symlinks):
+
 ```bash
 pnpm --filter @debo/web run deploy
 ```

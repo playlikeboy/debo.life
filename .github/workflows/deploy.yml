@@ -1,0 +1,58 @@
+# Deploy the web app (apps/web) to Cloudflare Workers at debo.life.
+# Runs on every push to main, or by hand from the Actions tab.
+# Secrets used (names only; set in GitHub repo settings > Secrets):
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID  - for wrangler
+#   DATABASE_URL_UNPOOLED                         - OpenNext's deploy step needs a
+#                                                   Postgres string to stand in for
+#                                                   the Hyperdrive binding
+# App secrets (Neon Auth, storage, AI gateway) live in Cloudflare as Worker
+# secrets, not here. See docs/SETUP.md.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4 # version comes from "packageManager" in package.json
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build and deploy
+        working-directory: apps/web
+        run: bun run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: ${{ secrets.DATABASE_URL_UNPOOLED }}
+
+      - name: Check the live site
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://debo.life/)
+          echo "debo.life returned $code"
+          test "$code" = "200"
