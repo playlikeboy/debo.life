@@ -56,7 +56,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const input = "mt-2 block min-h-12 w-full rounded-[12px] border-2 border-ink bg-paper px-3 py-2";
 
   return (
-    <form onSubmit={onSubmit} noValidate className="mt-8 grid gap-5">
+    // method="post": if JavaScript has not loaded yet, the browser must never
+    // put the email and password into the address bar as a GET request would.
+    <form onSubmit={onSubmit} method="post" noValidate className="mt-8 grid gap-5">
       {mode === "sign-up" && (
         <div>
           <label htmlFor="name" className="font-semibold">
