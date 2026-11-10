@@ -1,6 +1,6 @@
 # mcp-server
 
-Status: planned, no code yet.
+Status: libraries installed, no code yet.
 
 MCP server that lets other AI tools read a person's Debo context, with their permission. See `docs/ARCHITECTURE.md`.
 

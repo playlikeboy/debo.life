@@ -2,14 +2,21 @@
   "name": "debo",
   "private": true,
   "packageManager": "pnpm@10.28.0",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test"
   },
   "devDependencies": {
-    "turbo": "^2.11.10"
+    "@playwright/test": "1.65.0",
+    "@types/node": "^22.20.5",
+    "turbo": "^2.11.10",
+    "typescript": "^5.9.3",
+    "vitest": "5.1.0"
   }
 }

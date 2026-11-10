@@ -11,8 +11,8 @@ debo.life/
   docs/
   apps/
     web/            @debo/web       Next.js 15. Landing page now, product later.
-    voice-agent/    (planned)       LiveKit Agents worker
-    mcp-server/     (planned)       MCP server
+    voice-agent/    @debo/voice-agent  LiveKit Agents worker
+    mcp-server/     @debo/mcp-server   MCP server
   packages/
     db/             @debo/db        Drizzle schema, migrations, queries
     memory/         @debo/memory    Save and recall, always with sources

@@ -39,6 +39,7 @@ Why: a live audio session cannot run inside a short serverless request.
 Choice: build chat with CopilotKit and AG-UI. Use CopilotKit/OpenDots as a reference or starting point.
 Why: OpenDots is described as an MIT-licensed, self-hostable app template with a workspace and real-time voice calls, which overlaps a lot with Debo.
 Check before relying on it: read the repo and its licence file yourself; confirm it runs with our stack; note what extra services it needs (reports say a CopilotKit project and a separate voice provider). Note that two different projects use the name "Open Intelligent UI" (one from CopilotKit, one from Thesys built on OpenUI). Do not mix them up.
+Checked 2026-11-10: the LICENSE file in CopilotKit/OpenDots is MIT. CopilotKit 1.85.0 is installed in `apps/web`. OpenDots itself is a template to study, not a dependency; it is cloned beside this repo, not inside it.
 
 ## 5. Mem0 first, Graphiti maybe later
 2026-11-10 · to verify

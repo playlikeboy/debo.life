@@ -1,6 +1,6 @@
 # @debo/db
 
-Status: planned, no code yet.
+Status: libraries installed, no code yet.
 
 Postgres schema, migrations and typed queries (Drizzle). The only package allowed to talk to the database. See `docs/DATA-MODEL.md`.
 

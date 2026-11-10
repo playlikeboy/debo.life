@@ -1,6 +1,6 @@
 # voice-agent
 
-Status: planned, no code yet.
+Status: libraries installed, no code yet.
 
 LiveKit agent worker that lets people talk to Debo. Long-running process, not a serverless function. See `docs/VOICE.md`.
 
