@@ -1,35 +1,27 @@
 // @debo/db: the only package that talks to Postgres.
-//
-// Driver: node-postgres (`pg`). On Cloudflare the connection string comes from
-// Hyperdrive, which pools connections for us, so we open one client per
-// request and close it when done. Locally it is DATABASE_URL from `.env`.
 import { sql } from "drizzle-orm";
-import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
-import { Client } from "pg";
+import { withDb } from "./client";
 
-export type Db = NodePgDatabase;
-
-/**
- * Open a connection, run `work`, then always close the connection.
- * Never log query text or rows from here: they may hold a person's data.
- */
-export async function withDb<T>(connectionString: string, work: (db: Db) => Promise<T>): Promise<T> {
-  const client = new Client({ connectionString });
-  await client.connect();
-  try {
-    return await work(drizzle(client));
-  } finally {
-    await client.end();
-  }
-}
+export { withDb, type Db } from "./client";
+export {
+  createEntry,
+  deleteEntry,
+  getSources,
+  listEntries,
+  NewEntry,
+  searchPieces,
+  splitIntoChunks,
+  type Entry,
+  type FoundPiece,
+} from "./journal";
 
 /**
  * Delete a person's account for good.
  *
  * Neon Auth keeps users in the `neon_auth` schema of our own database. Its
- * foreign keys cascade from `user`, so this also removes their sessions,
- * sign-in accounts and memberships. When Debo stores entries, sources and
- * memories, delete those rows here too, in the same transaction.
+ * foreign keys cascade from `user` to sessions, sign-in accounts and
+ * memberships, and ours cascade to sources and chunks. Files are deleted
+ * separately by @debo/ingest before this runs.
  *
  * Returns whether a row was deleted.
  */
