@@ -11,3 +11,6 @@ next-env.d.ts
 *.tsbuildinfo
 out
 .wrangler
+.neon
+.open-next
+.dev.vars
