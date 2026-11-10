@@ -64,6 +64,10 @@ Say these plainly on the privacy page. Do not hide them.
 - Speech-to-text and text-to-speech providers process audio.
 - If Composio is used, it holds the tokens for connected apps.
 - Neon runs our database, sign-in, file storage and AI gateway, so it stores and processes people's data. Neon says the AI gateway's models are hosted by Databricks.
+- What the AI providers say about training and keeping data, checked 10 November 2026 (quotes and links in decision 16 of [`DECISIONS.md`](./DECISIONS.md)):
+  - Anthropic's business terms say it may not train on what we send. It deletes API inputs and outputs within 30 days, unless its safety checks flag them (kept up to 2 years) or the law requires more.
+  - Neon says the gateway follows Databricks' rules. Databricks says it does not train on paid customers' inputs or outputs, and may keep them up to 30 days only to catch abuse.
+  - Not confirmed: that Neon's Databricks account counts as "paid", and what Anthropic keeps when reached through Databricks. Do not claim more than the above on the privacy page.
 - Cloudflare hosts the web app, so every request passes through it.
 - Debo is **not** end-to-end encrypted: the server must read the data to search it. Never claim otherwise.
 - Staff access: the goal is none in normal work, and a recorded, rare exception for support with the person's consent. Build the tooling to make that true before saying it.

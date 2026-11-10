@@ -120,11 +120,19 @@ Why: one key reaches many model makers, switching models is a one-word change, a
 Check before relying on it: the gateway needs prepaid AI Gateway credits. On 2026-11-10 none were bought, so every call fails with "credits required". Also check each model maker's terms on training, per `docs/PRIVACY-AND-TRUST.md`; Neon says the models are hosted by Databricks.
 
 ## 16. Anthropic first, Neon AI Gateway as fallback
-2026-11-10 · decided
+2026-11-10 · decided · terms checked 2026-11-10
 
 Choice: `@debo/llm` calls Anthropic first, with our `ANTHROPIC_API_KEY` and `@ai-sdk/anthropic` 4.0.99, model `claude-haiku-5-5`. If that call fails for any reason, it tries the same model through the Neon AI Gateway.
 Why: the gateway has no credits yet, so every call there fails. Our Anthropic key works today. Keeping the gateway as a fallback means one outage does not stop answers.
-Check before relying on it: Anthropic's API terms say API data is not used for training by default. Confirm that on their current commercial terms before launch, and list Anthropic on the privacy page.
+Checked 2026-11-10 (training and retention terms, for the privacy page):
+- Anthropic, Commercial Terms of Service (effective Jun 17, 2025), section B: "Anthropic may not train models on Customer Content from Services." https://www.anthropic.com/legal/commercial-terms
+- Anthropic privacy center, commercial products: "By default, we will not use your inputs or outputs from our commercial products" to train models. The exception is feedback or bug reports a customer sends on purpose, which Debo does not send. https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training
+- Anthropic retention for the API: "we automatically delete inputs and outputs on our backend within 30 days of receipt or generation." Exceptions: a different agreement (such as zero data retention), Usage Policy enforcement, the law, and chats flagged by trust and safety, where "We retain inputs and outputs for up to 2 years". https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data
+- Anthropic's consumer privacy policy (effective Sep 10, 2026) "does not apply to content that we process on behalf of customers of our business offerings". https://www.anthropic.com/legal/privacy
+- Anthropic's safety retention for Mythos-class models ("retained for 30 days") covers "Mythos-class models and future models with similar capabilities" and only changes things for zero-data-retention workspaces. It does not name Haiku, so it should not apply to `claude-haiku-5-5`. https://support.claude.com/en/articles/15425996-data-retention-practices-for-mythos-class-models
+- Neon AI Gateway data retention (last updated 2026-10-29): "Most models are served through Databricks Model Serving, and data retention for those requests follows Databricks' policy". Databricks "may temporarily store inputs and outputs for up to 30 days to prevent, detect, and mitigate abuse." The Neon page says nothing about training. https://neon.com/docs/ai-gateway/data-retention
+- Databricks Model Serving: "For all paid accounts, Model Serving does not use user inputs submitted to the service or outputs from the service to train any models or improve any Databricks services." Inputs and outputs are "stored in the same region as your workspace for up to thirty (30) days, and only accessible for detecting and responding to security or abuse concerns." "Partner model providers may retain data for safety purposes." https://docs.databricks.com/aws/en/machine-learning/model-serving#data-retention
+Not verified: that Neon's account counts as a Databricks "paid account" (Neon does not say), and what Anthropic keeps when it is reached as a partner model through Databricks rather than directly. The privacy page says only what the pages above say. Check these pages again before launch and whenever a model changes.
 
 ## 17. Keyword search first, meaning search later
 2026-11-10 · done: meaning search added (see below)

@@ -76,10 +76,16 @@ export default function PrivacyPage() {
           When you ask a question, the pieces of your entries that match it go to Anthropic, which writes the
           answer. If Anthropic fails, they go to the Neon AI Gateway instead.
         </p>
-        <p className="text-ink-soft">
-          Anthropic&rsquo;s terms say they do not train on data sent through their API by default. We are confirming
-          this on their current terms before Debo opens fully.
+        <p>
+          Anthropic&rsquo;s business terms say it may not train its AI on what we send it. Anthropic deletes what
+          we send within 30 days. It keeps things longer only if its safety checks flag a message as breaking its
+          rules (up to 2 years), or if the law says it must.
         </p>
+        <p>
+          Neon says its AI gateway follows Databricks&rsquo; rules. Databricks says it does not use what paying
+          customers send to train any AI. It may keep your text for up to 30 days, only to spot abuse.
+        </p>
+        <p className="text-ink-soft">We checked these companies&rsquo; terms on 10 November 2026.</p>
         <p>We do not sell your data, share it, or show ads against it. We do not train AI on it.</p>
       </Section>
 
