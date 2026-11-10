@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
 // The whole phase 1 loop with a throwaway account that the test deletes at
@@ -62,6 +63,15 @@ test("write an entry, ask about it, then delete everything", async ({ page }) =>
   await expect(page.getByText("Mumbai")).toHaveCount(0);
   await page.getByRole("link", { name: "Back to your entries" }).click();
   await page.waitForLoadState("networkidle");
+
+  // Download everything: a zip arrives with the right name.
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Download everything" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/^debo-export-\d{4}-\d{2}-\d{2}\.zip$/);
+  const zip = readFileSync(await download.path());
+  expect(zip.subarray(0, 2).toString()).toBe("PK"); // every zip file starts with "PK"
+  expect(zip.includes("entries/")).toBe(true);
 
   // The chat answers from the same entry, with a source chip.
   await page.goto("/home/chat");
