@@ -114,7 +114,7 @@ pnpm --filter @debo/web run deploy
 That builds the app with OpenNext and runs `wrangler deploy`. Wrangler needs `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` in your shell, or run `npx wrangler login` first.
 
 - The Worker is called `debo-web` and serves `debo.life` and `www.debo.life`, set in `apps/web/wrangler.jsonc`.
-- The database is reached through a Cloudflare Hyperdrive binding called `HYPERDRIVE`.
+- The database is reached through a Cloudflare Hyperdrive binding called `HYPERDRIVE` (config `debo-db`). **Query caching is off** on that config (`npx wrangler hyperdrive update <id> --caching-disabled true`). With caching on, a person's new entry did not show up for up to a minute, and their journal query results would be cached at the edge. Keep it off. This is a Cloudflare setting, not a file in the repo.
 - Secrets are set once per value with `npx wrangler secret put <NAME>` in `apps/web`. Use the names in `.env.example`. Never put them in `wrangler.jsonc`. The Worker needs: `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `NEON_AI_GATEWAY_BASE_URL`, `NEON_AI_GATEWAY_TOKEN` and `ANTHROPIC_API_KEY`.
 
 ## Repo settings
