@@ -2,7 +2,9 @@
 // Every function takes userId and filters by it. Numbers and ids only.
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { withDb } from "./client";
-import { activity, usage } from "./schema";
+import { activity, usage, type ActivityAction } from "./schema";
+
+export type { ActivityAction };
 
 export type UsageRow = { provider: "anthropic" | "neon"; units: number };
 
@@ -29,7 +31,6 @@ export async function tokensUsedToday(connectionString: string, userId: string):
   });
 }
 
-export type ActivityAction = "saved" | "edited" | "deleted" | "answered" | "did-not-know" | "exported";
 export type ActivityItem = {
   id: string;
   actor: "you" | "debo";

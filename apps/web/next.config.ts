@@ -10,7 +10,7 @@ loadEnvConfig(resolve(process.cwd(), "../.."), process.env.NODE_ENV !== "product
 const config: NextConfig = {
   reactStrictMode: true,
   // Workspace packages ship TypeScript source; let Next compile them.
-  transpilePackages: ["@debo/db", "@debo/ingest", "@debo/llm"],
+  transpilePackages: ["@debo/db", "@debo/ingest", "@debo/llm", "@debo/memory"],
 };
 
 export default config;

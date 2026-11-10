@@ -61,6 +61,9 @@ export default async function HomePage() {
         <a href="/home/chat" className="font-semibold underline underline-offset-4">
           Chat with Debo
         </a>
+        <a href="/home/memories" className="font-semibold underline underline-offset-4">
+          See what Debo knows about you
+        </a>
         <a href="/home/activity" className="font-semibold underline underline-offset-4">
           See everything Debo did for you
         </a>

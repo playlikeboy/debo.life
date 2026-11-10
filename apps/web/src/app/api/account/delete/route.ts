@@ -2,6 +2,7 @@ import { deleteAccount } from "@debo/db";
 import { createStorage, deleteUserFiles } from "@debo/ingest";
 import { cookies } from "next/headers";
 import { getAuth } from "@/lib/auth/server";
+import { memoryStore } from "@/lib/memory";
 import { databaseUrl, serverEnv } from "@/lib/server-env";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,8 @@ export const dynamic = "force-dynamic";
  * Delete the signed-in person's account and everything they own, for good.
  *
  * Neon's managed sign-in does not offer self-service deletion, so we do it
- * ourselves: files first, then the account row (which cascades to sessions).
+ * ourselves: memories in Mem0 first, then files, then the account row
+ * (which cascades to sessions, entries and records).
  * Logs ids only, never names or emails.
  */
 export async function POST(request: Request) {
@@ -27,6 +29,11 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Memories in Mem0 first: once the account row is gone, the person cannot
+    // retry, and Mem0 has no link to our database to clean up by itself.
+    // If MEM0_API_KEY is not set, memory is off and there is nothing to delete.
+    const memory = memoryStore();
+    if (memory) await memory.forgetAll(userId);
     const filesDeleted = await deleteUserFiles(createStorage(serverEnv()), userId);
     const accountDeleted = await deleteAccount(databaseUrl(), userId);
     if (!accountDeleted) {
@@ -42,7 +49,7 @@ export async function POST(request: Request) {
       }
     }
 
-    console.info("account deleted", { userId, filesDeleted });
+    console.info("account deleted", { userId, filesDeleted, memoriesDeleted: memory !== null });
     return Response.json({ deleted: true });
   } catch (error) {
     // Library error messages carry ids and codes, not a person's content.

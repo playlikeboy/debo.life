@@ -73,6 +73,14 @@ test("write an entry, ask about it, then delete everything", async ({ page }) =>
   expect(zip.subarray(0, 2).toString()).toBe("PK"); // every zip file starts with "PK"
   expect(zip.includes("entries/")).toBe(true);
 
+  // "What Debo knows" opens. Mem0 reads entries in the background, so do not
+  // depend on which memories are there yet, only that the page loads.
+  await page.getByRole("link", { name: "See what Debo knows about you" }).click();
+  await expect(page.getByRole("heading", { name: "What Debo knows" })).toBeVisible();
+  await expect(page.getByText("couldn’t load what Debo knows")).toHaveCount(0);
+  await page.getByRole("link", { name: "Back to your entries" }).click();
+  await page.waitForLoadState("networkidle");
+
   // The chat answers from the same entry, with a source chip.
   await page.goto("/home/chat");
   // CopilotKit keeps a connection open, so wait for the input, not network idle.

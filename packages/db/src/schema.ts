@@ -58,6 +58,9 @@ export const usage = pgTable(
   (t) => [index("usage_user_created_idx").on(t.userId, t.createdAt)],
 );
 
+/** What the activity record can say happened. Memory actions carry the entry the memory came from. */
+export type ActivityAction = "saved" | "edited" | "deleted" | "answered" | "did-not-know" | "exported" | "fixed-memory" | "forgot-memory";
+
 /**
  * The record a person can read: what Debo saved, changed, deleted and answered.
  * Ids and times only, never content. Promise 7: nothing happens in secret.
@@ -70,7 +73,8 @@ export const activity = pgTable(
       .notNull()
       .references(() => authUsers.id, { onDelete: "cascade" }),
     actor: text("actor").$type<"you" | "debo">().notNull(),
-    action: text("action").$type<"saved" | "edited" | "deleted" | "answered" | "did-not-know" | "exported">().notNull(),
+    // Plain text column: adding an action needs no migration.
+    action: text("action").$type<ActivityAction>().notNull(),
     sourceIds: uuid("source_ids").array().notNull().default(sql`'{}'::uuid[]`),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

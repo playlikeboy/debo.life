@@ -1,12 +1,14 @@
 "use server";
 
 import { createEntry, deleteEntry, updateEntry } from "@debo/db";
+import { MemoryText } from "@debo/memory";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { afterEntryChanged } from "@/lib/after-entry";
+import { afterEntryChanged, afterEntryDeleted } from "@/lib/after-entry";
 import { z } from "zod";
 import { answerQuestion, logActivity, type SourceChip } from "@/lib/ask";
 import { getAuth } from "@/lib/auth/server";
+import { memoryStore } from "@/lib/memory";
 import { databaseUrl } from "@/lib/server-env";
 
 // Server Actions: Next checks that each call comes from our own origin.
@@ -57,7 +59,10 @@ export async function removeEntry(sourceId: string): Promise<SaveState> {
   const userId = await requireUserId();
   if (!userId) return { ok: false, message: "Your session ended. Sign in again." };
   const deleted = await deleteEntry(databaseUrl(), userId, sourceId);
-  if (deleted) await logActivity(userId, "you", "deleted", [sourceId]);
+  if (deleted) {
+    await logActivity(userId, "you", "deleted", [sourceId]);
+    after(() => afterEntryDeleted(userId, sourceId));
+  }
   revalidatePath("/home");
   return deleted ? { ok: true, message: "Entry deleted." } : { ok: false, message: "That entry was already gone." };
 }
@@ -92,4 +97,52 @@ export async function askDebo(_prev: AskState, formData: FormData): Promise<AskS
     console.error("ask failed", { userId, reason: error instanceof Error ? error.message.slice(0, 200) : "unknown" });
     return { status: "error", question, answer: "I couldn't reach my AI helper just now. Try again in a moment.", sources: [] };
   }
+}
+
+// "What Debo knows": the person fixes or forgets one memory.
+// Mem0 calls always pass this person's id, and @debo/memory checks the
+// memory is theirs first. The activity record gets the entry id, never text.
+
+const MemoryId = z.string().uuid();
+const MEMORY_GONE = "I couldn't find that memory. It may already be forgotten.";
+const MEMORY_OFF = "Debo is not keeping memories right now, so there is nothing to change.";
+
+export async function fixMemory(memoryId: string, text: string): Promise<SaveState> {
+  const userId = await requireUserId();
+  if (!userId) return { ok: false, message: "Your session ended. Sign in again, then save." };
+  const id = MemoryId.safeParse(memoryId);
+  if (!id.success) return { ok: false, message: MEMORY_GONE };
+  const clean = MemoryText.safeParse(text);
+  if (!clean.success) return { ok: false, message: clean.error.issues[0]?.message ?? "Check what you wrote." };
+  const memory = memoryStore();
+  if (!memory) return { ok: false, message: MEMORY_OFF };
+  try {
+    const fixed = await memory.update(userId, id.data, clean.data);
+    if (!fixed) return { ok: false, message: MEMORY_GONE };
+    await logActivity(userId, "you", "fixed-memory", [fixed.sourceId]);
+  } catch (error) {
+    console.error("fix memory failed", { userId, memoryId: id.data, reason: error instanceof Error ? error.name : "unknown" });
+    return { ok: false, message: "I couldn't save your fix. Try again in a moment." };
+  }
+  revalidatePath("/home/memories");
+  return { ok: true, message: "Memory fixed." };
+}
+
+export async function forgetMemory(memoryId: string): Promise<SaveState> {
+  const userId = await requireUserId();
+  if (!userId) return { ok: false, message: "Your session ended. Sign in again." };
+  const id = MemoryId.safeParse(memoryId);
+  if (!id.success) return { ok: false, message: MEMORY_GONE };
+  const memory = memoryStore();
+  if (!memory) return { ok: false, message: MEMORY_OFF };
+  try {
+    const forgotten = await memory.forget(userId, id.data);
+    if (!forgotten) return { ok: false, message: MEMORY_GONE };
+    await logActivity(userId, "you", "forgot-memory", [forgotten.sourceId]);
+  } catch (error) {
+    console.error("forget memory failed", { userId, memoryId: id.data, reason: error instanceof Error ? error.name : "unknown" });
+    return { ok: false, message: "I couldn't forget that memory. Try again in a moment." };
+  }
+  revalidatePath("/home/memories");
+  return { ok: true, message: "Memory forgotten." };
 }

@@ -19,6 +19,7 @@
     "@debo/db": "workspace:*",
     "@debo/ingest": "workspace:*",
     "@debo/llm": "workspace:*",
+    "@debo/memory": "workspace:*",
     "@fontsource-variable/bricolage-grotesque": "^5.2.0",
     "@fontsource-variable/figtree": "^5.2.0",
     "@neon/auth": "0.8.2",

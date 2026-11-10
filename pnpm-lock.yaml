@@ -69,6 +69,9 @@ importers:
       '@debo/llm':
         specifier: workspace:*
         version: link:../../packages/llm
+      '@debo/memory':
+        specifier: workspace:*
+        version: link:../../packages/memory
       '@fontsource-variable/bricolage-grotesque':
         specifier: ^5.2.0
         version: 5.3.0
