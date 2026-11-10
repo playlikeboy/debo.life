@@ -1,13 +1,14 @@
 import { Debo } from "@/components/debo";
+import { DeboArt } from "@/components/debo-art";
 import { MemoryDemo } from "@/components/memory-demo";
 
 const REPO = "https://github.com/playlikeboy/debo.life";
 
 const GIVE = [
   { name: "Write", text: "Keep a journal. A line or a page, whenever you like." },
-  { name: "Talk", text: "Record a voice note. Debo turns it into words and keeps both." },
-  { name: "Papers", text: "Add a bill, a letter or a report. Debo reads it for you." },
-  { name: "Photos", text: "Add a photo. Debo notes what is in it and any words on it." },
+  { name: "Talk", text: "Record a voice note. Debo will turn it into words and keep both." },
+  { name: "Papers", text: "Add a bill, a letter or a report. Debo will read it for you." },
+  { name: "Photos", text: "Add a photo. Debo will note what is in it and any words on it." },
 ];
 
 const PROMISES = [
@@ -35,6 +36,29 @@ const PROMISES = [
     title: "Debo asks first",
     text: "Before reading from a new app or doing anything outside Debo, it asks you.",
   },
+  {
+    title: "Nothing happens in secret",
+    text: "Debo keeps a plain list of everything it read and did. You can read all of it.",
+  },
+];
+
+const QUESTIONS = [
+  {
+    q: "Can I use Debo today?",
+    a: "Not yet. Debo is being built and is not open. There is no launch date, and we would rather say that than guess. You can follow the work on GitHub.",
+  },
+  {
+    q: "Who will be able to read my notes?",
+    a: "To answer you, Debo will send the pieces of your notes that matter to an AI company, and we will tell you which one. Debo's own servers will also need to read your notes to search them, so they will not be locked in a way only you can open. We would rather tell you that now than hide it.",
+  },
+  {
+    q: "Will Debo give me medical, legal or money advice?",
+    a: "No. Debo can tell you what your own notes say, like what the doctor told you in March. It will not tell you what to do about it.",
+  },
+  {
+    q: "Is Debo a person?",
+    a: "No. Debo is an AI assistant with a friendly face. It will never pretend to be a person.",
+  },
 ];
 
 const STEPS = [
@@ -60,9 +84,28 @@ export default function Home() {
           <Mark />
           Debo
         </a>
-        <a href={REPO} className="btn btn-quiet">
-          See the code
-        </a>
+        <nav aria-label="Main" className="flex items-center gap-6">
+          <ul className="hidden items-center gap-6 font-semibold md:flex">
+            <li>
+              <a href="#promises" className="underline-offset-4 hover:underline">
+                Promises
+              </a>
+            </li>
+            <li>
+              <a href="#plans" className="underline-offset-4 hover:underline">
+                Plans
+              </a>
+            </li>
+            <li>
+              <a href="#questions" className="underline-offset-4 hover:underline">
+                Questions
+              </a>
+            </li>
+          </ul>
+          <a href={REPO} className="btn btn-quiet">
+            See the code
+          </a>
+        </nav>
       </header>
 
       <main id="main">
@@ -71,7 +114,7 @@ export default function Home() {
           <div>
             <p className="chip">Being built. Not open yet.</p>
             <h1 className="h-hero mt-5">
-              Hi, I&rsquo;m Debo. I remember your life, so you can stop trying to.
+              Hi, I&rsquo;m Debo. I&rsquo;ll remember your life, so you can stop trying to.
             </h1>
             <p className="mt-6 max-w-[34rem] text-[1.125rem] text-ink-soft md:text-[1.25rem]">
               Give me your journals, voice notes, papers and photos. Ask me anything about them. I will always
@@ -103,7 +146,7 @@ export default function Home() {
                 <li className="chip">Journal, 14 March</li>
                 <li className="chip">Voice note, 16 March</li>
               </ul>
-              <figcaption className="mt-5 border-t border-line pt-3 text-sm text-ink-soft">
+              <figcaption className="mt-5 border-t border-line pt-3 text-ink-soft">
                 An example of how Debo will answer. The names are made up.
               </figcaption>
             </figure>
@@ -143,7 +186,7 @@ export default function Home() {
         {/* Promises */}
         <section id="promises" className="scroll-mt-6 bg-ink text-paper">
           <div className="wrap py-16 md:py-24">
-            <h2 className="h-section max-w-[20ch]">Six promises we are building Debo around</h2>
+            <h2 className="h-section max-w-[20ch]">Seven promises we are building Debo around</h2>
             <p className="mt-5 max-w-[38rem] text-[1.125rem] text-line">
               Debo is not open yet, so these are not claims about a product you can use today. They are the
               rules it is being built by, written down so you can hold us to them.
@@ -193,7 +236,7 @@ export default function Home() {
         </section>
 
         {/* Two ways to use it */}
-        <section className="border-t-2 border-ink bg-paper">
+        <section id="plans" className="scroll-mt-6 border-t-2 border-ink bg-paper">
           <div className="wrap py-16 md:py-24">
             <h2 className="h-section">Two ways you will be able to use Debo</h2>
             <div className="mt-10 grid gap-6 md:grid-cols-2">
@@ -202,7 +245,7 @@ export default function Home() {
                 <p className="mt-1 font-semibold">Free</p>
                 <p className="mt-4 text-ink-soft">
                   If you already pay an AI company, paste your key into Debo. You pay them for what you use.
-                  We store your key encrypted and you can remove it any time.
+                  We will store your key encrypted, and you can remove it any time.
                 </p>
               </div>
               <div className="rounded-[24px] border-2 border-ink bg-sky p-6 md:p-8">
@@ -217,6 +260,26 @@ export default function Home() {
             <p className="mt-6 max-w-[40rem] text-ink-soft">
               Seeing, fixing, exporting and deleting your own data will be free on both. Always.
             </p>
+          </div>
+        </section>
+
+        {/* Plain answers to the questions people ask first */}
+        <section id="questions" className="scroll-mt-6 border-t-2 border-ink">
+          <div className="wrap py-16 md:py-24">
+            <h2 className="h-section">Questions you might have</h2>
+            <div className="mt-10 max-w-[48rem] border-b-2 border-ink">
+              {QUESTIONS.map((item) => (
+                <details key={item.q} className="faq border-t-2 border-ink">
+                  <summary className="flex min-h-12 cursor-pointer items-center justify-between gap-4 py-4 text-[1.375rem] font-display font-bold">
+                    {item.q}
+                    <span className="faq-mark shrink-0" aria-hidden="true">
+                      +
+                    </span>
+                  </summary>
+                  <p className="max-w-[40rem] pb-5 text-ink-soft">{item.a}</p>
+                </details>
+              ))}
+            </div>
           </div>
         </section>
       </main>
@@ -238,14 +301,5 @@ export default function Home() {
 }
 
 function Mark() {
-  return (
-    <svg viewBox="0 0 64 64" width="32" height="32" aria-hidden="true" focusable="false">
-      <circle cx="32" cy="33" r="27" fill="#ffd23f" stroke="#1b1f4b" strokeWidth="4" />
-      <ellipse cx="23" cy="30" rx="6" ry="7.5" fill="#fff" stroke="#1b1f4b" strokeWidth="2.5" />
-      <ellipse cx="41" cy="30" rx="6" ry="7.5" fill="#fff" stroke="#1b1f4b" strokeWidth="2.5" />
-      <circle cx="24" cy="31" r="3.2" fill="#1b1f4b" />
-      <circle cx="42" cy="31" r="3.2" fill="#1b1f4b" />
-      <path d="M26 43c3 4 9 4 12 0" fill="none" stroke="#1b1f4b" strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  );
+  return <DeboArt width={36} height={36} ground={false} blink={false} />;
 }

@@ -95,12 +95,12 @@ p {
 .btn-primary {
   background: var(--color-ink);
   color: var(--color-paper);
-  box-shadow: 4px 4px 0 var(--color-butter);
+  box-shadow: var(--shadow-hard);
 }
 
 .btn-primary:hover {
   transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 var(--color-butter);
+  box-shadow: 2px 2px 0 var(--color-ink);
 }
 
 .btn-quiet {
@@ -120,7 +120,7 @@ p {
   border: 1px solid var(--color-ink);
   border-radius: var(--radius-chip);
   background: var(--color-mint);
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -143,8 +143,24 @@ p {
   animation: debo-blink 5.5s infinite;
 }
 
-.memory-row {
-  transition: opacity 180ms ease, transform 180ms ease;
+/* Questions: a plain + that turns into an x when open. */
+.faq summary {
+  list-style: none;
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-mark {
+  display: inline-block;
+  font-size: 1.75rem;
+  line-height: 1;
+  transition: transform 180ms ease;
+}
+
+.faq[open] .faq-mark {
+  transform: rotate(45deg);
 }
 
 @media (prefers-reduced-motion: reduce) {
