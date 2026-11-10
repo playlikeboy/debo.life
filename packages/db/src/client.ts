@@ -12,10 +12,15 @@ export type Db = NodePgDatabase;
  */
 export async function withDb<T>(connectionString: string, work: (db: Db) => Promise<T>): Promise<T> {
   const client = new Client({ connectionString });
+  // A dropped socket must not crash the request as an unhandled error.
+  client.on("error", () => {});
   await client.connect();
   try {
     return await work(drizzle(client));
   } finally {
-    await client.end();
+    // Do not wait for the close. On Cloudflare Workers, awaiting `end()`
+    // can hang or throw "This socket has been closed" after the work is
+    // done; Hyperdrive pools the real connections, so closing late is safe.
+    client.end().catch(() => {});
   }
 }
