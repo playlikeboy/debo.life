@@ -21,7 +21,7 @@ export const LIMIT_MESSAGE =
   "You have asked a lot today, and Debo has reached its daily limit for you. You can ask again after midnight UTC. Your entries are safe.";
 
 /** Tokens one person may use on our AI key per day (UTC). See docs/BYOK-AND-PLANS.md, "Limits". */
-function dailyTokenLimit(): number {
+export function dailyTokenLimit(): number {
   const fromEnv = Number(process.env.DAILY_TOKEN_LIMIT);
   return Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : 40_000;
 }
@@ -46,7 +46,20 @@ export async function logActivity(
 /** Answer a question from this person's own entries. Throws only on unexpected failures. */
 export async function answerQuestion(userId: string, question: string): Promise<AskResult> {
   const db = databaseUrl();
-  const pieces = await searchPieces(db, userId, question);
+  const llm = createLlm(serverEnv());
+
+  // Meaning search needs the question as a vector. If that fails, keyword
+  // search alone still answers, so the question never fails because of it.
+  let embedding: number[] | undefined;
+  try {
+    const { vectors, tokens } = await llm.embed([question]);
+    embedding = vectors[0];
+    await recordUsage(db, userId, { provider: "neon", units: tokens });
+  } catch (error) {
+    console.error("question embedding failed", { userId, reason: error instanceof Error ? error.name : "unknown" });
+  }
+
+  const pieces = await searchPieces(db, userId, question, { embedding });
   if (pieces.length === 0) {
     await logActivity(userId, "debo", "did-not-know");
     return { status: "unknown" };
@@ -57,7 +70,7 @@ export async function answerQuestion(userId: string, question: string): Promise<
     return { status: "limit", message: LIMIT_MESSAGE };
   }
 
-  const result = await createLlm(serverEnv()).answerFromSources(
+  const result = await llm.answerFromSources(
     question,
     pieces.map((p) => ({ id: p.sourceId, title: p.title, date: p.happenedAt.toISOString().slice(0, 10), text: p.text })),
   );

@@ -2,6 +2,8 @@
 
 import { createEntry, deleteEntry, updateEntry } from "@debo/db";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { afterEntryChanged } from "@/lib/after-entry";
 import { z } from "zod";
 import { answerQuestion, logActivity, type SourceChip } from "@/lib/ask";
 import { getAuth } from "@/lib/auth/server";
@@ -24,6 +26,7 @@ export async function saveEntry(_prev: SaveState, formData: FormData): Promise<S
   try {
     const entry = await createEntry(databaseUrl(), userId, { text: formData.get("text") });
     await logActivity(userId, "you", "saved", [entry.id]);
+    after(() => afterEntryChanged(userId, entry.id));
   } catch (error) {
     if (error instanceof z.ZodError) return { ok: false, message: error.issues[0]?.message ?? "Check your entry." };
     console.error("save entry failed", { userId, reason: error instanceof Error ? error.name : "unknown" });
@@ -40,6 +43,7 @@ export async function editEntry(sourceId: string, text: string): Promise<SaveSta
     const updated = await updateEntry(databaseUrl(), userId, sourceId, { text });
     if (!updated) return { ok: false, message: "I couldn't find that entry. It may have been deleted." };
     await logActivity(userId, "you", "edited", [sourceId]);
+    after(() => afterEntryChanged(userId, sourceId));
   } catch (error) {
     if (error instanceof z.ZodError) return { ok: false, message: error.issues[0]?.message ?? "Check your entry." };
     console.error("edit entry failed", { userId, reason: error instanceof Error ? error.name : "unknown" });
