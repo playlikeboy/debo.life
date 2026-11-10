@@ -70,7 +70,7 @@ export const activity = pgTable(
       .notNull()
       .references(() => authUsers.id, { onDelete: "cascade" }),
     actor: text("actor").$type<"you" | "debo">().notNull(),
-    action: text("action").$type<"saved" | "edited" | "deleted" | "answered" | "did-not-know">().notNull(),
+    action: text("action").$type<"saved" | "edited" | "deleted" | "answered" | "did-not-know" | "exported">().notNull(),
     sourceIds: uuid("source_ids").array().notNull().default(sql`'{}'::uuid[]`),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

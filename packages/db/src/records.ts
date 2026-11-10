@@ -29,7 +29,7 @@ export async function tokensUsedToday(connectionString: string, userId: string):
   });
 }
 
-export type ActivityAction = "saved" | "edited" | "deleted" | "answered" | "did-not-know";
+export type ActivityAction = "saved" | "edited" | "deleted" | "answered" | "did-not-know" | "exported";
 export type ActivityItem = {
   id: string;
   actor: "you" | "debo";

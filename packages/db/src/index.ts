@@ -22,6 +22,7 @@ export {
   type SearchOptions,
 } from "./journal";
 export { EMBEDDING_DIMENSIONS } from "./schema";
+export { exportRecords, type ExportEntry, type ExportRecords } from "./export";
 export {
   listActivity,
   recordActivity,
