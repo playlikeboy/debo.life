@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+/* Tokens. Source of truth: DESIGN.md at the repo root. */
+@theme {
+  --color-sky: #e9eeff;
+  --color-paper: #ffffff;
+  --color-ink: #1b1f4b;
+  --color-ink-soft: #4a4f7a;
+  --color-butter: #ffd23f;
+  --color-mint: #c4f1da;
+  --color-blush: #ffb3c7;
+  --color-line: #c9d0f2;
+
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-chip: 12px;
+  --radius-panel: 24px;
+
+  --shadow-hard: 4px 4px 0 var(--color-ink);
+}
+
+html {
+  background: var(--color-sky);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.h-hero {
+  font-size: clamp(2.5rem, 6.4vw, 4.75rem);
+}
+
+.h-section {
+  font-size: clamp(1.75rem, 3.6vw, 2.5rem);
+}
+
+.wrap {
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+
+@media (min-width: 768px) {
+  .wrap {
+    padding-inline: 32px;
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 10px 24px;
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.btn:focus-visible {
+  border-radius: 999px;
+}
+
+.btn-primary {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  box-shadow: 4px 4px 0 var(--color-butter);
+}
+
+.btn-primary:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--color-butter);
+}
+
+.btn-quiet {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.btn-quiet:hover {
+  background: var(--color-sky);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--color-ink);
+  border-radius: var(--radius-chip);
+  background: var(--color-mint);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Debo blinks now and then. */
+@keyframes debo-blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  97% {
+    transform: scaleY(0.08);
+  }
+}
+
+.debo-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: debo-blink 5.5s infinite;
+}
+
+.memory-row {
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

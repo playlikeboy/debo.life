@@ -1,0 +1,24 @@
+# Debo
+
+> Debo is a friendly assistant that remembers your life. You give it journals, voice notes, papers and photos, and ask it questions about your own life by text or voice. Every answer links to its source. You can see, fix and delete everything it knows.
+
+Status: Debo is being built. Only this landing page is live. The features below are planned, not available yet.
+
+- Website: https://debo.life
+- Source and plan: https://github.com/playlikeboy/debo.life
+
+## Planned features
+
+- Save journal entries, voice notes, documents and photos
+- Ask questions about your own life and get answers with sources
+- Talk to Debo by voice
+- A page showing everything Debo knows, where you can fix or forget any memory
+- Connect apps such as a calendar, only with your permission
+- Let other AI tools read your Debo memories, only with your permission
+- Use your own AI key for free, or a paid plan
+
+## Docs
+
+- [Product](https://github.com/playlikeboy/debo.life/blob/main/docs/PRODUCT.md)
+- [Privacy and trust](https://github.com/playlikeboy/debo.life/blob/main/docs/PRIVACY-AND-TRUST.md)
+- [Roadmap](https://github.com/playlikeboy/debo.life/blob/main/docs/ROADMAP.md)
