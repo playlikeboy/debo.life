@@ -12,7 +12,7 @@ Debo should feel like a small, kind friend who keeps your things safe. Two words
 
 ## Debo, the mascot
 
-A round, butter-yellow character with two eyes, small cheeks and a soft smile. Drawn in SVG, no image files.
+A soft, round, butter-yellow character shaped like a rice cake, a little wider at the bottom. It has big, dark, shiny eyes set low on the face (two white highlights each), pink cheeks, a small "ω" smile, one curl of hair on top and a flat white shine spot. Drawn in SVG, no image files. The one drawing lives in `apps/web/src/components/debo-art.tsx`; the live mascot, the logo, the favicon and the share image all use it.
 
 - Its eyes follow the pointer. This is the one playful moment on a screen. Do not add a second.
 - Debo appears once per screen at most. It is a character, not a pattern.
