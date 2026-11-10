@@ -1,0 +1,122 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "How Debo handles your data",
+  description: "What Debo stores, where it lives, who else sees it, and how you delete it. Plain words, true today.",
+  alternates: { canonical: "/privacy" },
+};
+
+const REPO = "https://github.com/playlikeboy/debo.life";
+
+function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+  return (
+    <section aria-labelledby={id} className="mt-12 border-t-2 border-ink pt-8">
+      <h2 id={id} className="text-[1.75rem]">
+        {title}
+      </h2>
+      <div className="mt-4 grid max-w-[40rem] gap-4">{children}</div>
+    </section>
+  );
+}
+
+function List({ items }: { items: React.ReactNode[] }) {
+  return (
+    <ul className="grid list-disc gap-2 pl-6">
+      {items.map((item, index) => (
+        <li key={index}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+export default function PrivacyPage() {
+  return (
+    <main className="wrap max-w-[48rem] py-16">
+      <a href="/" className="font-semibold underline underline-offset-4">
+        Back to Debo
+      </a>
+
+      <h1 className="h-section mt-8">How Debo handles your data</h1>
+      <p className="mt-4 text-[1.125rem] text-ink-soft">Last updated 10 November 2026.</p>
+
+      <div className="mt-8 max-w-[40rem] rounded-[24px] border-2 border-ink bg-paper p-6">
+        <p>
+          This page explains how Debo works today. A full privacy policy, checked by someone qualified, comes
+          before Debo opens fully.
+        </p>
+      </div>
+
+      <Section id="stores" title="What Debo stores">
+        <List
+          items={[
+            <>Your name, email and password. Your password passes through Debo on its way to our sign-in service, which stores only a hashed version. Debo never stores or logs it.</>,
+            <>Your journal entries.</>,
+            <>Short pieces of each entry, made so Debo can search them.</>,
+            <>A list of what Debo saved, deleted and answered for you (ids and times, not your words).</>,
+            <>How many AI tokens your questions used each day (numbers only, never your words), so we can keep costs fair.</>,
+          ]}
+        />
+      </Section>
+
+      <Section id="where" title="Where it is stored">
+        <p>
+          Your account, your entries and any files live with Neon, which runs our database, sign-in and file
+          storage. Neon keeps them in the United States (Amazon Web Services, us-east-2).
+        </p>
+        <p>Cloudflare runs the website. Your data travels between you, Cloudflare and Neon over HTTPS.</p>
+      </Section>
+
+      <Section id="who" title="Who else sees pieces of your data">
+        <p>
+          When you ask a question, the pieces of your entries that match it go to Anthropic, which writes the
+          answer. If Anthropic fails, they go to the Neon AI Gateway instead, whose models are run by Databricks.
+        </p>
+        <p className="text-ink-soft">
+          Anthropic&rsquo;s terms say they do not train on data sent through their API by default. We are confirming
+          this on their current terms before Debo opens fully.
+        </p>
+        <p>We do not sell your data, share it, or show ads against it. We do not train AI on it.</p>
+      </Section>
+
+      <Section id="limits" title="Honest limits">
+        <List
+          items={[
+            <>Debo is not end-to-end encrypted. Debo&rsquo;s servers have to read your notes to search them.</>,
+            <>Our database provider may keep backups for a short time. We will state the exact period before Debo opens fully.</>,
+            <>Sign-in emails are sent by Neon&rsquo;s shared mail service for now.</>,
+          ]}
+        />
+      </Section>
+
+      <Section id="control" title="What you control today">
+        <List
+          items={[
+            <>Delete any entry. It is deleted right away.</>,
+            <>
+              Delete your account from your home page. That deletes your account, every entry, every piece and any
+              files, right away.
+            </>,
+          ]}
+        />
+        <p className="text-ink-soft">
+          Planned, not built yet: one page that shows everything Debo knows about you, and a way to export all of
+          it.
+        </p>
+      </Section>
+
+      <Section id="cookies" title="Cookies">
+        <p>Debo only uses the sign-in cookies it needs to keep you signed in. No ads, no tracking, no analytics.</p>
+      </Section>
+
+      <Section id="questions" title="Questions">
+        <p>
+          Ask on{" "}
+          <a href={`${REPO}/issues`} className="font-semibold underline underline-offset-4">
+            Debo&rsquo;s GitHub issues page
+          </a>
+          . Please do not post anything private there, since it is public.
+        </p>
+      </Section>
+    </main>
+  );
+}

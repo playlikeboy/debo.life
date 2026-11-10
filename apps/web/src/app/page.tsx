@@ -202,11 +202,8 @@ export default function Home() {
             <p className="mt-10 max-w-[38rem] text-line">
               One honest limit: to answer you, Debo has to send the relevant pieces of your notes to an AI
               model. We will always tell you which company runs it.{" "}
-              <a
-                href={`${REPO}/blob/main/docs/PRIVACY-AND-TRUST.md`}
-                className="font-semibold text-paper underline underline-offset-4"
-              >
-                Read the full privacy plan
+              <a href="/privacy" className="font-semibold text-paper underline underline-offset-4">
+                Read how Debo handles your data
               </a>
               .
             </p>
@@ -291,9 +288,14 @@ export default function Home() {
             Debo
           </p>
           <p className="text-ink-soft">Being built in the open by one person.</p>
-          <a href={REPO} className="font-semibold underline underline-offset-4">
-            GitHub
-          </a>
+          <nav aria-label="Footer" className="flex gap-6">
+            <a href="/privacy" className="font-semibold underline underline-offset-4">
+              Privacy
+            </a>
+            <a href={REPO} className="font-semibold underline underline-offset-4">
+              GitHub
+            </a>
+          </nav>
         </div>
       </footer>
     </>
