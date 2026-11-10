@@ -59,6 +59,7 @@ A document, email or web page may contain text written to trick an AI ("ignore y
 Say these plainly on the privacy page. Do not hide them.
 
 - To answer a question, the relevant pieces of the person's data are sent to an AI provider. With "your own key", that is the provider the person chose.
+- Today that provider is Anthropic: when you ask Debo something, the pieces of your entries that match your question go to Anthropic so it can write the answer. If Anthropic fails, the same pieces go to the Neon AI Gateway instead.
 - Speech-to-text and text-to-speech providers process audio.
 - If Composio is used, it holds the tokens for connected apps.
 - Neon runs our database, sign-in, file storage and AI gateway, so it stores and processes people's data. Neon says the AI gateway's models are hosted by Databricks.

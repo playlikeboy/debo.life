@@ -113,8 +113,22 @@ Why: files branch together with the database rows that point at them, and it is 
 Check before relying on it: storage and download (egress) pricing, and that deleting a file is permanent.
 
 ## 15. Model calls go through the Neon AI Gateway
-2026-11-10 · decided
+2026-11-10 · changed by 16
 
 Choice: the Vercel AI SDK (`ai` 7.0.166) with `@neon/ai-sdk-provider` 1.3.2, inside `@debo/llm`. Default model `claude-haiku-5-5`.
 Why: one key reaches many model makers, switching models is a one-word change, and it is the same provider as the rest of the backend.
 Check before relying on it: the gateway needs prepaid AI Gateway credits. On 2026-11-10 none were bought, so every call fails with "credits required". Also check each model maker's terms on training, per `docs/PRIVACY-AND-TRUST.md`; Neon says the models are hosted by Databricks.
+
+## 16. Anthropic first, Neon AI Gateway as fallback
+2026-11-10 · decided
+
+Choice: `@debo/llm` calls Anthropic first, with our `ANTHROPIC_API_KEY` and `@ai-sdk/anthropic` 4.0.99, model `claude-haiku-5-5`. If that call fails for any reason, it tries the same model through the Neon AI Gateway.
+Why: the gateway has no credits yet, so every call there fails. Our Anthropic key works today. Keeping the gateway as a fallback means one outage does not stop answers.
+Check before relying on it: Anthropic's API terms say API data is not used for training by default. Confirm that on their current commercial terms before launch, and list Anthropic on the privacy page.
+
+## 17. Keyword search first, meaning search later
+2026-11-10 · decided
+
+Choice: "Ask" finds the person's pieces with Postgres full-text search only (any word may match, ranked by `ts_rank`). There is no embedding column yet.
+Why: there is no working embedding model. The gateway's `qwen3-embedding-0-6b` needs credits, and Anthropic does not make embeddings.
+Check before relying on it: questions that use different words from the entry ("physician" vs "doctor") will miss. Add embeddings and a pgvector index on `chunks` when the gateway has credits or another embedding provider is chosen, then merge both searches as `docs/MEMORY.md` describes.

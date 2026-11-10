@@ -1,6 +1,6 @@
 # Data model
 
-Status: plan. No tables exist yet. This is the starting shape for `@debo/db`. Change it when real code shows a better one, and update this file in the same change.
+Status: `sources` and `chunks` exist (journal entries only, and `chunks` has no `embedding` column yet; see decision 17). Users live in Neon Auth's `neon_auth."user"` table. Everything else here is a plan. The schema code is `packages/db/src/schema.ts`. Change it when real code shows a better one, and update this file in the same change.
 
 Database: Postgres with the `pgvector` extension. ORM: Drizzle.
 
@@ -8,7 +8,7 @@ Database: Postgres with the `pgvector` extension. ORM: Drizzle.
 
 - Every table that holds a person's data has a `user_id` column and an index on it.
 - Every query filters by `user_id`. Put this in the query helpers so callers cannot forget.
-- Deleting a user deletes every row and every file that belongs to them. Use `on delete cascade` and a job that removes files from R2.
+- Deleting a user deletes every row and every file that belongs to them. Every `user_id` has a foreign key to `neon_auth."user"(id)` with `on delete cascade`. Files in Neon Object Storage are removed by the account-delete route (`/api/account/delete`) before the user row goes.
 - Timestamps are `timestamptz` in UTC.
 - Ids are UUIDs.
 
@@ -27,7 +27,7 @@ One row per thing the person gave Debo. The original of every memory.
 | kind | text | `journal`, `voice`, `document`, `photo`, `connector` |
 | title | text | Short name shown on source chips |
 | text | text | Full text: the entry, the transcript, the parsed document, the photo description |
-| file_key | text | Path in R2 for the original file, if any |
+| file_key | text | Path in file storage (Neon Object Storage) for the original file, if any |
 | happened_at | timestamptz | When the thing happened, as best known |
 | status | text | `waiting`, `ready`, `failed` |
 | fail_reason | text | Plain words the person can read |
