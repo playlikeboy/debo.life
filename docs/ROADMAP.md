@@ -4,15 +4,15 @@ Build in this order. Do not start a phase until the one before it meets its "don
 
 ## What's next (as of 10 November 2026)
 
-Where we are: a person can sign up, write journal entries, ask Debo about them and get answers with source chips, delete entries, and delete their account. It runs at debo.life and passes the end-to-end test. Phase 1 is not done: voice notes, papers and photos cannot be saved yet.
+Where we are: a person can sign up, write journal entries, ask Debo about them and get answers with source chips, edit and delete entries, read a record of what Debo did, and delete their account. Each person has a daily AI limit. It runs at debo.life and passes the end-to-end test. Phase 1 is not done: voice notes, papers and photos cannot be saved yet.
 
 Do these in order. The first four protect people and our bill, so they come before new features.
 
-1. **Cap spending on our AI key.** Anyone can sign up, and every question costs us money on the Anthropic key. Add the `usage` table, write a row per model call (never the text), and stop asking for the day at a per-person limit with a plain message. See `BYOK-AND-PLANS.md`, "Limits".
-2. **Keep the activity record.** Promise 7, "Nothing happens in secret", is not true yet. Add the `activity` table and write a row when Debo saves, deletes or answers (ids only).
+1. ~~**Cap spending on our AI key.**~~ Done: `usage` table, a row per model call with token counts only, and a per-person daily limit (`DAILY_TOKEN_LIMIT`, default 40,000 tokens, resets at midnight UTC). Anyone can sign up, and every question costs us money on the Anthropic key. Add the `usage` table, write a row per model call (never the text), and stop asking for the day at a per-person limit with a plain message. See `BYOK-AND-PLANS.md`, "Limits".
+2. ~~**Keep the activity record.**~~ Done: `activity` table (ids and times only) and the "What Debo did" page at `/home/activity`. Promise 7, "Nothing happens in secret", is not true yet. Add the `activity` table and write a row when Debo saves, deletes or answers (ids only).
 3. **Use our own mail sender for sign-in emails.** Neon's shared sender is for development only. Set up custom SMTP, then decide whether to require email verification at sign-up.
-4. **Publish a privacy page.** List every company that touches data today: Neon (database, sign-in, files, AI gateway), Databricks (hosts the gateway's models), Cloudflare (hosting) and Anthropic (answers). Confirm Anthropic's current terms on training first (decision 16).
-5. **Journal: edit an entry.** Saving an edit must replace its chunks too.
+4. ~~**Publish a privacy page.**~~ Done: `/privacy`. Still to do: confirm Anthropic's training terms. List every company that touches data today: Neon (database, sign-in, files, AI gateway), Databricks (hosts the gateway's models), Cloudflare (hosting) and Anthropic (answers). Confirm Anthropic's current terms on training first (decision 16).
+5. ~~**Journal: edit an entry.**~~ Done: "Edit this entry" replaces the text and its chunks in one transaction. Saving an edit must replace its chunks too.
 6. **Uploads: voice notes, papers and photos.** Store the original in Neon Object Storage under `users/<id>/`, turn it into text with `@debo/ingest` in a background job (Inngest), and make it searchable like entries. Choose a speech-to-text provider first.
 7. **Meaning search.** When the AI gateway has credits (or another embedding provider is chosen), add embeddings and a pgvector index to `chunks`, and merge the results with keyword search (decision 17).
 8. **Recall test set.** Made-up entries and questions with known answers, run before each release, so search changes can be checked.
@@ -34,15 +34,16 @@ Housekeeping, not features:
 The smallest version that is truly useful.
 
 - [x] `@debo/db`: Postgres, Drizzle, first migration (`sources` and `chunks`; users live in Neon Auth)
-- [ ] `@debo/db`: `conversations`, `messages`, `usage`, `activity` tables, and pgvector embeddings on `chunks`
+- [x] `@debo/db`: `usage` and `activity` tables
+- [ ] `@debo/db`: `conversations`, `messages` tables, and pgvector embeddings on `chunks`
 - [x] Sign-in with Neon Auth (managed Better Auth)
 - [x] Delete account, built now, not later (deletes files, the account, entries, sessions and sign-in cookies)
 - [x] Journal: write, list, delete
-- [ ] Journal: edit
+- [x] Journal: edit
 - [ ] Upload a voice note, a PDF, a photo to file storage (Neon Object Storage)
 - [ ] `@debo/ingest` and background jobs: file to text to chunks to embeddings
 - [x] `@debo/llm`: one door for model calls (Anthropic first, Neon AI Gateway as fallback)
-- [ ] `@debo/llm`: usage rows
+- [x] `@debo/llm`: usage rows and a daily limit per person
 - [x] Ask my life: answers only from the person's entries and shows source chips (keyword search for now)
 - [x] "I don't have anything about that yet" when nothing is found
 - [ ] Recall test set with made-up data

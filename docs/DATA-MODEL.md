@@ -1,6 +1,6 @@
 # Data model
 
-Status: `sources` and `chunks` exist (journal entries only, and `chunks` has no `embedding` column yet; see decision 17). Users live in Neon Auth's `neon_auth."user"` table. Everything else here is a plan. The schema code is `packages/db/src/schema.ts`. Change it when real code shows a better one, and update this file in the same change.
+Status: `sources`, `chunks`, `usage` and `activity` exist (journal entries only, and `chunks` has no `embedding` column yet; see decision 17). Users live in Neon Auth's `neon_auth."user"` table. Everything else here is a plan. The schema code is `packages/db/src/schema.ts`. Change it when real code shows a better one, and update this file in the same change.
 
 Database: Postgres with the `pgvector` extension. ORM: Drizzle.
 
