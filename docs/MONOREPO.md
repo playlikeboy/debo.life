@@ -62,7 +62,17 @@ apps/web/src/
   lib/             small helpers
 ```
 
-Today only `app/page.tsx` and `app/layout.tsx` exist. Add the route groups when the first signed-in page is built.
+What exists today:
+
+- `app/page.tsx`, `app/layout.tsx`, `app/not-found.tsx`: the landing page and its 404 page.
+- `app/auth/sign-up`, `app/auth/sign-in`: sign-in pages (Neon Auth).
+- `app/home`: the first signed-in page.
+- `app/api/auth/[...path]`: forwards sign-in requests to Neon Auth.
+- `app/api/health`: development-only check of the database, file storage and AI gateway.
+- `src/proxy.ts`: sends signed-out visitors of `/home` to the sign-in page.
+- `lib/auth/`: the Neon Auth server and browser clients. `lib/server-env.ts`: where to reach the database (Hyperdrive on Cloudflare, `DATABASE_URL` locally).
+
+Move pages into the `(site)` and `(app)` route groups when there are more of them.
 
 ## Adding a package
 

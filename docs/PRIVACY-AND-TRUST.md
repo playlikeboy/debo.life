@@ -61,6 +61,8 @@ Say these plainly on the privacy page. Do not hide them.
 - To answer a question, the relevant pieces of the person's data are sent to an AI provider. With "your own key", that is the provider the person chose.
 - Speech-to-text and text-to-speech providers process audio.
 - If Composio is used, it holds the tokens for connected apps.
+- Neon runs our database, sign-in, file storage and AI gateway, so it stores and processes people's data. Neon says the AI gateway's models are hosted by Databricks.
+- Cloudflare hosts the web app, so every request passes through it.
 - Debo is **not** end-to-end encrypted: the server must read the data to search it. Never claim otherwise.
 - Staff access: the goal is none in normal work, and a recorded, rare exception for support with the person's consent. Build the tooling to make that true before saying it.
 

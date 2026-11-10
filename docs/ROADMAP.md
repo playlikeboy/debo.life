@@ -13,10 +13,10 @@ Build in this order. Do not start a phase until the one before it meets its "don
 The smallest version that is truly useful.
 
 - [ ] `@debo/db`: Postgres, pgvector, Drizzle, first migration (`users`, `sources`, `chunks`, `conversations`, `messages`, `usage`, `activity`)
-- [ ] Sign-in with Better Auth
-- [ ] Delete account, built now, not later
+- [x] Sign-in with Neon Auth (managed Better Auth)
+- [x] Delete account, built now, not later (deletes files, the account, sessions and sign-in cookies)
 - [ ] Journal: write, edit, list
-- [ ] Upload a voice note, a PDF, a photo to R2
+- [ ] Upload a voice note, a PDF, a photo to file storage (Neon Object Storage)
 - [ ] `@debo/ingest` and background jobs: file to text to chunks to embeddings
 - [ ] `@debo/llm`: one door for model calls, usage rows
 - [ ] Ask my life: chat that answers only from the person's sources and shows source chips

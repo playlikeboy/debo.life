@@ -51,17 +51,17 @@ Use these. Do not swap one out without adding an entry to `docs/DECISIONS.md`.
 
 | Job | Use |
 |---|---|
-| Web app | Next.js 15 App Router, React 19, TypeScript, Tailwind CSS 4 |
+| Web app | Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4, on Cloudflare Workers through OpenNext |
 | Workspace | pnpm workspaces, Turborepo |
-| Database | Postgres with pgvector, Drizzle ORM |
-| Auth | Better Auth |
-| File storage | Cloudflare R2 (S3 API) |
+| Database | Neon Postgres with pgvector, Drizzle ORM, node-postgres (`pg`) |
+| Auth | Neon Auth (managed Better Auth), `@neon/auth` |
+| File storage | Neon Object Storage (S3 API) |
 | Background jobs | Inngest |
 | Chat and generated UI | CopilotKit with AG-UI |
 | Voice | LiveKit Agents |
 | Memory | Mem0 first; Graphiti later if needed (see `docs/MEMORY.md`) |
 | Connectors | Composio first (see `docs/CONNECTORS.md`) |
-| Model routing | one gateway behind `@debo/llm` (see `docs/BYOK-AND-PLANS.md`) |
+| Model routing | Neon AI Gateway through the AI SDK, behind `@debo/llm` (see `docs/BYOK-AND-PLANS.md`) |
 | Validation | Zod |
 | Tests | Vitest, Playwright |
 
