@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { askDebo, removeEntry, saveEntry, type AskState, type SaveState } from "@/app/home/actions";
 
@@ -9,10 +10,15 @@ const box = "mt-2 block w-full rounded-[12px] border-2 border-ink bg-paper px-3 
 export function EntryForm() {
   const [state, action, pending] = useActionState<SaveState, FormData>(saveEntry, { ok: false, message: "" });
   const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
 
+  // Ask the server for the fresh list. revalidatePath alone does not
+  // re-render this page on Cloudflare (OpenNext), so refresh explicitly.
   useEffect(() => {
-    if (state.ok) formRef.current?.reset();
-  }, [state]);
+    if (!state.ok) return;
+    formRef.current?.reset();
+    router.refresh();
+  }, [state, router]);
 
   return (
     <form ref={formRef} action={action} className="rounded-[24px] border-2 border-ink bg-paper p-6">
@@ -98,6 +104,7 @@ export function DeleteEntryButton({ id }: { id: string }) {
   const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   if (!confirming) {
     return (
@@ -112,7 +119,13 @@ export function DeleteEntryButton({ id }: { id: string }) {
       <button
         type="button"
         disabled={pending}
-        onClick={() => startTransition(async () => setMessage((await removeEntry(id)).message))}
+        onClick={() =>
+          startTransition(async () => {
+            const result = await removeEntry(id);
+            setMessage(result.message);
+            router.refresh();
+          })
+        }
         className="btn btn-quiet"
       >
         Yes, delete it
