@@ -2,9 +2,9 @@
 # Runs on every push to main, or by hand from the Actions tab.
 # Secrets used (names only; set in GitHub repo settings > Secrets):
 #   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID  - for wrangler
-#   DATABASE_URL_UNPOOLED                         - OpenNext's deploy step needs a
-#                                                   Postgres string to stand in for
-#                                                   the Hyperdrive binding
+#   DATABASE_URL_UNPOOLED                         - database migrations, and OpenNext's
+#                                                   deploy step needs a Postgres string
+#                                                   to stand in for the Hyperdrive binding
 # App secrets (Neon Auth, storage, AI gateway) live in Cloudflare as Worker
 # secrets, not here. See docs/SETUP.md.
 name: Deploy
@@ -42,6 +42,11 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Apply database migrations
+        run: pnpm --filter @debo/db db:migrate
+        env:
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
 
       - name: Build and deploy
         working-directory: apps/web
