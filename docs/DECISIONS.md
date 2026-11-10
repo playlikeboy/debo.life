@@ -73,3 +73,10 @@ Why: no requests to an outside font service, which fits the privacy stance and m
 
 Choice: none. The repo is public with all rights reserved until the owner picks one.
 Why: open source versus closed is a business decision for the owner.
+
+## 10. Landing page is a static export on Cloudflare Workers
+2026-11-10 · decided
+
+Choice: `apps/web` builds with `output: "export"` into `apps/web/out`, served as Worker static assets (`apps/web/wrangler.jsonc`, Worker name `debo-web`).
+Why: the landing page has no server code, so plain files are the simplest, cheapest host, and the domain already lives in Cloudflare.
+Revisit when: sign-in or any server route is added. Static export cannot run those; move to the OpenNext Cloudflare adapter or another Next.js host then.

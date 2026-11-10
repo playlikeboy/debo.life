@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "debo-web",
+  "compatibility_date": "2026-11-01",
+  "routes": [
+    { "pattern": "debo.life", "custom_domain": true },
+    { "pattern": "www.debo.life", "custom_domain": true }
+  ],
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "404-page"
+  }
+}

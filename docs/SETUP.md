@@ -41,7 +41,16 @@ When you add a variable, add its name (never its value) to `.env.example` in the
 
 ## Deploying the landing page
 
-`apps/web` is a standard Next.js app. On any host that supports Next.js, set the project root to `apps/web` and the install command to `pnpm install`. The domain `debo.life` should point to it.
+`apps/web` builds to static files and runs on Cloudflare Workers (see decision 10 in `DECISIONS.md`).
+
+```bash
+pnpm install
+pnpm build
+cd apps/web
+npx wrangler deploy
+```
+
+Wrangler needs `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` in your shell, or run `npx wrangler login` first. The Worker is called `debo-web` and serves `debo.life` and `www.debo.life` as custom domains, set in `apps/web/wrangler.jsonc`.
 
 ## Repo settings
 
