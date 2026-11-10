@@ -42,7 +42,7 @@ export default async function HomePage() {
           <ul className="mt-4 grid gap-4">
             {entries.map((entry) => (
               <EntryItem
-                key={`${entry.id}-${entry.text.length}`}
+                key={entry.id}
                 id={entry.id}
                 text={entry.text}
                 dateLabel={entry.happenedAt.toLocaleDateString("en-GB", {
