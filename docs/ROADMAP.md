@@ -4,7 +4,7 @@ Build in this order. Do not start a phase until the one before it meets its "don
 
 ## What's next (as of 10 November 2026)
 
-Where we are: a person can sign up, write journal entries, ask Debo about them and get answers with source chips, edit and delete entries, read a record of what Debo did, and delete their account. Each person has a daily AI limit. It runs at debo.life and passes the end-to-end test. Phase 1 is not done: voice notes, papers and photos cannot be saved yet.
+Where we are: a person can sign up, write journal entries, ask Debo about them and get answers with source chips, edit and delete entries, read a record of what Debo did, download everything as a zip, and delete their account. Each person has a daily AI limit. It runs at debo.life and passes the end-to-end test. Phase 1 is not done: voice notes, papers and photos cannot be saved yet.
 
 Do these in order. The first four protect people and our bill, so they come before new features.
 
@@ -16,7 +16,7 @@ Do these in order. The first four protect people and our bill, so they come befo
 6. **Uploads: voice notes, papers and photos.** Store the original in Neon Object Storage under `users/<id>/`, turn it into text with `@debo/ingest` in a background job (Inngest), and make it searchable like entries. Choose a speech-to-text provider first.
 7. ~~**Meaning search.**~~ Done: embeddings and pgvector on `chunks`, merged with keyword search (decision 17). When the AI gateway has credits (or another embedding provider is chosen), add embeddings and a pgvector index to `chunks`, and merge the results with keyword search (decision 17).
 8. **Recall test set.** Made-up entries and questions with known answers, run before each release, so search changes can be checked.
-9. **Export everything.** A zip with entries as Markdown and the original files. Then Phase 1 is done and Phase 2 starts.
+9. ~~**Export everything.**~~ Done: "Download everything" on the home page gives a zip (`/api/export`) with each entry as Markdown, `activity.csv` and a README, and writes an "exported" row to the activity record. Still to add: original files once uploads exist, and memories once Mem0 is wired; each is one more section in `apps/web/src/lib/export`.
 
 Housekeeping, not features:
 
@@ -56,7 +56,7 @@ The smallest version that is truly useful.
 - [ ] "What Debo knows" page: list, search, fix, forget
 - [ ] People page
 - [ ] Activity record page
-- [ ] Export everything
+- [x] Export everything (entries and activity record today; files and memories join when they exist)
 - [ ] Daily note (opt-in)
 
 **Done when:** the recall test set passes at a level you would trust with your own journal, and a person can find and remove any single thing Debo knows.

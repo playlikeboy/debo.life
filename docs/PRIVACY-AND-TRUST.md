@@ -25,7 +25,7 @@ Written the way they will appear on the site, once true.
 | No training | Use AI provider settings and terms that exclude training on API data. Check each provider before adding it. List providers on the privacy page. |
 | See everything | The "What Debo knows" page lists every memory with its source. No hidden store. |
 | Fix or forget | Forget deletes the row, its embedding and, for a source, its file, chunks and dependent memories. |
-| Take it with you | Export gives a zip: entries as Markdown, original files, memories as JSON. |
+| Take it with you | Export gives a zip: entries as Markdown, original files, memories as JSON. Built today: entries as Markdown, the activity record as CSV and a README (`/api/export`). Files and memories join the zip when they exist. |
 | Leave | Delete account removes all rows and all files, and asks connected services to drop tokens. Backups expire on a stated schedule. |
 | Asks first | Permission screens before each connector and each outside action. |
 | No secrets | Every read by a connector, the voice agent or an outside AI tool writes to `activity`. |

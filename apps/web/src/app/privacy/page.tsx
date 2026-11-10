@@ -104,14 +104,17 @@ export default function PrivacyPage() {
           items={[
             <>Delete any entry. It is deleted right away.</>,
             <>
+              Download everything from your home page. You get a zip with every entry as a plain text file and your
+              activity record as a spreadsheet. It opens without Debo.
+            </>,
+            <>
               Delete your account from your home page. That deletes your account, every entry, every piece and any
               files, right away.
             </>,
           ]}
         />
         <p className="text-ink-soft">
-          Planned, not built yet: one page that shows everything Debo knows about you, and a way to export all of
-          it.
+          Planned, not built yet: one page that shows everything Debo knows about you.
         </p>
       </Section>
 
