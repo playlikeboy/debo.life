@@ -64,8 +64,8 @@ export function AccountActions() {
             Delete your account for good?
           </h3>
           <p className="mt-2 text-ink-soft">
-            This removes your account, your name, your email and any files you added, right away. It
-            cannot be undone.
+            This removes your account, your name, your email, every journal entry and any files you added,
+            right away. It cannot be undone.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <button type="button" onClick={deleteAccount} disabled={pending} className="btn btn-quiet">
