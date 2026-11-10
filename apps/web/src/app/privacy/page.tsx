@@ -52,7 +52,11 @@ export default function PrivacyPage() {
             <>Your name, email and password. Your password passes through Debo on its way to our sign-in service, which stores only a hashed version. Debo never stores or logs it.</>,
             <>Your journal entries.</>,
             <>Short pieces of each entry, made so Debo can search them.</>,
-            <>A list of what Debo saved, deleted and answered for you (ids and times, not your words).</>,
+            <>
+              Memories: short facts Debo picks out of your entries, like &ldquo;Riya moved to Pune in March&rdquo;. Each
+              one keeps a link to the entry it came from. Mem0 stores these, not our database.
+            </>,
+            <>A list of what Debo saved, deleted, forgot and answered for you (ids and times, not your words).</>,
             <>How many AI tokens your questions used each day (numbers only, never your words), so we can keep costs fair.</>,
           ]}
         />
@@ -62,6 +66,10 @@ export default function PrivacyPage() {
         <p>
           Your account, your entries and any files live with Neon, which runs our database, sign-in and file
           storage. Neon keeps them in the United States (Amazon Web Services, us-east-2).
+        </p>
+        <p>
+          Your memories live with Mem0 (Embedchain, Inc., doing business as Mem0). Mem0 says it stores data with
+          hosting providers in the United States and other countries.
         </p>
         <p>Cloudflare runs the website. Your data travels between you, Cloudflare and Neon over HTTPS.</p>
       </Section>
@@ -86,7 +94,16 @@ export default function PrivacyPage() {
           customers send to train any AI. It may keep your text for up to 30 days, only to spot abuse.
         </p>
         <p className="text-ink-soft">We checked these companies&rsquo; terms on 10 November 2026.</p>
-        <p>We do not sell your data, share it, or show ads against it. We do not train AI on it.</p>
+        <p>
+          When you save or change an entry, its text also goes to Mem0. Mem0 uses AI to pick out the facts worth
+          remembering, and stores them as your memories. Mem0 says it uses AI providers such as OpenAI and Anthropic.
+        </p>
+        <p className="text-ink-soft">
+          Mem0&rsquo;s privacy policy says it trains its AI models on data from its free plan users, and not on data
+          from its paid plan users. We have not yet confirmed which of these covers Debo&rsquo;s Mem0 account. Until
+          we do, assume Mem0 may train on what Debo sends it.
+        </p>
+        <p>We do not sell your data, share it, or show ads against it. We do not train AI on it ourselves.</p>
       </Section>
 
       <Section id="limits" title="Honest limits">
@@ -95,6 +112,7 @@ export default function PrivacyPage() {
             <>Debo is not end-to-end encrypted. Debo&rsquo;s servers have to read your notes to search them.</>,
             <>Our database provider may keep backups for a short time. We will state the exact period before Debo opens fully.</>,
             <>Sign-in emails are sent by Neon&rsquo;s shared mail service for now.</>,
+            <>Mem0&rsquo;s privacy policy does not say how long it keeps data after it is deleted.</>,
           ]}
         />
       </Section>
@@ -102,20 +120,18 @@ export default function PrivacyPage() {
       <Section id="control" title="What you control today">
         <List
           items={[
-            <>Delete any entry. It is deleted right away.</>,
+            <>Delete any entry. It is deleted right away, and the memories from it a few seconds later.</>,
+            <>See every memory on the &ldquo;What Debo knows&rdquo; page, with the entry it came from. Fix it or forget it there.</>,
             <>
               Download everything from your home page. You get a zip with every entry as a plain text file and your
               activity record as a spreadsheet. It opens without Debo.
             </>,
             <>
-              Delete your account from your home page. That deletes your account, every entry, every piece and any
-              files, right away.
+              Delete your account from your home page. That deletes your memories in Mem0, your account, every entry,
+              every piece and any files, right away.
             </>,
           ]}
         />
-        <p className="text-ink-soft">
-          Planned, not built yet: one page that shows everything Debo knows about you.
-        </p>
       </Section>
 
       <Section id="cookies" title="Cookies">

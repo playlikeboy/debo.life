@@ -4,14 +4,15 @@ Build in this order. Do not start a phase until the one before it meets its "don
 
 ## What's next (as of 10 November 2026)
 
-Where we are: a person can sign up, write journal entries, ask Debo about them and get answers with source chips, edit and delete entries, read a record of what Debo did, download everything as a zip, and delete their account. Each person has a daily AI limit. It runs at debo.life and passes the end-to-end test. Phase 1 is not done: voice notes, papers and photos cannot be saved yet.
+Where we are: a person can sign up, write journal entries, ask Debo about them and get answers with source chips, edit and delete entries, read a record of what Debo did, download everything as a zip, see, fix and forget the memories Debo picked out of their entries ("What Debo knows", through the hosted Mem0 Platform), and delete their account. Each person has a daily AI limit. It runs at debo.life and passes the end-to-end test. Phase 1 is not done: voice notes, papers and photos cannot be saved yet.
 
 Do these in order. The first four protect people and our bill, so they come before new features.
 
 1. ~~**Cap spending on our AI key.**~~ Done: `usage` table, a row per model call with token counts only, and a per-person daily limit (`DAILY_TOKEN_LIMIT`, default 40,000 tokens, resets at midnight UTC). Anyone can sign up, and every question costs us money on the Anthropic key. Add the `usage` table, write a row per model call (never the text), and stop asking for the day at a per-person limit with a plain message. See `BYOK-AND-PLANS.md`, "Limits".
 2. ~~**Keep the activity record.**~~ Done: `activity` table (ids and times only) and the "What Debo did" page at `/home/activity`. Promise 7, "Nothing happens in secret", is not true yet. Add the `activity` table and write a row when Debo saves, deletes or answers (ids only).
 3. **Use our own mail sender for sign-in emails.** Neon's shared sender is for development only. Set up custom SMTP, then decide whether to require email verification at sign-up.
-4. ~~**Publish a privacy page.**~~ Done: `/privacy`. Done 10 November 2026: Anthropic's, Neon's and Databricks' terms on training and keeping data were checked and the privacy page says what they say (decision 16). List every company that touches data today: Neon (database, sign-in, files, AI gateway), Databricks (hosts the gateway's models), Cloudflare (hosting) and Anthropic (answers).
+4. ~~**Publish a privacy page.**~~ Done: `/privacy`. Done 10 November 2026: Anthropic's, Neon's and Databricks' terms on training and keeping data were checked and the privacy page says what they say (decision 16). List every company that touches data today: Neon (database, sign-in, files, AI gateway), Databricks (hosts the gateway's models), Cloudflare (hosting), Anthropic (answers) and Mem0 (memories).
+4b. **Confirm Mem0 does not train on people's entries.** Mem0's privacy policy says it trains on free plan data, not paid plan data. Check which plan Debo's account is on, and get Mem0's Data Processing Addendum, before inviting real people (decision 20). Mem0's model calls are not in our `usage` table, so watch the Mem0 bill too.
 5. ~~**Journal: edit an entry.**~~ Done: "Edit this entry" replaces the text and its chunks in one transaction. Saving an edit must replace its chunks too.
 6. **Uploads: voice notes, papers and photos.** Store the original in Neon Object Storage under `users/<id>/`, turn it into text with `@debo/ingest` in a background job (Inngest), and make it searchable like entries. Choose a speech-to-text provider first.
 7. ~~**Meaning search.**~~ Done: embeddings and pgvector on `chunks`, merged with keyword search (decision 17). When the AI gateway has credits (or another embedding provider is chosen), add embeddings and a pgvector index to `chunks`, and merge the results with keyword search (decision 17).
@@ -52,8 +53,10 @@ The smallest version that is truly useful.
 
 ## Phase 2: memory you can see
 
-- [ ] `@debo/memory` with Mem0 behind it, every memory linked to a source
-- [ ] "What Debo knows" page: list, search, fix, forget
+- [x] `@debo/memory` with Mem0 behind it, every memory linked to a source (hosted Mem0 Platform, decision 20)
+- [x] "What Debo knows" page: list, fix, forget
+- [ ] "What Debo knows" page: search
+- [ ] Use memories in answers, not only entry pieces
 - [ ] People page
 - [ ] Activity record page
 - [x] Export everything (entries and activity record today; files and memories join when they exist)

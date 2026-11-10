@@ -47,6 +47,7 @@ Checked 2026-11-10: the LICENSE file in CopilotKit/OpenDots is MIT. CopilotKit 1
 Choice: Mem0 behind `@debo/memory`.
 Why: fastest path to per-person memory. Graphiti handles time and relationships better but needs a graph database.
 Check before relying on it: Mem0 must let each memory carry our source id and must truly delete on request. If not, do not use it.
+Checked 2026-11-10 on the hosted platform (decision 20): each memory carries `source_id`, and deleted memories no longer come back from the API. How long Mem0 keeps deleted data in backups is not stated.
 
 ## 6. Composio first for connectors
 2026-11-10 · to verify
@@ -143,7 +144,7 @@ Check before relying on it: questions that use different words from the entry ("
 Done 2026-11-10: the gateway has credits. `chunks.embedding vector(1024)` with an HNSW cosine index; `qwen3-embedding-0-6b` through the gateway; keyword and meaning results merged with reciprocal rank fusion; meaning hits beyond cosine distance 0.60 dropped. Entries are embedded after save (Next `after()`); questions are embedded when asked, falling back to keyword search if that fails.
 
 ## 18. Mem0 is built, but not in the web app yet
-2026-11-10 · decided
+2026-11-10 · replaced by 20
 
 Choice: `@debo/memory` wraps self-hosted Mem0 (`mem0ai/oss` 3.3.1): Anthropic `claude-haiku-5-5` as its model, the gateway's `qwen3-embedding-0-6b` as embedder, pgvector in our Neon Postgres (tables `debo_memories`, `debo_memories_entities`, `memory_migrations`, made by Mem0, not Drizzle). Every memory carries `source_id`; deletes are real (tested on the `dev-ai` branch).
 Why not in the web app: Mem0 imports the native module `better-sqlite3` at load time, which a Cloudflare Worker cannot load, and bundling it pulls in every optional provider (AWS, Azure and more). Rather than risk the live site, memories wait for a Node runtime.
@@ -157,3 +158,16 @@ Check before relying on it: pick where memory work runs (a Neon Function, or a N
 Choice: `/home/chat` uses CopilotKit 1.85 (v2 API) with a custom AG-UI agent that calls `answerQuestion` in `apps/web/src/lib/ask.ts`. CopilotKit never calls a model itself. Source chips are a rendered `show_sources` tool call.
 Why: decision 4 chose CopilotKit and AG-UI. Open Intelligent UI is a separate app template (Python backend plus its own frontend), so we use CopilotKit directly instead of hosting it.
 Check before relying on it: the chat sends only the latest question (no follow-up context yet); CopilotKit's runtime is large, so watch the Worker bundle size; CopilotKit telemetry is switched off.
+
+## 20. Hosted Mem0 Platform, not self-hosted Mem0
+2026-11-10 · decided (replaces 18)
+
+Choice: `@debo/memory` uses the hosted Mem0 Platform (`MemoryClient` from `mem0ai` 3.3.1, main entry, API key `MEM0_API_KEY`) instead of self-hosted `mem0ai/oss`. The oss path and its direct dependencies (`pg`, `@anthropic-ai/sdk`) are removed from the package. The web app now extracts memories after an entry is saved or edited, forgets them when the entry is deleted, deletes all of a person's memories on account delete, and shows them on `/home/memories` ("What Debo knows"). With no `MEM0_API_KEY`, memory is off and nothing else changes.
+Why: self-hosted Mem0 imports `better-sqlite3`, a native module a Cloudflare Worker cannot load (decision 18). The hosted client makes its calls with `fetch` and does not import it. Checked in a local workerd (`wrangler dev`, `nodejs_compat`): add, list, fix, forget and delete all work, with 0 telemetry calls. Mem0 runs the extraction model and the store, so there is no Node runtime for us to run.
+How it keeps the rules: every memory has `metadata.source_id` and `run_id` = the entry id; memories without a source are never shown; every call passes the person's id, and fix or forget first reads the memory and refuses if it is someone else's; Mem0's v3 add only adds, never rewrites, so a fixed memory survives a re-read of its entry.
+Trade-off: entry text and the memories made from it now go to, and are stored by, Mem0 (Embedchain, Inc., doing business as Mem0), a US company. Mem0's privacy policy (updated 22 August 2026) says it trains its AI models on data from free plan users and not on paid plan users, names OpenAI and Anthropic among its AI providers, stores data in the United States and other countries, and does not state how long it keeps deleted data. Mem0's model calls run on Mem0's side and are not counted in our `usage` table or the daily limit.
+Check before relying on it:
+- Which Mem0 plan Debo's account is on. If it is the free plan, Mem0 may train on people's entries: move to a paid plan, or get a Data Processing Addendum that rules training out, before inviting real people. The privacy page says this is not yet confirmed.
+- Ask Mem0 for its DPA, sub-processor list and how long deleted data stays in backups.
+- The full OpenNext build for the Worker could not run on the dev machine (old glibc). CI builds it; check the Worker bundle size and a real deploy before relying on it.
+- Mem0 extraction costs are outside our daily limit. Watch the Mem0 bill.

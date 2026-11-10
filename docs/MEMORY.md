@@ -1,6 +1,17 @@
 # Memory
 
-Status: mostly plan. Built so far: meaning and keyword search over journal entries, merged (steps 1 to 3), and answers only from those pieces, with source ids, or "I don't have anything about that yet" (steps 4 to 6). Mem0 is built in `@debo/memory` but not used by the web app yet (decision 18). This is the heart of Debo. If recall is poor, nothing else matters.
+Status: partly built. Built so far: meaning and keyword search over journal entries, merged (steps 1 to 3), and answers only from those pieces, with source ids, or "I don't have anything about that yet" (steps 4 to 6). Memories come from the hosted Mem0 Platform through `@debo/memory` (decision 20), and the "What Debo knows" page shows them. Answers do not use memories yet; they still come from entry pieces only. This is the heart of Debo. If recall is poor, nothing else matters.
+
+## How memory works today
+
+- After an entry is saved or edited (Next `after()`, in `apps/web/src/lib/after-entry.ts`), Debo forgets the memories from that entry's old text, except ones the person fixed, then sends the current text to Mem0. Mem0 picks out the lasting facts in the background, usually within seconds.
+- Each memory carries `metadata.source_id` (the entry id), and each entry is its own Mem0 run (`run_id`). A memory without a source is never shown.
+- When an entry is deleted, every memory from it is forgotten. When an account is deleted, every memory for that person is deleted in Mem0 before the account row goes.
+- `/home/memories` ("What Debo knows") lists memories, newest first, each with a source chip to its entry, "Fix this" and "Forget this". Fixing marks `edited_by_user`. Mem0's v3 add only adds and never rewrites, so a fixed memory survives a re-read; a re-read may add a new memory beside it. Fix and forget write `fixed-memory` and `forgot-memory` rows to the activity record (entry id only).
+- With no `MEM0_API_KEY`, memory is off: nothing is sent to Mem0 and the page says so. Any Mem0 failure is logged with ids only and never blocks saving.
+- Entry text and memories are stored by Mem0, a company outside Debo. See the privacy page and decision 20.
+- Mem0 runs its own model calls. They are **not** counted in our `usage` table or the daily limit.
+- Not built yet: search on the memories page, using memories in answers, dates on memories (rule 4), and the recall test set.
 
 ## Two kinds of thing Debo keeps
 
@@ -40,11 +51,11 @@ For each question:
 
 ## Library plan
 
-**Start: Mem0 (open source, self-hosted).** It pulls facts out of text and finds them again, and it is the fastest way to get per-person memory working. Wrap it inside `@debo/memory` so nothing else imports it.
+**Start: Mem0, hosted Mem0 Platform.** It pulls facts out of text and finds them again, and it is the fastest way to get per-person memory working. It is wrapped inside `@debo/memory` so nothing else imports it. Self-hosted Mem0 was tried first, but it cannot load in a Cloudflare Worker (decisions 18 and 20).
 
 **Maybe later: Graphiti.** It keeps a graph of facts with dates, which suits life data ("who was I working with last spring?"). It needs a separate graph database, which is more to run. Move only if real questions fail because Mem0 loses track of time or relationships.
 
-**Either way:** sources, chunks and the search above live in our own Postgres. If the memory library is swapped, the sources stay.
+**Either way:** sources, chunks and the search above live in our own Postgres. If the memory library is swapped, the sources stay. Memories live in Mem0 only; there is no `memories` table of our own.
 
 Before installing, check: the current Mem0 docs, whether it can use our Postgres with pgvector as its store, how it handles deletes, and whether a memory can carry our `source_id`. Write the answers in [`DECISIONS.md`](./DECISIONS.md). If a memory cannot carry a source link, do not use that library.
 
@@ -86,4 +97,4 @@ Use made-up data only. Never real user data in tests.
 
 ## The "What Debo knows" page
 
-Lists memories, newest first, with search. Each one shows the sentence, the source chip, and "Fix this" and "Forget this". This page is how people come to trust Debo. Build it in phase 2, not as an afterthought.
+Lists memories, newest first, with search. Each one shows the sentence, the source chip, and "Fix this" and "Forget this". This page is how people come to trust Debo. Built at `/home/memories`, except search.

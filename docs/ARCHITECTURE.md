@@ -101,7 +101,7 @@ More in [`PRIVACY-AND-TRUST.md`](./PRIVACY-AND-TRUST.md).
 | Chat UI | CopilotKit + AG-UI | Chat plus answers drawn as real components. | Not yet |
 | Starting point | CopilotKit/OpenDots | MIT app template with a workspace and voice calls. Study it; check the licence before copying. | Not yet |
 | Voice | LiveKit Agents | Handles live audio, turn-taking and interruptions. | Not yet |
-| Memory | Mem0, then maybe Graphiti | See [`MEMORY.md`](./MEMORY.md). | Not yet |
+| Memory | Mem0 (hosted platform), then maybe Graphiti | See [`MEMORY.md`](./MEMORY.md) and decision 20. | In use |
 | Connectors | Composio, maybe Nango later | See [`CONNECTORS.md`](./CONNECTORS.md). | Not yet |
 | Speech-to-text | Decide in phase 1 | Compare cost and accuracy on real voice notes, including Hindi-English mix. | Not yet |
 | Document parsing | Decide in phase 1 | Try an open-source parser first. | Not yet |

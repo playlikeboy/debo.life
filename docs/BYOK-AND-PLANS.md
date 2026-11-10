@@ -38,6 +38,8 @@ Every model call in the codebase goes through this package. It:
 4. Writes a `usage` row (who, what kind, how many units, whose key). Never the content.
 5. Returns a clear, plain error if the key is wrong, out of credit or over a limit.
 
+Exception today: Mem0 (memories, decision 20) runs its own model calls on its own servers. They do not go through `@debo/llm`, do not write `usage` rows and do not count toward the daily limit. They cost us on the Mem0 bill.
+
 For routing to different AI providers behind one interface, use an existing gateway library or service rather than writing provider code by hand. Candidates: LiteLLM (self-hosted proxy), OpenRouter (hosted), or the provider layer of the Vercel AI SDK. Pick one in phase 1, check its current docs, and record it in [`DECISIONS.md`](./DECISIONS.md).
 
 ## Handling a person's own key

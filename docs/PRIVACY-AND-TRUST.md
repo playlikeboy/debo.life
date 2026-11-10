@@ -23,7 +23,7 @@ Written the way they will appear on the site, once true.
 |---|---|
 | Yours | No third-party analytics or ad scripts on signed-in pages. No user content in any analytics event. |
 | No training | Use AI provider settings and terms that exclude training on API data. Check each provider before adding it. List providers on the privacy page. |
-| See everything | The "What Debo knows" page lists every memory with its source. No hidden store. |
+| See everything | The "What Debo knows" page (`/home/memories`) lists every memory with its source. No hidden store. Memories live only in Mem0. |
 | Fix or forget | Forget deletes the row, its embedding and, for a source, its file, chunks and dependent memories. |
 | Take it with you | Export gives a zip: entries as Markdown, original files, memories as JSON. Built today: entries as Markdown, the activity record as CSV and a README (`/api/export`). Files and memories join the zip when they exist. |
 | Leave | Delete account removes all rows and all files, and asks connected services to drop tokens. Backups expire on a stated schedule. |
@@ -62,6 +62,8 @@ Say these plainly on the privacy page. Do not hide them.
 - Entries and questions go to the Neon AI Gateway (models run by Databricks) to be turned into embeddings for meaning search.
 - Today that provider is Anthropic: when you ask Debo something, the pieces of your entries that match your question go to Anthropic so it can write the answer. If Anthropic fails, the same pieces go to the Neon AI Gateway instead.
 - Speech-to-text and text-to-speech providers process audio.
+- When an entry is saved or edited, its text goes to Mem0 (Embedchain, Inc., doing business as Mem0), which picks out memories with its own AI providers (it names OpenAI and Anthropic) and stores them in the United States and other countries. Mem0's privacy policy says it trains on free plan data and not on paid plan data; which plan Debo's account is on is not confirmed yet (decision 20). Its policy does not say how long deleted data is kept.
+- Mem0's model calls are not counted in our `usage` table or the daily limit.
 - If Composio is used, it holds the tokens for connected apps.
 - Neon runs our database, sign-in, file storage and AI gateway, so it stores and processes people's data. Neon says the AI gateway's models are hosted by Databricks.
 - What the AI providers say about training and keeping data, checked 10 November 2026 (quotes and links in decision 16 of [`DECISIONS.md`](./DECISIONS.md)):

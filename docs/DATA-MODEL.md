@@ -64,7 +64,7 @@ One lasting fact Debo knows. Shown on the "What Debo knows" page.
 | embedding | vector | |
 | created_at | timestamptz | |
 
-If Mem0 stores memories itself, this table mirrors what the person sees and stays the record for source links and edits. Decide in phase 2 and note it in `DECISIONS.md`.
+Not built as a table. Decided in phase 2 (decision 20): memories live only in the hosted Mem0 Platform. `source_id` and `edited_by_user` are Mem0 metadata on each memory; `true_from`, `true_until` and our own `embedding` do not exist yet.
 
 ### people
 People the person mentions.

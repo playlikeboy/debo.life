@@ -53,8 +53,8 @@ Status key: **Built**, **Next** (current phase), **Later**.
 
 | Feature | What the person gets | Status |
 |---|---|---|
-| What Debo knows | A page listing every memory, with its source. | Later |
-| Fix or forget | Correct a memory or remove it. | Later |
+| What Debo knows | A page listing every memory, with its source. | Built (`/home/memories`, no search yet) |
+| Fix or forget | Correct a memory or remove it. | Built |
 | Activity record | A list of everything Debo read and did. | Later |
 | Export | Download everything in open formats. | Later |
 | Delete account | Remove everything for good. | Next (built with sign-up) |
