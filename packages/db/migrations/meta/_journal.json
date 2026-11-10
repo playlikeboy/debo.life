@@ -8,6 +8,13 @@
       "when": 1794296457900,
       "tag": "0000_journal",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794306306583,
+      "tag": "0001_usage_activity",
+      "breakpoints": true
     }
   ]
 }

@@ -35,6 +35,45 @@ export const sources = pgTable(
   (t) => [index("sources_user_happened_idx").on(t.userId, t.happenedAt)],
 );
 
+/**
+ * One row per model call, for daily limits and costs.
+ * Numbers only: never the question, the answer or any note text.
+ */
+export const usage = pgTable(
+  "usage",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<"chat">().notNull(),
+    provider: text("provider").$type<"anthropic" | "neon">().notNull(),
+    keyOwner: text("key_owner").$type<"debo" | "user">().notNull(),
+    units: integer("units").notNull(), // input + output tokens
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("usage_user_created_idx").on(t.userId, t.createdAt)],
+);
+
+/**
+ * The record a person can read: what Debo saved, changed, deleted and answered.
+ * Ids and times only, never content. Promise 7: nothing happens in secret.
+ */
+export const activity = pgTable(
+  "activity",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    actor: text("actor").$type<"you" | "debo">().notNull(),
+    action: text("action").$type<"saved" | "edited" | "deleted" | "answered" | "did-not-know">().notNull(),
+    sourceIds: uuid("source_ids").array().notNull().default(sql`'{}'::uuid[]`),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("activity_user_created_idx").on(t.userId, t.createdAt)],
+);
+
 /** Pieces of a source, for search. Embeddings come when an embedding model is available. */
 export const chunks = pgTable(
   "chunks",

@@ -11,9 +11,19 @@ export {
   NewEntry,
   searchPieces,
   splitIntoChunks,
+  updateEntry,
   type Entry,
   type FoundPiece,
 } from "./journal";
+export {
+  listActivity,
+  recordActivity,
+  recordUsage,
+  tokensUsedToday,
+  type ActivityAction,
+  type ActivityItem,
+  type UsageRow,
+} from "./records";
 
 /**
  * Delete a person's account for good.

@@ -59,6 +59,34 @@ export async function listEntries(connectionString: string, userId: string, limi
   );
 }
 
+/**
+ * Replace an entry's text and rebuild its pieces in one transaction, so
+ * search never sees the old text. Returns false if it is not this person's.
+ */
+export async function updateEntry(
+  connectionString: string,
+  userId: string,
+  sourceId: string,
+  input: unknown,
+): Promise<boolean> {
+  if (!z.string().uuid().safeParse(sourceId).success) return false;
+  const { text } = NewEntry.parse(input);
+  return withDb(connectionString, (db) =>
+    db.transaction(async (tx) => {
+      const updated = await tx
+        .update(sources)
+        .set({ text, title: titleFrom(text), updatedAt: new Date() })
+        .where(and(eq(sources.id, sourceId), eq(sources.userId, userId)))
+        .returning({ id: sources.id });
+      if (updated.length === 0) return false;
+      await tx.delete(chunks).where(and(eq(chunks.sourceId, sourceId), eq(chunks.userId, userId)));
+      const pieces = splitIntoChunks(text);
+      await tx.insert(chunks).values(pieces.map((piece, position) => ({ userId, sourceId, position, text: piece })));
+      return true;
+    }),
+  );
+}
+
 /** Delete one entry and its pieces. Returns whether it existed for this person. */
 export async function deleteEntry(connectionString: string, userId: string, sourceId: string): Promise<boolean> {
   if (!z.string().uuid().safeParse(sourceId).success) return false;
