@@ -57,7 +57,10 @@ export default async function HomePage() {
         )}
       </section>
 
-      <p className="mt-10">
+      <p className="mt-10 flex flex-wrap gap-x-6 gap-y-2">
+        <a href="/home/chat" className="font-semibold underline underline-offset-4">
+          Chat with Debo
+        </a>
         <a href="/home/activity" className="font-semibold underline underline-offset-4">
           See everything Debo did for you
         </a>
