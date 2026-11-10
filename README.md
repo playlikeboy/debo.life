@@ -63,6 +63,7 @@ packages/
   connectors/    Connect other apps (planned)
   llm/           Model calls, keys and usage (planned)
   ui/            Shared components (planned)
+  recall/        Recall test set: made-up entries and questions
 docs/            The plan
 ```
 

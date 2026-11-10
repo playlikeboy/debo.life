@@ -19,7 +19,20 @@ pnpm dev
 - Follow [`DESIGN.md`](./DESIGN.md) for anything visible and [`docs/WRITING.md`](./docs/WRITING.md) for any text.
 - If you change how something works, update its doc in the same pull request.
 - Run `pnpm build` and `pnpm typecheck` before you open it.
+- If you change search, chunking or embeddings, run the recall test set on a non-production branch and put its numbers in the pull request (see below).
 - Never include real personal data, in code, tests, screenshots or issues. Use made-up data.
+
+## Before each release
+
+1. `pnpm typecheck` and `pnpm build` pass.
+2. The recall test set passes on the `dev-ai` branch, never production:
+
+   ```bash
+   export RECALL_DATABASE_URL="$(neon connection-string dev-ai --project-id sweet-dream-71477162)"
+   pnpm --filter @debo/recall recall
+   ```
+
+   See [`docs/MEMORY.md`](./docs/MEMORY.md), "Testing recall", for what the numbers mean.
 
 ## Commit messages
 

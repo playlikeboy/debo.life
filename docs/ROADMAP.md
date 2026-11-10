@@ -15,7 +15,7 @@ Do these in order. The first four protect people and our bill, so they come befo
 5. ~~**Journal: edit an entry.**~~ Done: "Edit this entry" replaces the text and its chunks in one transaction. Saving an edit must replace its chunks too.
 6. **Uploads: voice notes, papers and photos.** Store the original in Neon Object Storage under `users/<id>/`, turn it into text with `@debo/ingest` in a background job (Inngest), and make it searchable like entries. Choose a speech-to-text provider first.
 7. ~~**Meaning search.**~~ Done: embeddings and pgvector on `chunks`, merged with keyword search (decision 17). When the AI gateway has credits (or another embedding provider is chosen), add embeddings and a pgvector index to `chunks`, and merge the results with keyword search (decision 17).
-8. **Recall test set.** Made-up entries and questions with known answers, run before each release, so search changes can be checked.
+8. ~~**Recall test set.**~~ Done: `@debo/recall`, 21 made-up entries and 26 questions, run with `pnpm --filter @debo/recall recall` before each release (see `MEMORY.md`, "Testing recall"). Made-up entries and questions with known answers, run before each release, so search changes can be checked.
 9. ~~**Export everything.**~~ Done: "Download everything" on the home page gives a zip (`/api/export`) with each entry as Markdown, `activity.csv` and a README, and writes an "exported" row to the activity record. Still to add: original files once uploads exist, and memories once Mem0 is wired; each is one more section in `apps/web/src/lib/export`.
 
 Housekeeping, not features:
@@ -46,7 +46,7 @@ The smallest version that is truly useful.
 - [x] `@debo/llm`: usage rows and a daily limit per person
 - [x] Ask my life: answers only from the person's entries and shows source chips (keyword search for now)
 - [x] "I don't have anything about that yet" when nothing is found
-- [ ] Recall test set with made-up data
+- [x] Recall test set with made-up data
 
 **Done when:** a new person can sign up, save three things, ask a question, get a correct answer with the right source, and delete their account, with no help.
 

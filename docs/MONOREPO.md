@@ -20,6 +20,7 @@ debo.life/
     connectors/     @debo/connectors  Wrapper around the connector provider
     llm/            @debo/llm       Model calls, key choice, usage counting
     ui/             @debo/ui        Shared components and tokens
+    recall/         @debo/recall    Recall test set (tooling, never imported by apps)
 ```
 
 Planned folders hold only a README today. A folder becomes a real package when it gets a `package.json`.
@@ -32,6 +33,7 @@ apps/*  ->  any package
 @debo/ingest      ->  @debo/db, @debo/llm
 @debo/connectors  ->  @debo/db
 @debo/llm         ->  @debo/db
+@debo/recall      ->  @debo/db, @debo/ingest, @debo/llm
 @debo/ui          ->  nothing in this repo
 @debo/db          ->  nothing in this repo
 ```
@@ -47,6 +49,7 @@ Packages never import from `apps/`. No circles.
 | `@debo/connectors` | Call the connector provider |
 | `@debo/ingest` | Parse files and audio |
 | `@debo/memory` | Decide what is worth remembering and find it again |
+| `@debo/recall` | Check search against made-up entries (tooling; nothing imports it) |
 
 This keeps swaps cheap. Changing the memory library touches one package.
 

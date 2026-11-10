@@ -50,7 +50,33 @@ Before installing, check: the current Mem0 docs, whether it can use our Postgres
 
 ## Testing recall
 
-Build a small test set early: about 30 made-up journal entries and voice transcripts, with 50 questions and the right answers and sources. Run it on every change to `@debo/memory`. Track three numbers:
+Built: `@debo/recall` (see its README). 21 made-up journal entries for one made-up person, and 26 questions with the entries that must be found: 9 keyword questions, 12 paraphrases only meaning search can find, and 5 questions the journal cannot answer. It tests search only (`searchPieces`), not the answer model, so it is cheap.
+
+Run it before each release and after any change to search, chunking or embeddings. Never against production; the script refuses.
+
+```bash
+export RECALL_DATABASE_URL="$(neon connection-string dev-ai --project-id sweet-dream-71477162)"
+pnpm --filter @debo/recall recall
+```
+
+It fails (exit 1) if recall@6 drops below 90% or more than one "not in the journal" question is matched by meaning search.
+
+First run, 2026-11-10, on a local Postgres 17 with pgvector 0.8.7 (same migrations, same search code, real `qwen3-embedding-0-6b` embeddings through the gateway; the `dev-ai` branch could not be reached because the Neon CLI was not signed in on that machine):
+
+| | recall@1 | recall@3 | recall@6 |
+|---|---|---|---|
+| Keyword only, all 21 answerable | 33% | 43% | 43% |
+| Keyword + meaning, all 21 answerable | 67% | 90% | 90% |
+| Keyword + meaning, 9 keyword questions | 89% | 100% | 100% |
+| Keyword + meaning, 12 paraphrases | 50% | 83% | 83% |
+
+What it showed:
+
+- Meaning search is doing real work: paraphrases go from 0 of 12 found to 10 of 12.
+- Missed: "What present did I get my sister?" (the entry names Noor, never "sister") and "Do I do any charity work?" (food bank volunteering, nothing within the 0.60 cut-off).
+- "Not in the journal": 2 of 5 found something. "How much did the wedding cost?" matched the boiler entry by the word "cost" (keyword search; the model should then say it does not know). "What did I plant in the vegetable patch?" matched the dog entry by meaning, inside the 0.60 cut-off, so the cut-off is loose for some pairs.
+
+Still to do: run it on `dev-ai` and record those numbers here; add voice transcripts and papers once uploads exist; grow toward 50 questions; score the answers too (did the answer match, was the right source shown, did Debo say it did not know). Track three numbers:
 
 - Did the answer match?
 - Was the right source shown?
