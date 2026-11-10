@@ -45,11 +45,11 @@ const PROMISES = [
 const QUESTIONS = [
   {
     q: "Can I use Debo today?",
-    a: "You can create an account today, but there is not much to do with it yet. Writing, voice notes and asking Debo about your life come next. There is no date for those, and we would rather say that than guess. You can delete your account any time.",
+    a: "Yes, an early version. You can write journal entries and ask Debo about them, and every answer shows which entry it came from. Voice notes, papers and photos come next. You can delete your account any time.",
   },
   {
     q: "Who will be able to read my notes?",
-    a: "To answer you, Debo will send the pieces of your notes that matter to an AI company, and we will tell you which one. Debo's own servers will also need to read your notes to search them, so they will not be locked in a way only you can open. We would rather tell you that now than hide it.",
+    a: "To answer you, Debo sends the pieces of your notes that match your question to an AI company. Today that is Anthropic. Debo's own servers also need to read your notes to search them, so they are not locked in a way only you can open. We would rather tell you that now than hide it.",
   },
   {
     q: "Will Debo give me medical, legal or money advice?",
@@ -188,8 +188,8 @@ export default function Home() {
           <div className="wrap py-16 md:py-24">
             <h2 className="h-section max-w-[20ch]">Seven promises we are building Debo around</h2>
             <p className="mt-5 max-w-[38rem] text-[1.125rem] text-line">
-              Debo is not open yet, so these are not claims about a product you can use today. They are the
-              rules it is being built by, written down so you can hold us to them.
+              Debo is still early, so not all of these are true yet. They are the rules it is being built by,
+              written down so you can hold us to them.
             </p>
             <ul className="mt-10 grid gap-x-12 gap-y-8 md:grid-cols-2">
               {PROMISES.map((promise) => (
@@ -231,7 +231,7 @@ export default function Home() {
             ))}
           </ol>
           <p className="mt-6 text-ink-soft">
-            We are just starting step one. There are no dates yet, and we would rather say that than guess.
+            We are partway through step one: writing and asking work; voice notes, papers and photos are next.
           </p>
         </section>
 
