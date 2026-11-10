@@ -5,7 +5,7 @@ import { useState } from "react";
 import { authClient } from "@/lib/auth/client";
 
 /**
- * Sign out, and delete the account for good.
+ * Download everything, sign out, and delete the account for good.
  * When Debo starts storing entries and files, deleting the account must also
  * remove every row and file the person owns (docs/PRIVACY-AND-TRUST.md).
  */
@@ -47,7 +47,13 @@ export function AccountActions() {
       <h2 id="account-heading" className="text-[1.375rem]">
         Your account
       </h2>
+      <p className="mt-2 text-ink-soft">
+        Get a zip of all your entries and your activity record to keep. It opens without Debo.
+      </p>
       <div className="mt-4 flex flex-wrap gap-3">
+        <a href="/api/export" download className="btn btn-quiet">
+          Download everything
+        </a>
         <button type="button" onClick={signOut} disabled={pending} className="btn btn-quiet">
           Sign out
         </button>
