@@ -1,4 +1,0 @@
-# Cloudflare static asset headers.
-# The share image is exported without a file extension, so name its type here.
-/opengraph-image
-  Content-Type: image/png
