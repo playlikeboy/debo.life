@@ -107,7 +107,15 @@ export function createLlm(env: Record<string, string | undefined>) {
       const known = new Set(pieces.map((p) => p.id));
       const sourceIds = [...new Set(result.output.sourceIds)].filter((id) => known.has(id));
       const found = result.output.found && sourceIds.length > 0 && result.output.answer.trim().length > 0;
-      return { found, answer: found ? result.output.answer.trim() : "", sourceIds: found ? sourceIds : [], provider: result.provider };
+      const tokens =
+        result.usage.totalTokens ?? (result.usage.inputTokens ?? 0) + (result.usage.outputTokens ?? 0);
+      return {
+        found,
+        answer: found ? result.output.answer.trim() : "",
+        sourceIds: found ? sourceIds : [],
+        provider: result.provider,
+        tokens,
+      };
     },
   };
 }
