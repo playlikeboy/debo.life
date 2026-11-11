@@ -1,7 +1,7 @@
 import { getConversation, getSources, listConversations, listEntries, type ChatMessage } from "@debo/db";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { DeboChat } from "@/components/debo-chat";
+import { ChatLoader } from "@/components/chat-loader";
 import { getAuth } from "@/lib/auth/server";
 import type { ChatListItem, Chip, ReplyKind, Turn } from "@/lib/chat";
 import { databaseUrl } from "@/lib/server-env";
@@ -38,7 +38,7 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
         Ask about your entries. Debo only answers from what you wrote, shows which entry each answer came from, and
         says so when it doesn&rsquo;t know.
       </p>
-      <DeboChat
+      <ChatLoader
         key={chatId}
         chatId={chatId}
         isSaved={Boolean(chat)}

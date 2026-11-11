@@ -9,12 +9,25 @@ export type ComposerHandle = { focus: () => void };
  * The question box. Enter sends, Shift and Enter makes a new line. While
  * Debo answers, the send button becomes "Stop answering". The box grows
  * with the text up to about five lines.
+ *
+ * `pinned`: stay at the bottom of the screen while the person scrolls the
+ * thread. Off for an empty chat, so on a phone the box comes after the
+ * questions to try instead of sitting on top of them. On wider screens it
+ * is always pinned.
  */
 export const ChatComposer = forwardRef<
   ComposerHandle,
-  { running: boolean; ready: boolean; onSend: (question: string) => boolean; onStop: () => void }
->(function ChatComposer({ running, ready, onSend, onStop }, ref) {
-  const [value, setValue] = useState("");
+  {
+    running: boolean;
+    ready: boolean;
+    pinned: boolean;
+    /** Text already in the box when it first appears. */
+    initialValue?: string;
+    onSend: (question: string) => boolean;
+    onStop: () => void;
+  }
+>(function ChatComposer({ running, ready, pinned, initialValue, onSend, onStop }, ref) {
+  const [value, setValue] = useState(initialValue ?? "");
   const [hint, setHint] = useState("");
   const box = useRef<HTMLTextAreaElement>(null);
   useImperativeHandle(ref, () => ({ focus: () => box.current?.focus() }), []);
@@ -48,7 +61,7 @@ export const ChatComposer = forwardRef<
 
   return (
     <form
-      className="sticky bottom-0 z-10 -mx-5 border-t border-line bg-sky px-5 pb-4 pt-3 md:mx-0 md:px-0"
+      className={`${pinned ? "sticky" : "md:sticky"} bottom-0 z-10 -mx-5 border-t border-line bg-sky px-5 pb-4 pt-3 md:mx-0 md:px-0`}
       onSubmit={(e) => {
         e.preventDefault();
         send();

@@ -5,31 +5,20 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObje
 import { z } from "zod";
 import { ChatComposer, type ComposerHandle } from "@/components/chat-composer";
 import { ChatHistory } from "@/components/chat-history";
+import { ChatLayout, chatTitle, EmptyState, MissingChatNote, type ChatProps } from "@/components/chat-shell";
 import { ChatTurn } from "@/components/chat-turn";
-import { Debo } from "@/components/debo";
-import { AGENT_ID, NOTICE_TOOL, SOURCES_TOOL, type ChatListItem, type Chip, type ReplyKind, type Turn } from "@/lib/chat";
+import { AGENT_ID, NOTICE_TOOL, SOURCES_TOOL, type Chip, type ReplyKind, type Turn } from "@/lib/chat";
 
 // The chat page, drawn by us on CopilotKit's headless hooks (useAgent,
 // useCopilotKit) over AG-UI. CopilotKit runs the connection and the stream;
 // this file decides how it looks and behaves for the person.
-
-const STARTERS = [
-  "What plans have I made?",
-  "Who did I spend time with lately?",
-  "What did I write about work?",
-  "How have I been feeling?",
-];
+// It is loaded only in the browser (chat-loader.tsx); chat-shell.tsx holds
+// the layout and the first paint, which the server draws.
 
 const CONNECTION_ERROR = "I couldn’t reach Debo just now. Check your internet connection, then try again.";
 
-type Props = {
-  chatId: string;
-  isSaved: boolean;
-  initialTurns: Turn[];
-  initialChats: ChatListItem[];
-  hasEntries: boolean;
-  missingChat: boolean;
-};
+/** `initialDraft`: what the person typed in the question box before CopilotKit loaded. */
+type Props = ChatProps & { initialDraft?: string };
 
 export function DeboChat(props: Props) {
   return (
@@ -39,7 +28,7 @@ export function DeboChat(props: Props) {
   );
 }
 
-function ChatScreen({ chatId, initialTurns, initialChats, hasEntries, missingChat }: Props) {
+function ChatScreen({ chatId, initialTurns, initialChats, hasEntries, missingChat, initialDraft }: Props) {
   const [chats, setChats] = useState(initialChats);
   const [active, setActive] = useState({ id: chatId, turns: initialTurns, missing: missingChat });
   const [announcement, setAnnouncement] = useState("");
@@ -82,32 +71,29 @@ function ChatScreen({ chatId, initialTurns, initialChats, hasEntries, missingCha
   );
 
   return (
-    <div className="mt-8 grid gap-10 lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-12">
-      <div className="min-w-0 lg:order-2">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[1.375rem]">{active.turns.length > 0 || chats.some((c) => c.id === active.id) ? "This chat" : "New chat"}</h2>
-          <button type="button" className="btn btn-quiet" onClick={startNewChat}>
-            Start a new chat
-          </button>
-        </div>
+    <ChatLayout
+      title={chatTitle(active.turns, chats, active.id)}
+      newChat={
+        <button type="button" className="btn btn-quiet" onClick={startNewChat}>
+          Start a new chat
+        </button>
+      }
+      thread={
         <ChatThread
           key={active.id}
           chatId={active.id}
           initialTurns={active.turns}
           hasEntries={hasEntries}
           missingChat={active.missing}
+          initialDraft={active.id === chatId ? initialDraft : undefined}
           onSaved={onSaved}
           announce={announce}
           composer={composer}
         />
-      </div>
-      <aside className="lg:order-1">
-        <ChatHistory chats={chats} activeId={active.id} onDeleted={onDeleted} />
-      </aside>
-      <p role="status" aria-live="polite" className="sr-only">
-        {announcement}
-      </p>
-    </div>
+      }
+      history={<ChatHistory chats={chats} activeId={active.id} onDeleted={onDeleted} />}
+      announcement={announcement}
+    />
   );
 }
 
@@ -116,6 +102,7 @@ function ChatThread({
   initialTurns,
   hasEntries,
   missingChat,
+  initialDraft,
   onSaved,
   announce,
   composer,
@@ -124,6 +111,7 @@ function ChatThread({
   initialTurns: Turn[];
   hasEntries: boolean;
   missingChat: boolean;
+  initialDraft?: string;
   onSaved: (id: string, question: string) => void;
   announce: (text: string) => void;
   composer: RefObject<ComposerHandle | null>;
@@ -219,11 +207,7 @@ function ChatThread({
 
   return (
     <div ref={thread} className="mt-4">
-      {missingChat && (
-        <p className="mb-4 rounded-[12px] border border-line bg-paper p-4">
-          That chat isn&rsquo;t here any more. It may have been deleted. You can start again below.
-        </p>
-      )}
+      {missingChat && <MissingChatNote />}
 
       {turns.length === 0 ? (
         <EmptyState hasEntries={hasEntries} ready={isReady} onAsk={ask} />
@@ -249,43 +233,15 @@ function ChatThread({
         </div>
       )}
 
-      <ChatComposer ref={composer} running={running} ready={isReady} onSend={ask} onStop={stop} />
-    </div>
-  );
-}
-
-function EmptyState({ hasEntries, ready, onAsk }: { hasEntries: boolean; ready: boolean; onAsk: (q: string) => boolean }) {
-  return (
-    <div className="grid gap-6 py-6 sm:grid-cols-[6rem_1fr] sm:items-start">
-      <Debo className="w-20 sm:w-24" />
-      {hasEntries ? (
-        <div>
-          <p className="text-[1.125rem] font-semibold">What would you like to remember?</p>
-          <p className="mt-2 text-ink-soft">Ask in your own words, or try one of these.</p>
-          <ul className="mt-4 flex flex-wrap gap-2" aria-label="Questions to try">
-            {STARTERS.map((question) => (
-              <li key={question}>
-                <button
-                  type="button"
-                  className="btn btn-quiet min-h-11 px-4 py-1 text-left font-normal"
-                  disabled={!ready}
-                  onClick={() => onAsk(question)}
-                >
-                  {question}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div>
-          <p className="text-[1.125rem] font-semibold">Debo answers from your journal, and it&rsquo;s empty so far.</p>
-          <p className="mt-2 text-ink-soft">Write a few entries about your days, then come back and ask about them.</p>
-          <a href="/home/journal" className="btn btn-primary mt-4">
-            Write your first entry
-          </a>
-        </div>
-      )}
+      <ChatComposer
+        ref={composer}
+        running={running}
+        ready={isReady}
+        pinned={turns.length > 0}
+        initialValue={initialDraft}
+        onSend={ask}
+        onStop={stop}
+      />
     </div>
   );
 }
