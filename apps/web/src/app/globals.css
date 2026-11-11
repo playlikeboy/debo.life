@@ -20,112 +20,149 @@
   --shadow-hard: 4px 4px 0 var(--color-ink);
 }
 
-html {
-  background: var(--color-sky);
-  color: var(--color-ink);
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.6;
-  -webkit-text-size-adjust: 100%;
-}
+/*
+ * Base styles and the shared classes below sit in Tailwind's layers, so a
+ * utility on an element ("hidden", "max-w-[48rem]", "px-4") wins over them.
+ * Unlayered CSS would beat every utility.
+ */
+@layer base {
+  html {
+    background: var(--color-sky);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
 
-body {
-  min-height: 100dvh;
-  overflow-x: hidden;
-}
+  body {
+    min-height: 100dvh;
+    overflow-x: hidden;
+    /* A long word or link breaks onto the next line instead of pushing the page wider. */
+    overflow-wrap: break-word;
+  }
 
-h1,
-h2,
-h3 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  text-wrap: balance;
-}
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
 
-p {
-  text-wrap: pretty;
-}
+  p {
+    text-wrap: pretty;
+  }
 
-:focus-visible {
-  outline: 3px solid var(--color-ink);
-  outline-offset: 3px;
-  border-radius: 6px;
-}
-
-.h-hero {
-  font-size: clamp(2.5rem, 6.4vw, 4.75rem);
-}
-
-.h-section {
-  font-size: clamp(1.75rem, 3.6vw, 2.5rem);
-}
-
-.wrap {
-  width: 100%;
-  max-width: 1120px;
-  margin-inline: auto;
-  padding-inline: 20px;
-}
-
-@media (min-width: 768px) {
-  .wrap {
-    padding-inline: 32px;
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 3px;
+    border-radius: 6px;
   }
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  padding: 10px 24px;
-  border: 2px solid var(--color-ink);
-  border-radius: 999px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: transform 150ms ease, box-shadow 150ms ease;
+@layer components {
+  .h-hero {
+    font-size: clamp(2.5rem, 6.4vw, 4.75rem);
+  }
+
+  .h-section {
+    font-size: clamp(1.75rem, 3.6vw, 2.5rem);
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 1120px;
+    margin-inline: auto;
+    padding-inline: 20px;
+  }
+
+  @media (min-width: 768px) {
+    .wrap {
+      padding-inline: 32px;
+    }
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 10px 24px;
+    border: 2px solid var(--color-ink);
+    border-radius: 999px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+
+  .btn:focus-visible {
+    border-radius: 999px;
+  }
+
+  .btn-primary {
+    background: var(--color-ink);
+    color: var(--color-paper);
+    box-shadow: var(--shadow-hard);
+  }
+
+  .btn-primary:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--color-ink);
+  }
+
+  .btn-quiet {
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  .btn-quiet:hover {
+    background: var(--color-sky);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid var(--color-ink);
+    border-radius: var(--radius-chip);
+    background: var(--color-mint);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  /* Debo blinks now and then (the keyframes are below, outside the layer). */
+  .debo-eye {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: debo-blink 5.5s infinite;
+  }
+
+  /* Questions: a plain + that turns into an x when open. */
+  .faq summary {
+    list-style: none;
+  }
+
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-mark {
+    display: inline-block;
+    font-size: 1.75rem;
+    line-height: 1;
+    transition: transform 180ms ease;
+  }
+
+  .faq[open] .faq-mark {
+    transform: rotate(45deg);
+  }
 }
 
-.btn:focus-visible {
-  border-radius: 999px;
-}
-
-.btn-primary {
-  background: var(--color-ink);
-  color: var(--color-paper);
-  box-shadow: var(--shadow-hard);
-}
-
-.btn-primary:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 var(--color-ink);
-}
-
-.btn-quiet {
-  background: var(--color-paper);
-  color: var(--color-ink);
-}
-
-.btn-quiet:hover {
-  background: var(--color-sky);
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border: 1px solid var(--color-ink);
-  border-radius: var(--radius-chip);
-  background: var(--color-mint);
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-/* Debo blinks now and then. */
 @keyframes debo-blink {
   0%,
   94%,
@@ -135,32 +172,6 @@ p {
   97% {
     transform: scaleY(0.08);
   }
-}
-
-.debo-eye {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: debo-blink 5.5s infinite;
-}
-
-/* Questions: a plain + that turns into an x when open. */
-.faq summary {
-  list-style: none;
-}
-
-.faq summary::-webkit-details-marker {
-  display: none;
-}
-
-.faq-mark {
-  display: inline-block;
-  font-size: 1.75rem;
-  line-height: 1;
-  transition: transform 180ms ease;
-}
-
-.faq[open] .faq-mark {
-  transform: rotate(45deg);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -10,8 +10,18 @@ const links = [
   { href: "/home/activity", label: "What Debo did" },
 ];
 
+/** The header on every /home page, as wide as the page under it (the chat page is wider, for its list of chats). */
+export function HomeHeader() {
+  const wide = usePathname() === "/home/chat";
+  return (
+    <header className={`wrap pt-6 ${wide ? "max-w-[72rem]" : "max-w-[48rem]"}`}>
+      <HomeNav />
+    </header>
+  );
+}
+
 /** The same links on every /home page. The current page is filled in and marked for screen readers. */
-export function HomeNav() {
+function HomeNav() {
   const pathname = usePathname();
   return (
     <nav aria-label="Your Debo">
