@@ -34,7 +34,7 @@ export async function saveEntry(_prev: SaveState, formData: FormData): Promise<S
     console.error("save entry failed", { userId, reason: error instanceof Error ? error.name : "unknown" });
     return { ok: false, message: "I couldn't save that entry. Try again in a moment." };
   }
-  revalidatePath("/home");
+  revalidatePath("/home", "layout");
   return { ok: true, message: "Entry saved." };
 }
 
@@ -51,7 +51,7 @@ export async function editEntry(sourceId: string, text: string): Promise<SaveSta
     console.error("edit entry failed", { userId, reason: error instanceof Error ? error.name : "unknown" });
     return { ok: false, message: "I couldn't save your changes. Try again in a moment." };
   }
-  revalidatePath("/home");
+  revalidatePath("/home", "layout");
   return { ok: true, message: "Changes saved." };
 }
 
@@ -63,7 +63,7 @@ export async function removeEntry(sourceId: string): Promise<SaveState> {
     await logActivity(userId, "you", "deleted", [sourceId]);
     after(() => afterEntryDeleted(userId, sourceId));
   }
-  revalidatePath("/home");
+  revalidatePath("/home", "layout");
   return deleted ? { ok: true, message: "Entry deleted." } : { ok: false, message: "That entry was already gone." };
 }
 

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/lib/auth/client";
+import { clearAllDrafts } from "@/lib/journal-draft";
 
 /**
  * Download everything, sign out, and delete the account for good.
@@ -17,6 +18,7 @@ export function AccountActions() {
 
   async function signOut() {
     setPending(true);
+    clearAllDrafts(); // the next person on this browser must not see an unsaved draft
     await authClient.signOut();
     router.push("/");
     router.refresh();
@@ -38,6 +40,7 @@ export function AccountActions() {
       setMessage("I couldn't reach Debo. Check your connection and try again.");
       return;
     }
+    clearAllDrafts();
     router.push("/");
     router.refresh();
   }

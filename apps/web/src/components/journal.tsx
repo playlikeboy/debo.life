@@ -1,45 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
-import { askDebo, editEntry, removeEntry, saveEntry, type AskState, type SaveState } from "@/app/home/actions";
+import { useActionState, useEffect, useState, useTransition } from "react";
+import { askDebo, editEntry, removeEntry, type AskState } from "@/app/home/actions";
+import { entryHref } from "@/lib/links";
 
 const box = "mt-2 block w-full rounded-[12px] border-2 border-ink bg-paper px-3 py-2";
-
-/** Write a journal entry. */
-export function EntryForm() {
-  const [state, action, pending] = useActionState<SaveState, FormData>(saveEntry, { ok: false, message: "" });
-  const formRef = useRef<HTMLFormElement>(null);
-  const router = useRouter();
-
-  // Ask the server for the fresh list. revalidatePath alone does not
-  // re-render this page on Cloudflare (OpenNext), so refresh explicitly.
-  useEffect(() => {
-    if (!state.ok) return;
-    formRef.current?.reset();
-    router.refresh();
-  }, [state, router]);
-
-  return (
-    <form ref={formRef} action={action} className="rounded-[24px] border-2 border-ink bg-paper p-6">
-      <label htmlFor="entry-text" className="text-[1.375rem] font-display font-bold">
-        Write an entry
-      </label>
-      <p id="entry-hint" className="mt-1 text-ink-soft">
-        A line or a page. Debo keeps it and can answer questions about it later.
-      </p>
-      <textarea id="entry-text" name="text" rows={5} required aria-describedby="entry-hint" className={`${box} min-h-32`} />
-      <div className="mt-4 flex flex-wrap items-center gap-4">
-        <button type="submit" disabled={pending} className="btn btn-quiet">
-          {pending ? "Saving…" : "Save entry"}
-        </button>
-        <p role="status" aria-live="polite" className="font-semibold">
-          {state.message}
-        </p>
-      </div>
-    </form>
-  );
-}
 
 /** Ask a question; answer only from the person's entries, with source chips. */
 export function AskBox() {
@@ -80,7 +46,7 @@ export function AskBox() {
             <ul className="mt-4 flex flex-wrap gap-2" aria-label="Where this answer came from">
               {state.sources.map((source) => (
                 <li key={source.id}>
-                  <a href={`#entry-${source.id}`} className="chip no-underline">
+                  <a href={entryHref(source.id)} className="chip no-underline">
                     {source.label}
                   </a>
                 </li>
@@ -90,7 +56,11 @@ export function AskBox() {
         )}
         {state.status === "unknown" && (
           <p className="rounded-[24px] border-2 border-ink bg-paper p-6 font-semibold">
-            I don&rsquo;t have anything about that yet. Write an entry about it, then ask again.
+            I don&rsquo;t have anything about that yet.{" "}
+            <a href="/home/journal" className="underline underline-offset-4">
+              Write an entry about it
+            </a>
+            , then ask again.
           </p>
         )}
         {(state.status === "error" || state.status === "limit") && (
@@ -125,6 +95,11 @@ export function DeleteEntryButton({ id }: { id: string }) {
           startTransition(async () => {
             const result = await removeEntry(id);
             setMessage(result.message);
+            if (result.ok) {
+              // This entry is about to vanish, so say so where it stays heard.
+              announce(result.message);
+              document.getElementById("entries-heading")?.focus();
+            }
             router.refresh();
           })
         }
@@ -142,8 +117,19 @@ export function DeleteEntryButton({ id }: { id: string }) {
   );
 }
 
-/** One entry: read it, edit it, or delete it. */
-export function EntryItem({ id, text, dateLabel }: { id: string; text: string; dateLabel: string }) {
+/** One entry: read it, edit it, or delete it. Its anchor is what source chips link to. */
+export function EntryItem({
+  id,
+  text,
+  dayLabel,
+  isoDate,
+}: {
+  id: string;
+  text: string;
+  /** "Tuesday 11 November 2026" */
+  dayLabel: string;
+  isoDate: string;
+}) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(text);
   const [message, setMessage] = useState("");
@@ -151,6 +137,7 @@ export function EntryItem({ id, text, dateLabel }: { id: string; text: string; d
   const router = useRouter();
 
   function save() {
+    if (pending) return;
     startTransition(async () => {
       const result = await editEntry(id, draft);
       setMessage(result.message);
@@ -164,9 +151,15 @@ export function EntryItem({ id, text, dateLabel }: { id: string; text: string; d
   return (
     <li
       id={`entry-${id}`}
-      className="scroll-mt-6 rounded-[24px] border border-line bg-paper p-6 target:border-2 target:border-ink"
+      tabIndex={-1}
+      className="group scroll-mt-6 rounded-[24px] border border-line bg-paper p-6 target:border-[3px] target:border-ink"
     >
-      <p className="chip">Journal, {dateLabel}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 id={`entry-date-${id}`} className="font-semibold text-ink-soft">
+          <time dateTime={isoDate}>{dayLabel}</time>
+        </h4>
+        <p className="chip hidden group-target:inline-flex">The entry you opened</p>
+      </div>
       {editing ? (
         <div className="mt-3">
           <label htmlFor={`edit-${id}`} className="font-semibold">
@@ -178,11 +171,20 @@ export function EntryItem({ id, text, dateLabel }: { id: string; text: string; d
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Escape") setEditing(false);
+              if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+                event.preventDefault();
+                save();
+              }
             }}
-            rows={5}
+            rows={8}
+            maxLength={20_000}
             autoFocus
-            className={`${box} min-h-32`}
+            aria-describedby={`edit-keys-${id}`}
+            className={`${box} min-h-48 text-[1.125rem]`}
           />
+          <p id={`edit-keys-${id}`} className="mt-2 text-ink-soft">
+            Press Ctrl + Enter (Cmd + Enter on a Mac) to save, or Escape to stop editing.
+          </p>
           <div className="mt-3 flex flex-wrap gap-3">
             <button type="button" onClick={save} disabled={pending} className="btn btn-quiet">
               {pending ? "Saving…" : "Save changes"}
@@ -201,7 +203,7 @@ export function EntryItem({ id, text, dateLabel }: { id: string; text: string; d
           </div>
         </div>
       ) : (
-        <p className="mt-3 whitespace-pre-wrap">{text}</p>
+        <p className="mt-3 whitespace-pre-wrap text-[1.125rem]">{text}</p>
       )}
       {!editing && (
         <div className="mt-4 flex flex-wrap items-start gap-3">
@@ -224,4 +226,49 @@ export function EntryItem({ id, text, dateLabel }: { id: string; text: string; d
       </p>
     </li>
   );
+}
+
+const STATUS_EVENT = "debo:journal-status";
+
+/** Say something in the journal's page-level status line. */
+function announce(message: string) {
+  window.dispatchEvent(new CustomEvent<string>(STATUS_EVENT, { detail: message }));
+}
+
+/** A status line that outlives single entries, so "Entry deleted." is still heard after the entry is gone. */
+export function JournalStatus() {
+  const [message, setMessage] = useState("");
+  useEffect(() => {
+    const listener = (event: Event) => setMessage((event as CustomEvent<string>).detail);
+    window.addEventListener(STATUS_EVENT, listener);
+    return () => window.removeEventListener(STATUS_EVENT, listener);
+  }, []);
+  return (
+    <p role="status" aria-live="polite" className="mt-4 min-h-6 font-semibold">
+      {message}
+    </p>
+  );
+}
+
+/**
+ * When the page opens at /home/journal#entry-<id> (from a source chip), move
+ * keyboard and screen reader focus to that entry. The CSS :target style
+ * draws the thick border and the "The entry you opened" label.
+ */
+export function EntryTargetFocus() {
+  useEffect(() => {
+    function focusTarget() {
+      const id = decodeURIComponent(window.location.hash.slice(1));
+      if (!id.startsWith("entry-")) return;
+      const element = document.getElementById(id);
+      if (!element) return;
+      element.focus({ preventScroll: true });
+      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      element.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" });
+    }
+    focusTarget();
+    window.addEventListener("hashchange", focusTarget);
+    return () => window.removeEventListener("hashchange", focusTarget);
+  }, []);
+  return null;
 }
