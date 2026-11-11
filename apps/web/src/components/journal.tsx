@@ -94,11 +94,12 @@ export function DeleteEntryButton({ id }: { id: string }) {
         onClick={() =>
           startTransition(async () => {
             const result = await removeEntry(id);
-            setMessage(result.message);
             if (result.ok) {
               // This entry is about to vanish, so say so where it stays heard.
               announce(result.message);
               document.getElementById("entries-heading")?.focus();
+            } else {
+              setMessage(result.message);
             }
             router.refresh();
           })
