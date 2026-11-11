@@ -7,7 +7,7 @@
 // Never log prompts, answers or source text: they hold a person's notes.
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createNeon } from "@neon/ai-sdk-provider";
-import { embedMany, generateText, Output, type LanguageModel } from "ai";
+import { embedMany, generateText, Output, streamText, type LanguageModel } from "ai";
 import { z } from "zod";
 
 const LlmEnv = z.object({
@@ -65,11 +65,37 @@ async function withFallback<T>(
 /** One piece of the person's own data, given to the model as quoted material. */
 export type SourcePiece = { id: string; title: string; date: string; text: string };
 
+// Order matters: the model writes `found` and `sourceIds` before `answer`,
+// so the answer can be streamed only once its sources are known.
 const Answer = z.object({
   found: z.boolean().describe("true only if the pieces actually answer the question"),
+  sourceIds: z.array(z.string()).describe("Ids of the pieces the answer uses. Write these before the answer."),
   answer: z.string().describe("A short, plain answer that uses only the pieces. Empty if found is false."),
-  sourceIds: z.array(z.string()).describe("Ids of the pieces the answer used"),
 });
+
+/**
+ * What streamAnswerFromSources yields, in order:
+ * - `sources` once, just before the first text: the answer uses these piece ids.
+ * - `text` deltas of the answer.
+ * - `done` last, always. `answer` is exactly the text that was yielded.
+ *
+ * No text is ever yielded before `sources`, so an answer is never shown
+ * without its sources.
+ */
+export type AnswerEvent =
+  | { type: "sources"; sourceIds: string[] }
+  | { type: "text"; delta: string }
+  | {
+      type: "done";
+      found: boolean;
+      answer: string;
+      sourceIds: string[];
+      /** True if the call was stopped (signal aborted) before the answer finished. */
+      stopped: boolean;
+      provider: Provider["name"];
+      /** Tokens used. Estimated from text length if the provider did not say (a stopped call). */
+      tokens: number;
+    };
 
 const ANSWER_RULES = `You are Debo, a kind assistant that helps a person remember their own life.
 Rules:
@@ -119,40 +145,149 @@ export function createLlm(env: Record<string, string | undefined>) {
       });
     },
 
-    /**
-     * Answer a question from the person's own pieces only.
-     * Returned source ids are always a subset of the pieces given.
-     */
+    streamAnswerFromSources,
+
+    /** Answer a question from the person's own pieces only, without streaming. */
     async answerFromSources(question: string, pieces: SourcePiece[]) {
-      const quoted = pieces
-        .map((p) => `<piece id="${p.id}" title="${escape(p.title)}" date="${p.date}">\n${escape(p.text)}\n</piece>`)
-        .join("\n");
-
-      const result = await withFallback(providers, async (model) => {
-        const response = await generateText({
-          model,
-          system: ANSWER_RULES,
-          prompt: `<pieces>\n${quoted}\n</pieces>\n\nQuestion: ${question}`,
-          output: Output.object({ schema: Answer }),
-          maxOutputTokens: 600,
-        });
-        return { output: response.output, usage: response.usage };
-      });
-
-      const known = new Set(pieces.map((p) => p.id));
-      const sourceIds = [...new Set(result.output.sourceIds)].filter((id) => known.has(id));
-      const found = result.output.found && sourceIds.length > 0 && result.output.answer.trim().length > 0;
-      const tokens =
-        result.usage.totalTokens ?? (result.usage.inputTokens ?? 0) + (result.usage.outputTokens ?? 0);
-      return {
-        found,
-        answer: found ? result.output.answer.trim() : "",
-        sourceIds: found ? sourceIds : [],
-        provider: result.provider,
-        tokens,
-      };
+      for await (const event of streamAnswerFromSources(question, pieces)) {
+        if (event.type === "done") {
+          const { found, answer, sourceIds, provider, tokens } = event;
+          return { found, answer, sourceIds, provider, tokens };
+        }
+      }
+      throw new Error("The answer stream ended without a result.");
     },
   };
+
+  /**
+   * Answer a question from the person's own pieces only, streaming the text.
+   * Returned source ids are always a subset of the pieces given.
+   *
+   * Tries each provider in order, but falls back only while nothing has been
+   * shown. Once text is out, a failure ends the answer where it is: that text
+   * is already tied to the sources yielded before it.
+   */
+  async function* streamAnswerFromSources(
+    question: string,
+    pieces: SourcePiece[],
+    options: { signal?: AbortSignal } = {},
+  ): AsyncGenerator<AnswerEvent, void> {
+    const known = new Set(pieces.map((p) => p.id));
+    const validIds = (ids: readonly (string | undefined)[] | undefined) => [
+      ...new Set((ids ?? []).filter((id): id is string => typeof id === "string" && known.has(id))),
+    ];
+    const quoted = pieces
+      .map((p) => `<piece id="${p.id}" title="${escape(p.title)}" date="${p.date}">\n${escape(p.text)}\n</piece>`)
+      .join("\n");
+    const prompt = `<pieces>\n${quoted}\n</pieces>\n\nQuestion: ${question}`;
+    const failures: string[] = [];
+
+    for (const provider of providers) {
+      let failure: unknown;
+      let ids: string[] | null = null; // set when the answer starts to stream
+      let sent = "";
+      let sawOutput = false;
+      const result = streamText({
+        model: provider.model(DEFAULT_MODEL),
+        system: ANSWER_RULES,
+        prompt,
+        output: Output.object({ schema: Answer }),
+        maxOutputTokens: 600,
+        abortSignal: options.signal,
+        onError: ({ error }) => {
+          failure ??= error;
+        },
+      });
+
+      try {
+        for await (const partial of result.partialOutputStream) {
+          sawOutput = true;
+          if (ids === null) {
+            // Start only when the model has said it found an answer, has
+            // closed its source list (the answer field has begun) and at
+            // least one source is real. Otherwise wait for the end.
+            if (partial.found !== true || typeof partial.answer !== "string") continue;
+            const valid = validIds(partial.sourceIds);
+            if (valid.length === 0) continue;
+            ids = valid;
+            yield { type: "sources", sourceIds: ids };
+          }
+          const text = (partial.answer ?? "").trimStart();
+          if (text.length > sent.length && text.startsWith(sent)) {
+            yield { type: "text", delta: text.slice(sent.length) };
+            sent = text;
+          }
+        }
+      } catch (error) {
+        failure ??= error;
+      }
+
+      const stopped = options.signal?.aborted ?? false;
+      let final: { found: boolean; answer: string; sourceIds: string[] } | null = null;
+      if (!stopped && failure === undefined) {
+        try {
+          const output = await result.output;
+          final = { found: output.found, answer: output.answer.trim(), sourceIds: validIds(output.sourceIds) };
+        } catch (error) {
+          failure = error;
+        }
+      }
+
+      // Nothing shown yet and this provider failed: try the next one.
+      if (!stopped && final === null && ids === null) {
+        failures.push(`${provider.name}: ${reason(failure)}`);
+        continue;
+      }
+
+      if (ids === null && final?.found && final.sourceIds.length > 0 && final.answer) {
+        // The model wrote the fields in another order: show it all at once.
+        ids = final.sourceIds;
+        yield { type: "sources", sourceIds: ids };
+        yield { type: "text", delta: final.answer };
+        sent = final.answer;
+      } else if (ids !== null && final && final.answer.length > sent.length && final.answer.startsWith(sent)) {
+        yield { type: "text", delta: final.answer.slice(sent.length) };
+        sent = final.answer;
+      }
+
+      const found = ids !== null && sent.length > 0;
+      yield {
+        type: "done",
+        found,
+        answer: found ? sent : "",
+        sourceIds: found && ids ? ids : [],
+        stopped,
+        provider: provider.name,
+        tokens: await usedTokens(result.usage, prompt.length + (sawOutput ? sent.length : 0)),
+      };
+      return;
+    }
+    throw new Error(`Every AI provider failed. ${failures.join(" | ")}`);
+  }
+}
+
+/** Provider error messages carry status codes, not the person's text. */
+function reason(error: unknown) {
+  return error instanceof Error ? error.message.slice(0, 160) : "unknown error";
+}
+
+/**
+ * Tokens a call used, as the provider reports them. A stopped call may
+ * report nothing; then estimate about four characters per token, so the
+ * daily limit still counts it.
+ */
+async function usedTokens(
+  usage: PromiseLike<{ totalTokens?: number; inputTokens?: number; outputTokens?: number }>,
+  characters: number,
+): Promise<number> {
+  try {
+    const u = await usage;
+    const total = u.totalTokens ?? (u.inputTokens ?? 0) + (u.outputTokens ?? 0);
+    if (total > 0) return total;
+  } catch {
+    // Fall through to the estimate.
+  }
+  return Math.ceil(characters / 4);
 }
 
 function escape(text: string) {
