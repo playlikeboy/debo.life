@@ -129,13 +129,25 @@ test("write an entry, ask about it, then delete everything", async ({ page }) =>
 
   // The chat answers from the same entry, with a source chip.
   await page.goto("/home/chat");
-  // CopilotKit keeps a connection open, so wait for the input, not network idle.
-  const chatInput = page.getByPlaceholder("When did I last see Riya?");
-  await expect(chatInput).toBeEditable({ timeout: 30_000 });
+  // CopilotKit keeps a connection open, so wait for the button, not network idle.
+  await expect(page.getByRole("button", { name: "Ask Debo" })).toBeEnabled({ timeout: 30_000 });
+  const chatInput = page.getByLabel("Your question");
   await chatInput.fill("Where did Riya move to?");
   await chatInput.press("Enter");
   const chatSources = page.getByRole("list", { name: "Where this answer came from" });
   await expect(chatSources.getByRole("link", { name: /^Journal, / })).toBeVisible({ timeout: 60_000 });
+  await expect(chatSources.getByRole("link", { name: /^Journal, / })).toHaveAttribute("href", /^\/home\/journal#entry-/);
+
+  // The chat is saved: it is in "Your chats" and survives a reload.
+  await expect(page).toHaveURL(/\/home\/chat\?c=/);
+  await page.reload();
+  await expect(page.getByRole("list", { name: "Where this answer came from" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("Where did Riya move to?").first()).toBeVisible();
+
+  // Delete the chat; it leaves the list.
+  await page.getByRole("button", { name: /^Delete this chat/ }).click();
+  await page.getByRole("button", { name: "Yes, delete it" }).click();
+  await expect(page.getByText("Your chats will show here")).toBeVisible();
   await page.goto("/home");
   await page.waitForLoadState("networkidle");
 
