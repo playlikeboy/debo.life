@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { fixMemory, forgetMemory } from "@/app/home/actions";
+import { entryHref } from "@/lib/links";
 
 const box = "mt-2 block w-full rounded-[12px] border-2 border-ink bg-paper px-3 py-2";
 
@@ -94,7 +95,7 @@ export function MemoryItem({
       )}
 
       <p className="mt-3">
-        <a href={`/home#entry-${sourceId}`} className="chip no-underline">
+        <a href={entryHref(sourceId)} className="chip no-underline">
           {sourceLabel}
         </a>
       </p>
