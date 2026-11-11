@@ -15,15 +15,15 @@ test("sign in by email code or link, then delete the account", async ({ page }) 
   await page.goto("/auth/sign-in");
   await page.waitForLoadState("networkidle");
   await page.getByRole("radio", { name: "Email me a code" }).check();
-  await expect(page.getByLabel("Password")).toHaveCount(0);
-  await page.getByLabel("Email").fill(person.email);
+  await expect(page.getByLabel("Password", { exact: true })).toHaveCount(0);
+  await page.getByLabel("Email", { exact: true }).fill(person.email);
   await page.getByRole("button", { name: "Email me a code" }).click();
   await expect(page.getByRole("heading", { name: "Check your email for a code" })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("textbox", { name: "Code from your email" })).toBeVisible();
   await page.getByRole("button", { name: "Use a different email" }).click();
 
   await page.getByRole("radio", { name: "Email me a link" }).check();
-  await page.getByLabel("Email").fill(person.email);
+  await page.getByLabel("Email", { exact: true }).fill(person.email);
   await page.getByRole("button", { name: "Email me a link" }).click();
   await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible({ timeout: 30_000 });
 

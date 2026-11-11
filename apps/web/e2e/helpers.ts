@@ -30,8 +30,8 @@ export async function signUp(page: Page, person: { email: string; password: stri
   await page.getByRole("link", { name: "Create your account" }).click();
   await page.waitForLoadState("networkidle"); // let the form's JavaScript load first
   await page.getByLabel("Your name").fill(name);
-  await page.getByLabel("Email").fill(person.email);
-  await page.getByLabel("Password").fill(person.password);
+  await page.getByLabel("Email", { exact: true }).fill(person.email);
+  await page.getByLabel("Password", { exact: true }).fill(person.password);
   await page.getByRole("button", { name: "Create my account" }).click();
 
   const hello = page.getByRole("heading", { name: `Hi, ${name}` });
@@ -49,7 +49,7 @@ export async function signUp(page: Page, person: { email: string; password: stri
 export async function signInWithPassword(page: Page, person: { email: string; password: string }) {
   await page.goto("/auth/sign-in");
   await page.waitForLoadState("networkidle");
-  await page.getByLabel("Email").fill(person.email);
-  await page.getByLabel("Password").fill(person.password);
+  await page.getByLabel("Email", { exact: true }).fill(person.email);
+  await page.getByLabel("Password", { exact: true }).fill(person.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
 }
