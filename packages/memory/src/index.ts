@@ -235,3 +235,5 @@ export function createMemory(env: Record<string, string | undefined>) {
 }
 
 export type MemoryStore = NonNullable<ReturnType<typeof createMemory>>;
+
+export { speakToPerson } from "./wording";

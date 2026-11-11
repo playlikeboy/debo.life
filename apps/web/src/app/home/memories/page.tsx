@@ -1,5 +1,5 @@
 import { getSources } from "@debo/db";
-import type { Memory } from "@debo/memory";
+import { speakToPerson, type Memory } from "@debo/memory";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -68,7 +68,10 @@ async function load(userId: string): Promise<Loaded> {
       status: "ok",
       memories: memories.flatMap((m) => {
         const sourceLabel = labels.get(m.sourceId);
-        return sourceLabel ? [{ ...m, sourceLabel }] : [];
+        if (!sourceLabel) return [];
+        // Older memories say "User went…"; show them as "You went…". Display only, nothing
+        // stored changes. A memory the person fixed is shown exactly as they wrote it.
+        return [{ ...m, text: m.editedByUser ? m.text : speakToPerson(m.text), sourceLabel }];
       }),
     };
   } catch (error) {

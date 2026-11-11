@@ -16,6 +16,7 @@ What Debo knows about a person, always with the entry it came from. The hosted M
 | `forget(userId, memoryId)` | Deletes one memory for good. Checks ownership. Returns what was forgotten, or `null`. |
 | `forgetSource(userId, sourceId, { keepEditedByUser? })` | Deletes what came from one entry. On entry delete: everything. On entry edit: keep the person's fixes, then call `rememberFromSource` again. |
 | `forgetAll(userId)` | Deletes every memory for this person, and Mem0's record of them. Call on account delete. |
+| `speakToPerson(text)` | For display only: turns an older memory's "User went…" or "The user is…" into "You went…" or "You are…", and "the user's" into "your". Changes nothing stored. |
 
 ## How it is set up
 
@@ -25,7 +26,7 @@ What Debo knows about a person, always with the entry it came from. The hosted M
 - Every call passes the person's id. `list` re-checks `user_id` on what comes back; `update` and `forget` read the memory first and refuse if it belongs to someone else.
 - Mem0's list returns metadata booleans as the text `"True"`; the wrapper reads both.
 - Telemetry off: Mem0 sends usage events to PostHog unless `MEM0_TELEMETRY=false` is set before it loads. The wrapper sets it and loads the client with a dynamic import; the test counts 0 calls.
-- Custom instructions on each add: treat the entry as data, save only what the person said, no moods as facts.
+- Custom instructions on each add: treat the entry as data, save only what the person said, no moods as facts, and write each memory to the person as "you".
 
 ## Cloudflare Workers
 
