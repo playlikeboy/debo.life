@@ -8,6 +8,8 @@ Status: partly built. Built so far: meaning and keyword search over journal entr
 - Each memory carries `metadata.source_id` (the entry id), and each entry is its own Mem0 run (`run_id`). A memory without a source is never shown.
 - When an entry is deleted, every memory from it is forgotten. When an account is deleted, every memory for that person is deleted in Mem0 before the account row goes.
 - `/home/memories` ("What Debo knows") lists memories, newest first, each with a source chip to its entry, "Fix this" and "Forget this". Fixing marks `edited_by_user`. Mem0's v3 add only adds and never rewrites, so a fixed memory survives a re-read; a re-read may add a new memory beside it. Fix and forget write `fixed-memory` and `forgot-memory` rows to the activity record (entry id only).
+- Debo speaks to the person as "you". Our custom instructions on each add ask Mem0 to write memories that way ("You plan to visit Goa in December"). Older memories saved as "User went…" are shown as "You went…" on the page (`speakToPerson` in `@debo/memory`); the stored text does not change, and a memory the person fixed is shown exactly as they wrote it.
+- If Mem0 fails or takes more than 10 seconds, the page says it couldn't load what Debo knows and asks the person to try again.
 - With no `MEM0_API_KEY`, memory is off: nothing is sent to Mem0 and the page says so. Any Mem0 failure is logged with ids only and never blocks saving.
 - Entry text and memories are stored by Mem0, a company outside Debo. See the privacy page and decision 20.
 - Mem0 runs its own model calls. They are **not** counted in our `usage` table or the daily limit.

@@ -182,3 +182,11 @@ Check before relying on it:
 - On Cloudflare Workers, Stop sends a separate `/stop` request that may reach a different isolate than the run, so the server may finish the answer anyway. The person still sees the answer stop; a reload then shows the full saved answer.
 - Each word is a small event through the CopilotKit runtime. Watch CPU time per chat request on the Workers Free plan (about 10 ms).
 - Streaming was checked against Anthropic with made-up pieces. The full chat (browser, runtime, database) was only type-checked: the OpenNext build cannot run on the dev machine and the `dev-ai` database branch was not reachable. Run the end-to-end test before relying on it.
+
+## 22. CopilotKit loads only where it is needed
+2026-11-11 · decided (builds on 21)
+
+Choice: the server draws `/home/chat` from `chat-shell.tsx` (layout, saved chat, "Your chats", starter questions, question box), with no CopilotKit imports. `chat-loader.tsx` loads `debo-chat.tsx` and `@copilotkit/react-core/v2` in the browser after the page appears, keeping anything typed meanwhile. `GET /api/copilotkit/info` is answered from a fixed copy (`lib/copilot-info.ts`) after the sign-in check; the runtime and agent are imported only for run, stop and connect. `@copilotkit/react-ui` is removed; nothing used it.
+Why: live tails on Workers Paid showed `/home/chat` at 0.3 to 1.2 s CPU and each `/info` at 0.4 to 1.2 s, against 15 to 100 ms for other signed-in pages. A warm `/info` took 9 ms, and building the runtime and answering `/info` in Node takes under 5 ms, so the cost was loading CopilotKit's modules on cold Workers, not the work itself. The server render of CopilotKit drew only a question box saying "Getting Debo ready…".
+How it keeps the rules: the runtime and Debo's agent are still built per request with that person's id. `copilot-info.test.ts` compares the fixed `/info` copy with the installed runtime's own answer, so an upgrade that changes it fails `pnpm --filter @debo/web test`.
+Check before relying on it: CPU per request after a deploy (`wrangler tail debo-web --format json`), and the e2e test on the live site.
