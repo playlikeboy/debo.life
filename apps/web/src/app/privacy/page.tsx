@@ -37,7 +37,7 @@ export default function PrivacyPage() {
       </a>
 
       <h1 className="h-section mt-8">How Debo handles your data</h1>
-      <p className="mt-4 text-[1.125rem] text-ink-soft">Last updated 10 November 2026.</p>
+      <p className="mt-4 text-[1.125rem] text-ink-soft">Last updated 11 November 2026.</p>
 
       <div className="mt-8 max-w-[40rem] rounded-[24px] border-2 border-ink bg-paper p-6">
         <p>
@@ -134,8 +134,13 @@ export default function PrivacyPage() {
         />
       </Section>
 
-      <Section id="cookies" title="Cookies">
+      <Section id="cookies" title="Cookies and your browser">
         <p>Debo only uses the sign-in cookies it needs to keep you signed in. No ads, no tracking, no analytics.</p>
+        <p>
+          While you write a journal entry, Debo keeps your unsaved draft only in this browser, so you don&rsquo;t lose
+          it if the page closes. It is not sent to Debo until you save it. Saving, signing out or deleting your
+          account removes the draft from the browser.
+        </p>
       </Section>
 
       <Section id="questions" title="Questions">
