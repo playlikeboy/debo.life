@@ -22,11 +22,8 @@ export default async function MemoriesPage() {
   const loaded = await load(session.user.id);
 
   return (
-    <main className="wrap max-w-[48rem] py-16">
-      <a href="/home" className="font-semibold underline underline-offset-4">
-        Back to your entries
-      </a>
-      <h1 className="h-section mt-8">What Debo knows</h1>
+    <main className="wrap max-w-[48rem] pb-16 pt-10">
+      <h1 className="h-section">What Debo knows</h1>
       <p className="mt-4 text-[1.125rem] text-ink-soft">
         After you save an entry, Debo picks out the lasting facts in it, like people, places and plans. Each memory
         shows the entry it came from. Fix anything that is wrong, or forget anything you don&rsquo;t want Debo to keep.

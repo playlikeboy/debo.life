@@ -15,11 +15,8 @@ export default async function ActivityPage() {
   const items = await listActivity(databaseUrl(), session.user.id);
 
   return (
-    <main className="wrap max-w-[48rem] py-16">
-      <a href="/home" className="font-semibold underline underline-offset-4">
-        Back to your entries
-      </a>
-      <h1 className="h-section mt-8">What Debo did</h1>
+    <main className="wrap max-w-[48rem] pb-16 pt-10">
+      <h1 className="h-section">What Debo did</h1>
       <p className="mt-4 text-[1.125rem] text-ink-soft">
         Everything Debo saved, changed, deleted, forgot and answered for you, and every copy you downloaded, newest first. This list keeps when it
         happened and which entries it touched, never your words.
