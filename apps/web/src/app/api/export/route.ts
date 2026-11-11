@@ -1,6 +1,6 @@
-import { exportRecords, recordActivity } from "@debo/db";
+import { exportChats, exportRecords, recordActivity } from "@debo/db";
 import { getAuth } from "@/lib/auth/server";
-import { activitySection, buildExportZip, entriesSection } from "@/lib/export";
+import { activitySection, buildExportZip, chatsSection, entriesSection } from "@/lib/export";
 import { databaseUrl } from "@/lib/server-env";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +19,12 @@ export async function GET() {
 
   try {
     const exportedAt = new Date();
-    const records = await exportRecords(databaseUrl(), userId);
+    const [records, chats] = await Promise.all([exportRecords(databaseUrl(), userId), exportChats(databaseUrl(), userId)]);
     // Add a section here when Debo stores more (files, memories).
-    const zip = buildExportZip([entriesSection(records.entries), activitySection(records.activity)], exportedAt);
+    const zip = buildExportZip(
+      [entriesSection(records.entries), chatsSection(chats), activitySection(records.activity)],
+      exportedAt,
+    );
     await recordActivity(databaseUrl(), userId, { actor: "you", action: "exported" });
 
     return new Response(zip as Uint8Array<ArrayBuffer>, {

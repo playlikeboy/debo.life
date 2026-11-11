@@ -1,5 +1,41 @@
-import type { ActivityItem, ExportEntry } from "@debo/db";
+import type { ActivityItem, ChatMessage, ExportChat, ExportEntry } from "@debo/db";
 import type { ExportSection } from "./zip";
+
+/** Each chat with Debo as a Markdown file, e.g. `chats/2026-11-11-where-did-riya-move.md`. */
+export function chatsSection(chats: ExportChat[]): ExportSection {
+  const used = new Set<string>();
+  const files = chats.map((chat) => {
+    const base = `chats/${chat.createdAt.toISOString().slice(0, 10)}-${slugify(chat.title)}`;
+    let path = `${base}.md`;
+    for (let n = 2; used.has(path); n++) path = `${base}-${n}.md`;
+    used.add(path);
+    return { path, content: chatMarkdown(chat) };
+  });
+  const count = chats.length === 1 ? "1 chat" : `${chats.length} chats`;
+  return {
+    readme: `\`chats/\`: your ${count} with Debo, one Markdown file each, with every question and reply. Each answer lists the ids of the entries it came from.`,
+    files,
+  };
+}
+
+const REPLY_NOTE: Record<ChatMessage["kind"], string> = {
+  question: "",
+  answer: "",
+  unknown: " (Debo had nothing about this)",
+  limit: " (daily limit reached)",
+  error: " (Debo could not answer)",
+  stopped: " (you stopped this answer)",
+};
+
+function chatMarkdown(chat: ExportChat): string {
+  const lines = ["---", `title: ${JSON.stringify(chat.title)}`, `started: ${chat.createdAt.toISOString()}`, `id: ${chat.id}`, "---", ""];
+  for (const message of chat.messages) {
+    const who = message.role === "person" ? "You" : "Debo";
+    lines.push(`**${who}**, ${message.createdAt.toISOString()}${REPLY_NOTE[message.kind]}`, "", message.text || "(nothing yet)", "");
+    if (message.sourceIds.length > 0) lines.push(`Sources (entry ids): ${message.sourceIds.join(", ")}`, "");
+  }
+  return lines.join("\n");
+}
 
 /** Each journal entry as a Markdown file, e.g. `entries/2026-11-10-riya-moved-to-pune.md`. */
 export function entriesSection(entries: ExportEntry[]): ExportSection {
