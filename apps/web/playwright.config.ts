@@ -5,6 +5,13 @@ import { defineConfig, devices } from "@playwright/test";
 // Against the live site: BASE_URL=https://debo.life pnpm --filter @debo/web test:e2e
 const baseURL = process.env.BASE_URL ?? "http://localhost:3000";
 
+// Test helpers read the database URL from the repo-root .env (see e2e/helpers.ts).
+try {
+  process.loadEnvFile("../../.env");
+} catch {
+  // In CI the values come from the environment instead.
+}
+
 export default defineConfig({
   testDir: "./e2e",
   timeout: 120_000,

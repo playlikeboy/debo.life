@@ -4,7 +4,7 @@
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
 
-export type Db = NodePgDatabase;
+export type Db = NodePgDatabase & { $client: Client };
 
 /**
  * Open a connection, run `work`, then always close the connection.

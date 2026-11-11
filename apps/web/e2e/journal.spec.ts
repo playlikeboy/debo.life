@@ -1,24 +1,15 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { newTestPerson, signUp } from "./helpers";
 
 // The whole phase 1 loop with a throwaway account that the test deletes at
 // the end: sign up, write, ask (with and without an answer), delete.
 // Uses made-up data only.
 test("write an entry, ask about it, then delete everything", async ({ page }) => {
-  const email = `debo-e2e-${Date.now()}@example.com`;
-  const password = `E2e-${Math.random().toString(36).slice(2)}-pass`;
   const nav = page.getByRole("navigation", { name: "Your Debo" });
   const askBox = page.getByRole("textbox", { name: "Ask Debo about your entries" });
 
-  await page.goto("/");
-  await page.getByRole("link", { name: "Create your account" }).click();
-  await page.waitForLoadState("networkidle"); // let the form's JavaScript load first
-  await page.getByLabel("Your name").fill("Test Person");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(password);
-  await page.getByRole("button", { name: "Create my account" }).click();
-  await expect(page.getByRole("heading", { name: "Hi, Test Person" })).toBeVisible({ timeout: 30_000 });
-  await page.waitForLoadState("networkidle");
+  await signUp(page, newTestPerson("journal"));
   await expect(page.getByText("Nothing here yet.")).toBeVisible();
   await expect(nav.getByRole("link", { name: "Home", exact: true })).toHaveAttribute("aria-current", "page");
 
