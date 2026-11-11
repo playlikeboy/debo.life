@@ -54,11 +54,19 @@ export default async function MemoriesPage() {
   );
 }
 
+/** Mem0 usually answers in under a second. Past this, show the error state instead of waiting on. */
+const MEM0_WAIT_MS = 10_000;
+
+/**
+ * Everything that can fail is inside the try, so the page always draws:
+ * at worst it says it couldn't load what Debo knows. Errors are logged with
+ * ids and the error's name only.
+ */
 async function load(userId: string): Promise<Loaded> {
-  const memory = memoryStore();
-  if (!memory) return { status: "off" };
   try {
-    const memories = await memory.list(userId);
+    const memory = memoryStore();
+    if (!memory) return { status: "off" };
+    const memories = await withTimeout(memory.list(userId), MEM0_WAIT_MS);
     // Show a memory only when its entry is still this person's. An entry
     // deleted a moment ago may still have memories waiting to be forgotten.
     const ids = [...new Set(memories.map((m) => m.sourceId))].filter((id) => z.string().uuid().safeParse(id).success);
@@ -75,8 +83,26 @@ async function load(userId: string): Promise<Loaded> {
       }),
     };
   } catch (error) {
-    console.error("list memories failed", { userId, reason: error instanceof Error ? error.name : "unknown" });
+    console.error("list memories failed", {
+      userId,
+      reason: error instanceof Error ? (error.message === "Mem0 took too long" ? "timeout" : error.name) : "unknown",
+    });
     return { status: "error" };
+  }
+}
+
+/** Resolve with `work`, or reject after `ms`. The timer is always cleared. */
+async function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("Mem0 took too long")), ms);
+  });
+  try {
+    return await Promise.race([work, timeout]);
+  } finally {
+    clearTimeout(timer);
+    // If the timeout won, a late failure of `work` must not become an unhandled rejection.
+    work.catch(() => {});
   }
 }
 
