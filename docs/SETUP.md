@@ -76,6 +76,21 @@ pnpm dev
 - `/home` needs you to be signed in. There you can write journal entries, ask Debo about them ("Ask Debo about your entries"), and delete entries or your whole account.
 - http://localhost:3000/api/health checks the database, file storage and AI gateway. It only works in development; on the live site it does not exist.
 
+## Sign-in emails
+
+Neon Auth does not send sign-in emails itself. It calls our webhook, which sends them from `mail.debo.life` through Cloudflare (decision 23).
+
+- Worker secrets: `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` (a token that can use Email Sending).
+- Neon Auth settings, set once per branch with the Neon CLI:
+
+```bash
+neon neon-auth config webhook update --enabled --url https://debo.life/api/neon-auth/webhook --enabled-events send.otp send.magic_link --timeout 5
+neon neon-auth config email-password update --email-verification-method otp --require-email-verification --send-verification-email-on-sign-up --send-verification-email-on-sign-in --auto-sign-in-after-verification
+neon api /projects/sweet-dream-71477162/branches/<branch-id>/auth/plugins/magic-link -X PATCH -F enabled=true -F expires_in=10 -F disable_sign_up=true
+```
+
+- The webhook only works on a public HTTPS address, so locally (`pnpm dev`) codes and links still go out through the deployed site's webhook. Turn the webhook off (`--no-enabled`) to fall back to Neon's shared sender.
+
 ## Database changes
 
 Tables are defined in `packages/db/src/schema.ts` and changed through Drizzle migrations in `packages/db/migrations`.

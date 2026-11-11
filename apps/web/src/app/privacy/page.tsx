@@ -115,7 +115,7 @@ export default function PrivacyPage() {
           items={[
             <>Debo is not end-to-end encrypted. Debo&rsquo;s servers have to read your notes to search them.</>,
             <>Our database provider may keep backups for a short time. We will state the exact period before Debo opens fully.</>,
-            <>Sign-in emails are sent by Neon&rsquo;s shared mail service for now.</>,
+            <>Sign-in emails (codes and links) are sent from mail.debo.life through Cloudflare&rsquo;s email service. Cloudflare sees your email address and the code or link, never your entries.</>,
             <>Mem0&rsquo;s privacy policy does not say how long it keeps data after it is deleted.</>,
           ]}
         />
