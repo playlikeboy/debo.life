@@ -1,5 +1,5 @@
 import "server-only";
-import { getSources, recordActivity, recordUsage, searchPieces, tokensUsedToday, type ActivityAction } from "@debo/db";
+import { recordActivity, recordUsage, searchPieces, tokensUsedToday, type ActivityAction } from "@debo/db";
 import { createLlm } from "@debo/llm";
 import { databaseUrl, serverEnv } from "@/lib/server-env";
 
@@ -9,12 +9,30 @@ import { databaseUrl, serverEnv } from "@/lib/server-env";
 // - no source, no answer ("I don't have anything about that yet");
 // - the daily limit is checked before any model call;
 // - usage and the activity record are written (ids and numbers only).
+//
+// askStream() is the pipeline; answerQuestion() is the same pipeline
+// without streaming, for surfaces that want the whole answer at once.
 
 export type SourceChip = { id: string; label: string };
 export type AskResult =
   | { status: "answered"; answer: string; sources: SourceChip[] }
   | { status: "unknown" }
   | { status: "limit"; message: string };
+
+/**
+ * How a streamed question ended. `stopped` means the person stopped it:
+ * `answer` and `sources` are what was shown by then (both may be empty).
+ */
+export type AskOutcome = AskResult | { status: "stopped"; answer: string; sources: SourceChip[] };
+
+/**
+ * What askStream yields. `sources` always comes before the first `text`,
+ * and `done` always comes last.
+ */
+export type AskEvent =
+  | { type: "sources"; sources: SourceChip[] }
+  | { type: "text"; delta: string }
+  | { type: "done"; outcome: AskOutcome };
 
 export const UNKNOWN_MESSAGE = "I don’t have anything about that yet. Write an entry about it, then ask again.";
 export const LIMIT_MESSAGE =
@@ -43,8 +61,15 @@ export async function logActivity(
   }
 }
 
-/** Answer a question from this person's own entries. Throws only on unexpected failures. */
-export async function answerQuestion(userId: string, question: string): Promise<AskResult> {
+/**
+ * Answer a question from this person's own entries, streaming the answer.
+ * Pass `signal` to let the person stop it. Throws only on unexpected failures.
+ */
+export async function* askStream(
+  userId: string,
+  question: string,
+  options: { signal?: AbortSignal } = {},
+): AsyncGenerator<AskEvent, void> {
   const db = databaseUrl();
   const llm = createLlm(serverEnv());
 
@@ -62,31 +87,66 @@ export async function answerQuestion(userId: string, question: string): Promise<
   const pieces = await searchPieces(db, userId, question, { embedding });
   if (pieces.length === 0) {
     await logActivity(userId, "debo", "did-not-know");
-    return { status: "unknown" };
+    yield { type: "done", outcome: { status: "unknown" } };
+    return;
   }
 
   // Only spend on the AI when there is something to answer from.
   if ((await tokensUsedToday(db, userId)) >= dailyTokenLimit()) {
-    return { status: "limit", message: LIMIT_MESSAGE };
+    yield { type: "done", outcome: { status: "limit", message: LIMIT_MESSAGE } };
+    return;
   }
 
-  const result = await llm.answerFromSources(
+  // Chips come from the pieces search found, which are already this
+  // person's own (searchPieces filters by userId), and the model can only
+  // name ids from those pieces. So no second read is needed.
+  const days = new Map(pieces.map((p) => [p.sourceId, p.happenedAt]));
+  const chipsFor = (ids: string[]): SourceChip[] =>
+    ids.flatMap((id) => {
+      const day = days.get(id);
+      return day ? [{ id, label: `Journal, ${formatDay(day)}` }] : [];
+    });
+
+  const stream = llm.streamAnswerFromSources(
     question,
     pieces.map((p) => ({ id: p.sourceId, title: p.title, date: p.happenedAt.toISOString().slice(0, 10), text: p.text })),
+    { signal: options.signal },
   );
-  await recordUsage(db, userId, { provider: result.provider, units: result.tokens });
+  for await (const event of stream) {
+    if (event.type === "sources") {
+      yield { type: "sources", sources: chipsFor(event.sourceIds) };
+    } else if (event.type === "text") {
+      yield { type: "text", delta: event.delta };
+    } else {
+      await recordUsage(db, userId, { provider: event.provider, units: event.tokens });
+      const sources = chipsFor(event.sourceIds);
+      const shown = event.found && sources.length > 0;
+      if (shown) await logActivity(userId, "debo", "answered", sources.map((s) => s.id));
+      console.info("asked", { userId, sources: sources.length, provider: event.provider, tokens: event.tokens, stopped: event.stopped });
 
-  // Re-read the sources by id, scoped to this person, for the chips.
-  const rows = result.found ? await getSources(db, userId, result.sourceIds) : [];
-  if (rows.length === 0) {
-    await logActivity(userId, "debo", "did-not-know");
-    return { status: "unknown" };
+      if (event.stopped) {
+        yield { type: "done", outcome: { status: "stopped", answer: shown ? event.answer : "", sources: shown ? sources : [] } };
+      } else if (shown) {
+        yield { type: "done", outcome: { status: "answered", answer: event.answer, sources } };
+      } else {
+        await logActivity(userId, "debo", "did-not-know");
+        yield { type: "done", outcome: { status: "unknown" } };
+      }
+      return;
+    }
   }
+  throw new Error("The answer stream ended without a result.");
+}
 
-  const sources = rows.map((row) => ({ id: row.id, label: `Journal, ${formatDay(row.happenedAt)}` }));
-  await logActivity(userId, "debo", "answered", sources.map((s) => s.id));
-  console.info("asked", { userId, sources: sources.length, provider: result.provider, tokens: result.tokens });
-  return { status: "answered", answer: result.answer, sources };
+/** Answer a question from this person's own entries, all at once. Throws only on unexpected failures. */
+export async function answerQuestion(userId: string, question: string): Promise<AskResult> {
+  for await (const event of askStream(userId, question)) {
+    if (event.type !== "done") continue;
+    // Without a signal nothing can stop the answer, so `stopped` cannot happen.
+    if (event.outcome.status === "stopped") throw new Error("An answer stopped without being asked to.");
+    return event.outcome;
+  }
+  throw new Error("The answer stream ended without a result.");
 }
 
 function formatDay(date: Date) {

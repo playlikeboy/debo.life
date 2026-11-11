@@ -1,5 +1,6 @@
 import { CopilotRuntime, createCopilotRuntimeHandler } from "@copilotkit/runtime/v2";
 import { getAuth } from "@/lib/auth/server";
+import { AGENT_ID } from "@/lib/chat";
 import { createDeboAgent } from "@/lib/copilot-agent";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ async function handle(request: Request): Promise<Response> {
   if (!userId) return Response.json({ error: "Sign in first, then try again." }, { status: 401 });
 
   const runtime = new CopilotRuntime({
-    agents: { debo: createDeboAgent(userId) },
+    agents: { [AGENT_ID]: createDeboAgent(userId) },
     // Scope chat threads to this person. Only the id; CopilotKit needs no name or email.
     identifyUser: () => ({ id: userId, name: userId }),
   });

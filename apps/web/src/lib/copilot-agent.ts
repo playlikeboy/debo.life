@@ -1,26 +1,33 @@
 import "server-only";
+import { saveExchange, type ChatReply } from "@debo/db";
 import { BuiltInAgent, type BuiltInAgentCustomFactoryConfig } from "@copilotkit/runtime/v2";
 import { z } from "zod";
-import { answerQuestion, UNKNOWN_MESSAGE, type SourceChip } from "@/lib/ask";
+import { askStream, UNKNOWN_MESSAGE, type SourceChip } from "@/lib/ask";
+import { MAX_QUESTION, NOTICE_TOOL, SOURCES_TOOL, type ReplyKind } from "@/lib/chat";
+import { databaseUrl } from "@/lib/server-env";
 
 // Debo's chat agent for CopilotKit, speaking AG-UI.
 //
-// It never calls a model itself: every question goes through answerQuestion()
-// (lib/ask.ts), which keeps the rules — answers only from the person's own
+// It never calls a model itself: every question goes through askStream()
+// (lib/ask.ts), which keeps the rules: answers only from the person's own
 // entries with sources, "I don't have anything about that yet" otherwise,
 // the daily limit, usage and the activity record. The runtime adds
-// RUN_STARTED and RUN_FINISHED; this factory yields the answer text and, when
-// there are sources, one finished `show_sources` tool call that the browser
-// renders as source chips (generative UI).
-
-/** Name of the tool call the chat page renders as source chips. */
-export const SOURCES_TOOL = "show_sources";
+// RUN_STARTED and RUN_FINISHED. This factory yields:
+// - for an answer: one finished `show_sources` tool call (the chips), then
+//   the answer text as it streams. Sources always come first, so a stopped
+//   answer still shows where its words came from;
+// - for anything else: one finished `show_notice` tool call saying what
+//   kind of reply it is, then the reply text.
+// Each exchange is then saved to the chat history (the AG-UI thread id is
+// the chat id). Nothing here logs the question or the answer.
 
 type CustomFactory = BuiltInAgentCustomFactoryConfig["factory"];
 type FactoryContext = Parameters<CustomFactory>[0];
 type AgentEvent = Awaited<ReturnType<CustomFactory>> extends AsyncIterable<infer E> ? E : never;
 
-const Question = z.string().trim().min(3).max(500);
+const Question = z.string().trim().min(3).max(MAX_QUESTION);
+const ERROR_MESSAGE = "I couldn’t reach my AI helper just now. Nothing was lost. Try again in a moment.";
+const INVALID_MESSAGE = `Ask a question of a few words, up to ${MAX_QUESTION} characters.`;
 
 /** Text of the last message the person sent, or null if there is none. */
 function lastUserText(input: FactoryContext["input"]): string | null {
@@ -56,39 +63,87 @@ function* say(text: string): Generator<AgentEvent> {
   yield event({ type: "TEXT_MESSAGE_END", messageId });
 }
 
-function* showSources(sources: SourceChip[]): Generator<AgentEvent> {
+/** A tool call the browser draws, already finished so the browser never tries to run it. */
+function* finishedToolCall(name: string, args: unknown): Generator<AgentEvent> {
   const toolCallId = crypto.randomUUID();
-  yield event({ type: "TOOL_CALL_START", toolCallId, toolCallName: SOURCES_TOOL });
-  yield event({ type: "TOOL_CALL_ARGS", toolCallId, delta: JSON.stringify({ sources }) });
+  yield event({ type: "TOOL_CALL_START", toolCallId, toolCallName: name });
+  yield event({ type: "TOOL_CALL_ARGS", toolCallId, delta: JSON.stringify(args) });
   yield event({ type: "TOOL_CALL_END", toolCallId });
-  // A result marks the call finished, so the browser never tries to run it.
   yield event({ type: "TOOL_CALL_RESULT", messageId: crypto.randomUUID(), toolCallId, role: "tool", content: "shown" });
+}
+
+function* notice(kind: Exclude<ReplyKind, "answer">, text: string): Generator<AgentEvent> {
+  yield* finishedToolCall(NOTICE_TOOL, { kind });
+  yield* say(text);
+}
+
+/** Save the exchange to the chat history. A failure never hides the answer; it is logged with ids only. */
+async function save(userId: string, conversationId: string, question: string, reply: ChatReply) {
+  try {
+    const saved = await saveExchange(databaseUrl(), userId, { conversationId, question, reply });
+    if (!saved) console.error("chat not saved: not this person's chat", { userId, conversationId });
+  } catch (error) {
+    console.error("chat save failed", { userId, conversationId, reason: error instanceof Error ? error.name : "unknown" });
+  }
 }
 
 async function* answer(userId: string, ctx: FactoryContext): AsyncGenerator<AgentEvent> {
   const parsed = Question.safeParse(lastUserText(ctx.input));
   if (!parsed.success) {
-    yield* say("Ask a question of a few words, up to 500 characters.");
+    yield* notice("invalid", INVALID_MESSAGE);
     return;
   }
+  const question = parsed.data;
+  const chatId = ctx.input.threadId;
 
-  let result: Awaited<ReturnType<typeof answerQuestion>>;
+  let messageId: string | null = null; // the streamed answer's message, once started
+  let text = "";
+  let sources: SourceChip[] = [];
+  let reply: ChatReply;
+
   try {
-    result = await answerQuestion(userId, parsed.data);
+    for await (const step of askStream(userId, question, { signal: ctx.abortSignal })) {
+      if (step.type === "sources") {
+        sources = step.sources;
+        yield* finishedToolCall(SOURCES_TOOL, { sources });
+        messageId = crypto.randomUUID();
+        yield event({ type: "TEXT_MESSAGE_START", messageId, role: "assistant" });
+      } else if (step.type === "text") {
+        if (!messageId || !step.delta) continue;
+        text += step.delta;
+        yield event({ type: "TEXT_MESSAGE_CONTENT", messageId, delta: step.delta });
+      } else {
+        if (messageId) yield event({ type: "TEXT_MESSAGE_END", messageId });
+        const outcome = step.outcome;
+        if (outcome.status === "answered") {
+          reply = { kind: "answer", text: outcome.answer, sourceIds: outcome.sources.map((s) => s.id) };
+        } else if (outcome.status === "stopped") {
+          // The browser already shows what it got; save the same.
+          reply = { kind: "stopped", text: outcome.answer, sourceIds: outcome.sources.map((s) => s.id) };
+        } else if (outcome.status === "limit") {
+          yield* notice("limit", outcome.message);
+          reply = { kind: "limit", text: outcome.message, sourceIds: [] };
+        } else {
+          yield* notice("unknown", UNKNOWN_MESSAGE);
+          reply = { kind: "unknown", text: UNKNOWN_MESSAGE, sourceIds: [] };
+        }
+        await save(userId, chatId, question, reply);
+        return;
+      }
+    }
+    throw new Error("The answer stream ended without a result.");
   } catch (error) {
     // Never pass provider or database errors to the browser.
     console.error("chat ask failed", { userId, reason: error instanceof Error ? error.message.slice(0, 200) : "unknown" });
-    yield* say("I couldn't reach my AI helper just now. Try again in a moment.");
-    return;
-  }
-
-  if (result.status === "unknown") {
-    yield* say(UNKNOWN_MESSAGE);
-  } else if (result.status === "limit") {
-    yield* say(result.message);
-  } else {
-    yield* say(result.answer);
-    yield* showSources(result.sources);
+    if (messageId) yield event({ type: "TEXT_MESSAGE_END", messageId });
+    if (text) {
+      // Part of an answer was already shown with its sources: keep it, marked as cut short.
+      await save(userId, chatId, question, { kind: "stopped", text, sourceIds: sources.map((s) => s.id) });
+      yield* notice("error", ERROR_MESSAGE);
+      return;
+    }
+    yield* notice("error", ERROR_MESSAGE);
+    await save(userId, chatId, question, { kind: "error", text: ERROR_MESSAGE, sourceIds: [] });
   }
 }
 
