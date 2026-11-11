@@ -1,6 +1,6 @@
 // Journal entries and keyword search over them.
 // Every function takes userId and filters by it. Callers cannot skip that.
-import { and, asc, cosineDistance, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { and, asc, cosineDistance, desc, eq, ilike, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import { z } from "zod";
 import { withDb } from "./client";
 import { chunks, sources } from "./schema";
@@ -48,12 +48,24 @@ export async function createEntry(connectionString: string, userId: string, inpu
   );
 }
 
-export async function listEntries(connectionString: string, userId: string, limit = 50): Promise<Entry[]> {
+/**
+ * The person's journal entries, newest first. With `contains`, only entries
+ * whose text has those exact letters (any case), for the journal's "Find" box.
+ */
+export async function listEntries(
+  connectionString: string,
+  userId: string,
+  limit = 50,
+  contains?: string,
+): Promise<Entry[]> {
+  const needle = contains?.trim().slice(0, 200);
+  // Escape LIKE's wildcards so "50%" finds "50%", not everything.
+  const pattern = needle ? `%${needle.replace(/[\\%_]/g, (c) => `\\${c}`)}%` : undefined;
   return withDb(connectionString, (db) =>
     db
       .select({ id: sources.id, title: sources.title, text: sources.text, happenedAt: sources.happenedAt })
       .from(sources)
-      .where(and(eq(sources.userId, userId), eq(sources.kind, "journal")))
+      .where(and(eq(sources.userId, userId), eq(sources.kind, "journal"), pattern ? ilike(sources.text, pattern) : undefined))
       .orderBy(desc(sources.happenedAt))
       .limit(limit),
   );
