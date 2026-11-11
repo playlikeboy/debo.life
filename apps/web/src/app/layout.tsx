@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   title,
   description,
   applicationName: "Debo",
+  // Added to an iPhone's home screen, Debo opens full screen with its own name.
+  appleWebApp: { title: "Debo", statusBarStyle: "default" },
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -27,6 +29,9 @@ export const viewport: Viewport = {
   themeColor: "#e9eeff",
   width: "device-width",
   initialScale: 1,
+  // On Android, the on-screen keyboard shrinks the page instead of covering
+  // it, so the chat's question box stays in sight above the keys.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
