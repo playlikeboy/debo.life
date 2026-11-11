@@ -140,6 +140,9 @@ function ChatThread({
   stoppedRef.current = stopped;
   // Keep the newest words in view, unless the person has scrolled up to read.
   const stick = useRef(true);
+  // The thread and its question box. On a phone, "Your chats" comes after it,
+  // so "the newest words" means the end of this, not the end of the page.
+  const thread = useRef<HTMLDivElement>(null);
 
   const running = agent.isRunning || inFlight !== null;
   const live = turnsFromMessages(agent.messages).map((turn, i, all) =>
@@ -192,7 +195,7 @@ function ChatThread({
   const [showJump, setShowJump] = useState(false);
   useEffect(() => {
     const onScroll = () => {
-      stick.current = nearBottom();
+      stick.current = nearThreadEnd(thread.current);
       if (stick.current) setShowJump(false);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -201,7 +204,7 @@ function ChatThread({
   const contentSize = turns.length * 100_000 + (last?.reply?.text.length ?? 0);
   useLayoutEffect(() => {
     if (turns.length === 0) return;
-    if (stick.current) window.scrollTo({ top: document.documentElement.scrollHeight });
+    if (stick.current) window.scrollTo({ top: threadEndTop(thread.current) });
     else setShowJump(true);
     // Runs only when the content grows (a new turn or more words), not on every render.
   }, [contentSize, turns.length]);
@@ -210,12 +213,12 @@ function ChatThread({
     stick.current = true;
     setShowJump(false);
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: reduce ? "auto" : "smooth" });
+    window.scrollTo({ top: threadEndTop(thread.current), behavior: reduce ? "auto" : "smooth" });
     composer.current?.focus();
   }
 
   return (
-    <div className="mt-4">
+    <div ref={thread} className="mt-4">
       {missingChat && (
         <p className="mb-4 rounded-[12px] border border-line bg-paper p-4">
           That chat isn&rsquo;t here any more. It may have been deleted. You can start again below.
@@ -371,6 +374,12 @@ function titleFrom(question: string): string {
   return line.length > 60 ? `${line.slice(0, 57)}…` : line;
 }
 
-function nearBottom(): boolean {
-  return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 96;
+/** The scroll position that puts the end of the thread (the question box) at the bottom of the screen. */
+function threadEndTop(thread: HTMLElement | null): number {
+  if (!thread) return document.documentElement.scrollHeight;
+  return thread.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+}
+
+function nearThreadEnd(thread: HTMLElement | null): boolean {
+  return window.scrollY >= threadEndTop(thread) - 96;
 }
