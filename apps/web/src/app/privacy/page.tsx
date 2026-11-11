@@ -53,6 +53,10 @@ export default function PrivacyPage() {
             <>Your journal entries.</>,
             <>Short pieces of each entry, made so Debo can search them.</>,
             <>
+              Your chats with Debo: each question you ask in the chat and Debo&rsquo;s reply, with links to the entries
+              it used, so you can come back to a chat later. They stay until you delete the chat or your account.
+            </>,
+            <>
               Memories: short facts Debo picks out of your entries, like &ldquo;Riya moved to Pune in March&rdquo;. Each
               one keeps a link to the entry it came from. Mem0 stores these, not our database.
             </>,
@@ -121,14 +125,15 @@ export default function PrivacyPage() {
         <List
           items={[
             <>Delete any entry. It is deleted right away, and the memories from it a few seconds later.</>,
+            <>Delete any chat from the chat page. It and every message in it are deleted right away.</>,
             <>See every memory on the &ldquo;What Debo knows&rdquo; page, with the entry it came from. Fix it or forget it there.</>,
             <>
-              Download everything from your home page. You get a zip with every entry as a plain text file and your
-              activity record as a spreadsheet. It opens without Debo.
+              Download everything from your home page. You get a zip with every entry and every chat as a plain text
+              file and your activity record as a spreadsheet. It opens without Debo.
             </>,
             <>
               Delete your account from your home page. That deletes your memories in Mem0, your account, every entry,
-              every piece and any files, right away.
+              every piece, every chat and any files, right away.
             </>,
           ]}
         />

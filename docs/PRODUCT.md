@@ -42,7 +42,8 @@ Status key: **Built**, **Next** (current phase), **Later**.
 
 | Feature | What the person gets | Status |
 |---|---|---|
-| Ask my life | Ask a question in plain words. Get an answer with sources. | Next |
+| Ask my life | Ask a question in plain words. Get an answer with sources. | Built (home ask box and `/home/chat`) |
+| Chat history | Come back to past chats, start a new one, delete one. | Built (`/home/chat`) |
 | Rich answers | Debo answers with a timeline, a list or a card when that is clearer than text. | Later |
 | Talk to Debo | Speak and hear Debo answer. | Later |
 | On this day | What happened on this date in past years. | Later |
@@ -56,7 +57,7 @@ Status key: **Built**, **Next** (current phase), **Later**.
 | What Debo knows | A page listing every memory, with its source. | Built (`/home/memories`, no search yet) |
 | Fix or forget | Correct a memory or remove it. | Built |
 | Activity record | A list of everything Debo read and did. | Built (`/home/activity`) |
-| Export | Download everything in open formats. | Built (entries and activity record) |
+| Export | Download everything in open formats. | Built (entries, chats and activity record) |
 | Delete account | Remove everything for good. | Next (built with sign-up) |
 
 ### Help without being asked
@@ -97,6 +98,21 @@ Built 11 November 2026. The aim: a tired, non-technical person can write, find a
   - Edit in place ("Edit this entry", "Save changes", "Keep as it was") and delete with a confirm step ("Delete this entry", "Yes, delete it", "Keep it").
   - Every entry has the anchor `entry-<id>`. Source chips link to `/home/journal#entry-<id>` (`entryHref` in `apps/web/src/lib/links.ts`). Arriving from a chip draws a thick border, shows "The entry you opened" and moves focus there.
 - The page shows the newest 500 entries; older ones are reached with "Find an entry".
+
+## Chat with Debo: how it should feel
+
+Built 11 November 2026 at `/home/chat`. The aim: asking Debo feels like asking a calm friend who checks their notes, and the person can always see where an answer came from.
+
+- **Start easy.** A new chat shows Debo and four questions to try ("What plans have I made?"). One press asks it. With an empty journal, it says Debo answers from the journal and offers "Write your first entry" instead.
+- **See Debo working.** "Looking through your entries…" shows until the first words arrive. Then the answer appears word by word, in the answer card.
+- **Sources first, always.** Debo only starts writing once it knows which entries it is using. Every answer ends with "From your entries:" and mint chips ("Journal, 14 March") that open the entry. If an entry was deleted later, the card says so.
+- **Stop any time.** While Debo answers, "Ask Debo" becomes "Stop answering". What was shown stays, with its chips, marked "You stopped this answer here."
+- **Every dead end has a next step.** Nothing found: a link to write an entry. Daily limit: when it resets, in the person's own time. No connection: "Try again".
+- **Typing.** The question box has a visible label and grows with the text. Enter asks; Shift and Enter makes a new line. Near 500 characters it counts down.
+- **Reading.** The page follows new words only while the person is at the bottom. If they scroll up, it stays put and offers "Jump to the newest message". "Copy answer" sits under every finished answer.
+- **Coming back.** Every exchange is saved. A reload brings the chat back. "Your chats" lists past chats (below the chat on phones, beside it on wide screens), each with "Delete this chat" and a clear yes. "Start a new chat" clears the screen.
+- **Screen readers and keyboards.** A polite status says when Debo starts, reads the whole answer once it is finished (not word by word), and confirms copy, stop and delete. Focus goes back to the question box after asking, stopping and starting a new chat. Everything works with a keyboard; touch targets are at least 44px.
+- Not built yet: follow-up questions that use earlier messages in the chat (each question is answered on its own), renaming chats, searching chats.
 
 ## What Debo will not do
 

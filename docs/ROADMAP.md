@@ -4,7 +4,7 @@ Build in this order. Do not start a phase until the one before it meets its "don
 
 ## What's next (as of 11 November 2026)
 
-Where we are: a person can sign up, write journal entries on their own journal page (with a draft kept in the browser, a word count and "Find an entry"), ask Debo about them from the home page and get answers with source chips that open the entry, edit and delete entries, read a record of what Debo did, download everything as a zip, see, fix and forget the memories Debo picked out of their entries ("What Debo knows", through the hosted Mem0 Platform), and delete their account. Each person has a daily AI limit. It runs at debo.life and passes the end-to-end test. Phase 1 is not done: voice notes, papers and photos cannot be saved yet.
+Where we are: a person can sign up, write journal entries on their own journal page (with a draft kept in the browser, a word count and "Find an entry"), ask Debo about them from the home page or in a chat (answers stream in word by word, and chats are saved so the person can come back to them or delete them) and get answers with source chips that open the entry, edit and delete entries, read a record of what Debo did, download everything as a zip, see, fix and forget the memories Debo picked out of their entries ("What Debo knows", through the hosted Mem0 Platform), and delete their account. Each person has a daily AI limit. It runs at debo.life and passes the end-to-end test. Phase 1 is not done: voice notes, papers and photos cannot be saved yet.
 
 Do these in order. The first four protect people and our bill, so they come before new features.
 
@@ -36,7 +36,8 @@ The smallest version that is truly useful.
 
 - [x] `@debo/db`: Postgres, Drizzle, first migration (`sources` and `chunks`; users live in Neon Auth)
 - [x] `@debo/db`: `usage` and `activity` tables
-- [ ] `@debo/db`: `conversations`, `messages` tables, and pgvector embeddings on `chunks`
+- [x] `@debo/db`: `conversations`, `messages` tables (migration 0003), and pgvector embeddings on `chunks`
+- [x] Chat at `/home/chat`: streamed answers with sources, stop, copy, saved chats that survive a reload, delete a chat
 - [x] Sign-in with Neon Auth (managed Better Auth)
 - [x] Delete account, built now, not later (deletes files, the account, entries, sessions and sign-in cookies)
 - [x] Journal: write, list, delete
@@ -59,7 +60,7 @@ The smallest version that is truly useful.
 - [ ] Use memories in answers, not only entry pieces
 - [ ] People page
 - [ ] Activity record page
-- [x] Export everything (entries and activity record today; files and memories join when they exist)
+- [x] Export everything (entries, chats and activity record today; files and memories join when they exist)
 - [ ] Daily note (opt-in)
 
 **Done when:** the recall test set passes at a level you would trust with your own journal, and a person can find and remove any single thing Debo knows.

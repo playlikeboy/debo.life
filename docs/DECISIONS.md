@@ -171,3 +171,14 @@ Check before relying on it:
 - Ask Mem0 for its DPA, sub-processor list and how long deleted data stays in backups.
 - The full OpenNext build for the Worker could not run on the dev machine (old glibc). CI builds it; check the Worker bundle size and a real deploy before relying on it.
 - Mem0 extraction costs are outside our daily limit. Watch the Mem0 bill.
+
+## 21. Our own chat screen on CopilotKit's headless hooks, with streaming and saved chats
+2026-11-11 · decided (builds on 19)
+
+Choice: `/home/chat` keeps CopilotKit 1.85 and AG-UI, but draws its own screen with the headless hooks `useAgent` (one private agent per chat, `runtimeAgentId: "debo"`, `threadId` = the chat id) and `useCopilotKit` (`runAgent`, `stopAgent`), instead of the ready-made `CopilotChat` box. Answers stream: `@debo/llm` has `streamAnswerFromSources` (AI SDK `streamText` with `Output.object`), `lib/ask.ts` has `askStream`, and `answerQuestion` drains the same stream. Chats are saved in our own `conversations` and `messages` tables.
+Why: the ready-made box could not meet DESIGN.md and WRITING.md without fighting it (its own toolbar, labels, feedback buttons and styles). The headless hooks keep CopilotKit's connection, run and stop handling while we own the words, focus, live region and layout. CopilotKit's own thread history (`useThreads`) needs CopilotKit Intelligence, a hosted service, which would put people's chats with another company; our tables keep them in our database, with export and delete.
+How it keeps the rules: the answer schema asks for `found` and `sourceIds` before `answer`, and text streams only after at least one real source is known, so the chips (a finished `show_sources` tool call) always arrive before the first word. Replies that are not answers come with a finished `show_notice` tool call (`unknown`, `limit`, `error`, `invalid`). A stopped answer still records its tokens (estimated when the provider reports none). The run's abort signal stops the model call; the runtime keeps reading our event stream after an abort, so the exchange is still saved.
+Check before relying on it:
+- On Cloudflare Workers, Stop sends a separate `/stop` request that may reach a different isolate than the run, so the server may finish the answer anyway. The person still sees the answer stop; a reload then shows the full saved answer.
+- Each word is a small event through the CopilotKit runtime. Watch CPU time per chat request on the Workers Free plan (about 10 ms).
+- Streaming was checked against Anthropic with made-up pieces. The full chat (browser, runtime, database) was only type-checked: the OpenNext build cannot run on the dev machine and the `dev-ai` database branch was not reachable. Run the end-to-end test before relying on it.

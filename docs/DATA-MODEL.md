@@ -1,6 +1,6 @@
 # Data model
 
-Status: `sources`, `chunks`, `usage` and `activity` exist (journal entries only, and `chunks` has no `embedding` column yet; see decision 17). Users live in Neon Auth's `neon_auth."user"` table. Everything else here is a plan. The schema code is `packages/db/src/schema.ts`. Change it when real code shows a better one, and update this file in the same change.
+Status: `sources`, `chunks` (with `embedding`, decision 17), `usage`, `activity`, `conversations` and `messages` exist (journal entries only). Users live in Neon Auth's `neon_auth."user"` table. Everything else here is a plan. The schema code is `packages/db/src/schema.ts`. Change it when real code shows a better one, and update this file in the same change.
 
 Database: Postgres with the `pgvector` extension. ORM: Drizzle.
 
@@ -79,7 +79,35 @@ People the person mentions.
 Plus `memory_people (memory_id, person_id)`.
 
 ### conversations and messages
-Chat history. Each assistant message stores `source_ids uuid[]`, the sources it used.
+Chat history for `/home/chat`. Built (migration `0003_chats`). Functions in `packages/db/src/chats.ts`.
+
+`conversations`: one row per chat.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | The chat's AG-UI thread id, made by the page. No default. |
+| user_id | uuid | FK to `neon_auth."user"`, on delete cascade |
+| title | text | The first question, cut to 60 characters |
+| created_at, updated_at | timestamptz | `updated_at` moves on every exchange; the list sorts by it |
+
+Index: `(user_id, updated_at)`.
+
+`messages`: the person's questions and Debo's replies.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | |
+| user_id | uuid | FK to `neon_auth."user"`, on delete cascade |
+| conversation_id | uuid | FK to `conversations`, on delete cascade |
+| role | text | `person` or `debo` |
+| kind | text | `question` for the person. For Debo: `answer`, `unknown`, `limit`, `error`, `stopped` |
+| text | text | The words, exactly as shown. A stopped answer keeps what was shown by then. |
+| source_ids | uuid[] | Entries an answer used. Not a foreign key: if an entry is deleted, the chat says so instead of losing the answer. |
+| created_at | timestamptz | The question gets the transaction time, the reply the clock time, so the reply always sorts after |
+
+Indexes: `user_id`, `(conversation_id, created_at)`.
+
+Rules: the chat agent saves the question and reply together, in one transaction, after each answer (`saveExchange`). If a chat id already belongs to someone else, nothing is saved. Deleting a chat deletes its messages. Deleting an account deletes every chat. Chats are in the export (`chats/`). Never log titles or message text.
 
 ### connections
 One row per connected app.
