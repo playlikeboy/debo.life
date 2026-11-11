@@ -2,9 +2,9 @@
 
 Build in this order. Do not start a phase until the one before it meets its "done when" line. Each phase leaves something a real person can use.
 
-## What's next (as of 10 November 2026)
+## What's next (as of 11 November 2026)
 
-Where we are: a person can sign up, write journal entries, ask Debo about them and get answers with source chips, edit and delete entries, read a record of what Debo did, download everything as a zip, see, fix and forget the memories Debo picked out of their entries ("What Debo knows", through the hosted Mem0 Platform), and delete their account. Each person has a daily AI limit. It runs at debo.life and passes the end-to-end test. Phase 1 is not done: voice notes, papers and photos cannot be saved yet.
+Where we are: a person can sign up, write journal entries on their own journal page (with a draft kept in the browser, a word count and "Find an entry"), ask Debo about them from the home page and get answers with source chips that open the entry, edit and delete entries, read a record of what Debo did, download everything as a zip, see, fix and forget the memories Debo picked out of their entries ("What Debo knows", through the hosted Mem0 Platform), and delete their account. Each person has a daily AI limit. It runs at debo.life and passes the end-to-end test. Phase 1 is not done: voice notes, papers and photos cannot be saved yet.
 
 Do these in order. The first four protect people and our bill, so they come before new features.
 

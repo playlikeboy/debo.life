@@ -29,7 +29,7 @@ Status key: **Built**, **Next** (current phase), **Later**.
 
 | Feature | What the person gets | Status |
 |---|---|---|
-| Journal | Write an entry. Debo keeps it. | Next |
+| Journal | Write an entry. Debo keeps it. Find, edit and delete entries. | Built (`/home/journal`) |
 | Voice notes | Record or upload audio. Debo turns it into text and keeps both. | Next |
 | Papers | Upload a PDF or document. Debo reads it. | Next |
 | Photos | Upload a photo. Debo describes it and reads any text in it. | Next |
@@ -55,8 +55,8 @@ Status key: **Built**, **Next** (current phase), **Later**.
 |---|---|---|
 | What Debo knows | A page listing every memory, with its source. | Built (`/home/memories`, no search yet) |
 | Fix or forget | Correct a memory or remove it. | Built |
-| Activity record | A list of everything Debo read and did. | Later |
-| Export | Download everything in open formats. | Later |
+| Activity record | A list of everything Debo read and did. | Built (`/home/activity`) |
+| Export | Download everything in open formats. | Built (entries and activity record) |
 | Delete account | Remove everything for good. | Next (built with sign-up) |
 
 ### Help without being asked
@@ -81,6 +81,22 @@ Status key: **Built**, **Next** (current phase), **Later**.
 |---|---|---|
 | Your own key | Use Debo free with your own AI key. | Later |
 | Paid plan | Pay monthly and use our key, plus voice and connectors. | Later |
+
+## Home and journal: how the signed-in pages fit together
+
+Built 11 November 2026. The aim: a tired, non-technical person can write, find and trust their entries without being taught.
+
+- **One navigation on every page.** Home, Journal, Chat, What Debo knows, What Debo did. The current page is filled in and marked for screen readers. It wraps on small phones. A "Skip to content" link comes first.
+- **Home (`/home`) is the calm front door.** A greeting, the "Ask Debo" box (the one primary button), the three newest entries, one card per part of Debo, and the account section (Download everything, Sign out, Delete my account). With no entries yet, it says so and offers "Write your first entry".
+- **Journal (`/home/journal`) is for writing and reading.**
+  - A large writing box with a word count. Ctrl+Enter (Cmd+Enter on a Mac) saves. No title field: the first line becomes the title used in source chips.
+  - The unsaved draft stays only in this browser until it is saved, so a closed tab does not lose words. Saving, "Clear this draft", signing out and deleting the account remove it.
+  - When the box is empty, four gentle questions ("What happened today?") help a person start. Picking one shows it above the box; it is not saved into the entry.
+  - Entries are grouped by month, newest first, each headed by its full date (UTC, the same as source chips).
+  - "Find an entry" shows only the person's entries that contain those words.
+  - Edit in place ("Edit this entry", "Save changes", "Keep as it was") and delete with a confirm step ("Delete this entry", "Yes, delete it", "Keep it").
+  - Every entry has the anchor `entry-<id>`. Source chips link to `/home/journal#entry-<id>` (`entryHref` in `apps/web/src/lib/links.ts`). Arriving from a chip draws a thick border, shows "The entry you opened" and moves focus there.
+- The page shows the newest 500 entries; older ones are reached with "Find an entry".
 
 ## What Debo will not do
 
