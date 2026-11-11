@@ -22,6 +22,13 @@
       "when": 1794308323812,
       "tag": "0002_embeddings",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794367897005,
+      "tag": "0003_chats",
+      "breakpoints": true
     }
   ]
 }

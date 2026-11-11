@@ -24,6 +24,20 @@ export {
 export { EMBEDDING_DIMENSIONS } from "./schema";
 export { exportRecords, type ExportEntry, type ExportRecords } from "./export";
 export {
+  chatTitleFrom,
+  deleteConversation,
+  exportChats,
+  getConversation,
+  listConversations,
+  saveExchange,
+  type ChatKind,
+  type ChatMessage,
+  type ChatReply,
+  type ChatRole,
+  type ChatSummary,
+  type ExportChat,
+} from "./chats";
+export {
   listActivity,
   recordActivity,
   recordUsage,
@@ -38,7 +52,8 @@ export {
  *
  * Neon Auth keeps users in the `neon_auth` schema of our own database. Its
  * foreign keys cascade from `user` to sessions, sign-in accounts and
- * memberships, and ours cascade to sources, chunks, usage and activity.
+ * memberships, and ours cascade to sources, chunks, usage, activity,
+ * conversations and messages.
  * Tables left by the old self-hosted Mem0 (decision 18; no foreign keys) are
  * cleared here by payload.user_id if they exist. Memories in the hosted Mem0
  * Platform are deleted by @debo/memory, and files by @debo/ingest, before

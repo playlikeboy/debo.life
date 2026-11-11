@@ -105,3 +105,57 @@ export const chunks = pgTable(
     index("chunks_embedding_idx").using("hnsw", t.embedding.op("vector_cosine_ops")),
   ],
 );
+
+/**
+ * One chat with Debo. The id is the chat's thread id, made in the browser,
+ * so the first answer can save it without an extra round trip. The title is
+ * the first question, cut short, so the person can find the chat again.
+ */
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: uuid("id").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("conversations_user_updated_idx").on(t.userId, t.updatedAt)],
+);
+
+/** Who said a chat message: the person, or Debo. */
+export type ChatRole = "person" | "debo";
+
+/**
+ * What kind of message it is. The person always asks a `question`. Debo
+ * replies with an `answer` (with sources), `unknown` (nothing found),
+ * `limit` (daily limit reached), `error` (could not answer) or `stopped`
+ * (the person stopped the answer; the text is what was shown by then).
+ */
+export type ChatKind = "question" | "answer" | "unknown" | "limit" | "error" | "stopped";
+
+/** One message in a chat. Debo's answers keep the ids of the entries they used. */
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    role: text("role").$type<ChatRole>().notNull(),
+    // Plain text column: adding a kind needs no migration.
+    kind: text("kind").$type<ChatKind>().notNull(),
+    text: text("text").notNull(),
+    sourceIds: uuid("source_ids").array().notNull().default(sql`'{}'::uuid[]`),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("messages_user_idx").on(t.userId),
+    index("messages_conversation_created_idx").on(t.conversationId, t.createdAt),
+  ],
+);
