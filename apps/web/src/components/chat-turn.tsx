@@ -25,7 +25,7 @@ export function ChatTurn({
     <li className="grid gap-3">
       <div className="ml-auto max-w-[85%] rounded-[24px] rounded-br-[12px] border border-line bg-paper px-4 py-3">
         <p className="sr-only">You asked:</p>
-        <p className="whitespace-pre-wrap break-words">{turn.question}</p>
+        <p className="whitespace-pre-wrap wrap-anywhere">{turn.question}</p>
       </div>
 
       <div className="max-w-[40rem]">
@@ -74,7 +74,7 @@ function ReplyView({
     return (
       <div className="rounded-[24px] border-2 border-ink bg-paper p-5" style={{ boxShadow: "var(--shadow-hard)" }}>
         <p className="sr-only">Debo said:</p>
-        <p className="whitespace-pre-wrap break-words">{reply.text}</p>
+        <p className="whitespace-pre-wrap wrap-anywhere">{reply.text}</p>
         {reply.kind === "stopped" && <p className="mt-3 text-ink-soft">You stopped this answer here.</p>}
         {reply.sources.length > 0 && (
           <div className="mt-4">
@@ -108,7 +108,7 @@ function ReplyView({
 
   return (
     <div className="rounded-[24px] border border-line bg-paper p-5">
-      <p className="whitespace-pre-wrap break-words">{reply.text}</p>
+      <p className="whitespace-pre-wrap wrap-anywhere">{reply.text}</p>
       {reply.kind === "unknown" && (
         <p className="mt-3">
           <a href="/home/journal" className="font-semibold underline underline-offset-4">

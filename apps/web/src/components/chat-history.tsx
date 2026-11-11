@@ -62,7 +62,7 @@ function ChatRow({
         aria-current={active ? "page" : undefined}
         className="block min-h-11 font-semibold no-underline hover:underline"
       >
-        <span className="line-clamp-2 break-words">{chat.title}</span>
+        <span className="line-clamp-2 wrap-anywhere">{chat.title}</span>
         <span className="block font-normal text-ink-soft">
           {active ? "Open now · " : ""}
           {dayFormat.format(new Date(chat.updatedAt))}

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Create your Debo account", robots: {
 export default function SignUpPage() {
   return (
     <main className="wrap max-w-[34rem] py-16">
-      <a href="/" className="font-semibold underline underline-offset-4">
+      <a href="/" className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4">
         Back to Debo
       </a>
       <h1 className="h-section mt-8">Create your account</h1>

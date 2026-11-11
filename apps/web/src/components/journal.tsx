@@ -46,7 +46,7 @@ export function AskBox() {
             <ul className="mt-4 flex flex-wrap gap-2" aria-label="Where this answer came from">
               {state.sources.map((source) => (
                 <li key={source.id}>
-                  <a href={entryHref(source.id)} className="chip no-underline">
+                  <a href={entryHref(source.id)} className="chip min-h-11 no-underline">
                     {source.label}
                   </a>
                 </li>
@@ -204,7 +204,7 @@ export function EntryItem({
           </div>
         </div>
       ) : (
-        <p className="mt-3 whitespace-pre-wrap text-[1.125rem]">{text}</p>
+        <p className="mt-3 whitespace-pre-wrap wrap-anywhere text-[1.125rem]">{text}</p>
       )}
       {!editing && (
         <div className="mt-4 flex flex-wrap items-start gap-3">

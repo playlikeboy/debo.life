@@ -32,7 +32,7 @@ function List({ items }: { items: React.ReactNode[] }) {
 export default function PrivacyPage() {
   return (
     <main className="wrap max-w-[48rem] py-16">
-      <a href="/" className="font-semibold underline underline-offset-4">
+      <a href="/" className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4">
         Back to Debo
       </a>
 

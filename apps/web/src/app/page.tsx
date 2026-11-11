@@ -80,24 +80,24 @@ export default function Home() {
       </a>
 
       <header className="wrap flex items-center justify-between py-5">
-        <a href="/" className="flex items-center gap-2 font-display text-[1.375rem] font-bold no-underline">
+        <a href="/" className="flex min-h-11 items-center gap-2 font-display text-[1.375rem] font-bold no-underline">
           <Mark />
           Debo
         </a>
         <nav aria-label="Main" className="flex items-center gap-6">
           <ul className="hidden items-center gap-6 font-semibold md:flex">
             <li>
-              <a href="#promises" className="underline-offset-4 hover:underline">
+              <a href="#promises" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
                 Promises
               </a>
             </li>
             <li>
-              <a href="#plans" className="underline-offset-4 hover:underline">
+              <a href="#plans" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
                 Plans
               </a>
             </li>
             <li>
-              <a href="#questions" className="underline-offset-4 hover:underline">
+              <a href="#questions" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
                 Questions
               </a>
             </li>
@@ -289,10 +289,10 @@ export default function Home() {
           </p>
           <p className="text-ink-soft">Being built in the open by one person.</p>
           <nav aria-label="Footer" className="flex gap-6">
-            <a href="/privacy" className="font-semibold underline underline-offset-4">
+            <a href="/privacy" className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4">
               Privacy
             </a>
-            <a href={REPO} className="font-semibold underline underline-offset-4">
+            <a href={REPO} className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4">
               GitHub
             </a>
           </nav>

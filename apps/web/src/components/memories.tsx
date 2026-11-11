@@ -91,11 +91,11 @@ export function MemoryItem({
           </div>
         </div>
       ) : (
-        <p className="text-[1.125rem]">{text}</p>
+        <p className="wrap-anywhere text-[1.125rem]">{text}</p>
       )}
 
       <p className="mt-3">
-        <a href={entryHref(sourceId)} className="chip no-underline">
+        <a href={entryHref(sourceId)} className="chip min-h-11 no-underline">
           {sourceLabel}
         </a>
       </p>
