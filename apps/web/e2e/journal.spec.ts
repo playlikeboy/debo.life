@@ -49,6 +49,15 @@ test("write an entry, ask about it, then delete everything", async ({ page }) =>
   await expect(chip).toHaveAttribute("href", /^\/home\/journal#entry-/);
   await expect(page.getByText(/March/).first()).toBeVisible();
 
+  // Small talk gets a short reply with no sources (decision 24).
+  await askBox.fill("Hi Debo!");
+  await page.getByRole("button", { name: "Ask Debo" }).click();
+  const reply = page.locator('[aria-live="polite"]');
+  await expect(reply).not.toContainText("March", { timeout: 60_000 }); // the Riya answer is replaced
+  await expect(reply).toContainText(/\w/);
+  await expect(page.getByText("I don’t have anything about that yet.", { exact: false })).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Where this answer came from" })).toHaveCount(0);
+
   // A question nothing answers: Debo must say it does not know.
   await askBox.fill("What is my passport number?");
   await page.getByRole("button", { name: "Ask Debo" }).click();

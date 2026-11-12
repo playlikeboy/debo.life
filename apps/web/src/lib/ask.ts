@@ -6,7 +6,9 @@ import { databaseUrl, serverEnv } from "@/lib/server-env";
 // The one path from a question to an answer. Every surface (the ask box,
 // the chat) goes through here, so the rules hold everywhere:
 // - answers come only from the person's own pieces, with sources;
-// - no source, no answer ("I don't have anything about that yet");
+// - no source, no answer ("I don't have anything about that yet"), except
+//   small talk ("hi", "thanks", "what can you do?"), which gets a short reply
+//   with no sources and no facts about the person (decision 24);
 // - the daily limit is checked before any model call;
 // - usage and the activity record are written (ids and numbers only).
 //
@@ -84,16 +86,15 @@ export async function* askStream(
     console.error("question embedding failed", { userId, reason: error instanceof Error ? error.name : "unknown" });
   }
 
-  const pieces = await searchPieces(db, userId, question, { embedding });
-  if (pieces.length === 0) {
-    await logActivity(userId, "debo", "did-not-know");
-    yield { type: "done", outcome: { status: "unknown" } };
+  // The daily limit is checked before any model call below.
+  if ((await tokensUsedToday(db, userId)) >= dailyTokenLimit()) {
+    yield { type: "done", outcome: { status: "limit", message: LIMIT_MESSAGE } };
     return;
   }
 
-  // Only spend on the AI when there is something to answer from.
-  if ((await tokensUsedToday(db, userId)) >= dailyTokenLimit()) {
-    yield { type: "done", outcome: { status: "limit", message: LIMIT_MESSAGE } };
+  const pieces = await searchPieces(db, userId, question, { embedding });
+  if (pieces.length === 0) {
+    yield* smallTalkOrUnknown(llm, userId, question, options.signal);
     return;
   }
 
@@ -129,13 +130,51 @@ export async function* askStream(
       } else if (shown) {
         yield { type: "done", outcome: { status: "answered", answer: event.answer, sources } };
       } else {
-        await logActivity(userId, "debo", "did-not-know");
-        yield { type: "done", outcome: { status: "unknown" } };
+        // Nothing shown yet: the entries found don't answer it. It may be small talk.
+        yield* smallTalkOrUnknown(llm, userId, question, options.signal);
       }
       return;
     }
   }
   throw new Error("The answer stream ended without a result.");
+}
+
+/**
+ * The person's entries don't answer this message. Small talk ("hi",
+ * "thanks", "what can you do?") gets a short reply with no sources; it
+ * never states a fact about the person. Anything else is "unknown".
+ */
+async function* smallTalkOrUnknown(
+  llm: ReturnType<typeof createLlm>,
+  userId: string,
+  message: string,
+  signal: AbortSignal | undefined,
+): AsyncGenerator<AskEvent, void> {
+  const db = databaseUrl();
+  let opened = false;
+  for await (const event of llm.streamReply(message, { signal })) {
+    if (event.type === "text") {
+      if (!opened) {
+        opened = true;
+        yield { type: "sources", sources: [] };
+      }
+      yield { type: "text", delta: event.delta };
+      continue;
+    }
+    await recordUsage(db, userId, { provider: event.provider, units: event.tokens });
+    console.info("small talk", { userId, talk: event.talk, provider: event.provider, tokens: event.tokens, stopped: event.stopped });
+    if (event.stopped) {
+      yield { type: "done", outcome: { status: "stopped", answer: event.reply, sources: [] } };
+    } else if (event.talk) {
+      await logActivity(userId, "debo", "answered");
+      yield { type: "done", outcome: { status: "answered", answer: event.reply, sources: [] } };
+    } else {
+      await logActivity(userId, "debo", "did-not-know");
+      yield { type: "done", outcome: { status: "unknown" } };
+    }
+    return;
+  }
+  throw new Error("The reply stream ended without a result.");
 }
 
 /** Answer a question from this person's own entries, all at once. Throws only on unexpected failures. */

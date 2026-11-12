@@ -43,15 +43,17 @@ export function AskBox() {
         {state.status === "answered" && (
           <div className="rounded-[24px] border-2 border-ink bg-paper p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
             <p className="text-[1.125rem] font-semibold">{state.answer}</p>
-            <ul className="mt-4 flex flex-wrap gap-2" aria-label="Where this answer came from">
-              {state.sources.map((source) => (
-                <li key={source.id}>
-                  <a href={entryHref(source.id)} className="chip min-h-11 no-underline">
-                    {source.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            {state.sources.length > 0 && (
+              <ul className="mt-4 flex flex-wrap gap-2" aria-label="Where this answer came from">
+                {state.sources.map((source) => (
+                  <li key={source.id}>
+                    <a href={entryHref(source.id)} className="chip min-h-11 no-underline">
+                      {source.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
         {state.status === "unknown" && (

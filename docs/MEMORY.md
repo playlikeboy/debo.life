@@ -1,6 +1,6 @@
 # Memory
 
-Status: partly built. Built so far: meaning and keyword search over journal entries, merged (steps 1 to 3), and answers only from those pieces, with source ids, or "I don't have anything about that yet" (steps 4 to 6). Memories come from the hosted Mem0 Platform through `@debo/memory` (decision 20), and the "What Debo knows" page shows them. Answers do not use memories yet; they still come from entry pieces only. This is the heart of Debo. If recall is poor, nothing else matters.
+Status: partly built. Built so far: meaning and keyword search over journal entries, merged (steps 1 to 3), and answers only from those pieces, with source ids, or "I don't have anything about that yet" (steps 4 to 6). Small talk such as "hi" gets a short reply with no sources and no facts about the person (decision 24). Memories come from the hosted Mem0 Platform through `@debo/memory` (decision 20), and the "What Debo knows" page shows them. Answers do not use memories yet; they still come from entry pieces only. This is the heart of Debo. If recall is poor, nothing else matters.
 
 ## How memory works today
 
