@@ -25,9 +25,9 @@ type CustomFactory = BuiltInAgentCustomFactoryConfig["factory"];
 type FactoryContext = Parameters<CustomFactory>[0];
 type AgentEvent = Awaited<ReturnType<CustomFactory>> extends AsyncIterable<infer E> ? E : never;
 
-const Question = z.string().trim().min(3).max(MAX_QUESTION);
+const Question = z.string().trim().min(1).max(MAX_QUESTION);
 const ERROR_MESSAGE = "I couldn’t reach my AI helper just now. Nothing was lost. Try again in a moment.";
-const INVALID_MESSAGE = `Ask a question of a few words, up to ${MAX_QUESTION} characters.`;
+const INVALID_MESSAGE = `Write something, up to ${MAX_QUESTION} characters.`;
 
 /** Text of the last message the person sent, or null if there is none. */
 function lastUserText(input: FactoryContext["input"]): string | null {

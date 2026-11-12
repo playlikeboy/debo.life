@@ -27,7 +27,7 @@ export function AskBox() {
             id="question"
             name="question"
             required
-            minLength={3}
+            minLength={1}
             maxLength={500}
             defaultValue={state.question}
             placeholder="When did I last see Riya?"

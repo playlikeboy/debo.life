@@ -75,7 +75,7 @@ export type AskState = {
   sources: Chip[];
 };
 
-const Question = z.string().trim().min(3, "Ask a question of at least a few words.").max(500, "Keep your question under 500 characters.");
+const Question = z.string().trim().min(1, "Write something first.").max(500, "Keep your question under 500 characters.");
 
 export async function askDebo(_prev: AskState, formData: FormData): Promise<AskState> {
   const raw = formData.get("question");

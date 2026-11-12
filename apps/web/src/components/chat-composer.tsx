@@ -45,8 +45,8 @@ export const ChatComposer = forwardRef<
   function send() {
     const question = value.trim();
     if (running || !ready) return;
-    if (question.length < 3) {
-      setHint("Write a question of a few words first.");
+    if (question.length < 1) {
+      setHint("Write something first.");
       return;
     }
     if (question.length > MAX_QUESTION) {
