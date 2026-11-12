@@ -6,6 +6,7 @@ import { newTestPerson, signUp } from "./helpers";
 // the end: sign up, write, ask (with and without an answer), delete.
 // Uses made-up data only.
 test("write an entry, ask about it, then delete everything", async ({ page }) => {
+  test.setTimeout(180_000); // many model calls in one test
   const nav = page.getByRole("navigation", { name: "Your Debo" });
   const askBox = page.getByRole("textbox", { name: "Ask Debo about your entries" });
 
@@ -52,7 +53,7 @@ test("write an entry, ask about it, then delete everything", async ({ page }) =>
   // Small talk gets a short reply with no sources (decision 24).
   await askBox.fill("Hi Debo!");
   await page.getByRole("button", { name: "Ask Debo" }).click();
-  const reply = page.locator('[aria-live="polite"]');
+  const reply = page.locator('[aria-live="polite"]').first();
   await expect(reply).not.toContainText("March", { timeout: 60_000 }); // the Riya answer is replaced
   await expect(reply).toContainText(/\w/);
   await expect(page.getByText("I don’t have anything about that yet.", { exact: false })).toHaveCount(0);
