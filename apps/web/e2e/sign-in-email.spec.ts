@@ -12,6 +12,10 @@ test("sign in by email code or link, then delete the account", async ({ page }) 
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/$/);
 
+  // A wrong password says so; it is not shown as a connection problem.
+  await signInWithPassword(page, { email: person.email, password: "not-the-password-1" });
+  await expect(page.getByRole("alert")).toContainText("That email and password don't match.");
+
   await page.goto("/auth/sign-in");
   await page.waitForLoadState("networkidle");
   await page.getByRole("radio", { name: "Email me a code" }).check();

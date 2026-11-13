@@ -28,8 +28,29 @@ type Step =
 const input = "mt-2 block min-h-12 w-full rounded-[12px] border-2 border-ink bg-paper px-3 py-2";
 const OFFLINE = "I couldn't reach the sign-in service. Check your connection and try again.";
 
+type AuthError = { status?: number; code?: string; message?: string };
+
+/**
+ * @neon/auth 0.8 throws on any non-2xx reply (a wrong password is a 401)
+ * instead of returning `{ error }`. Turn those back into `{ error }`, so only
+ * a real network failure reaches run()'s catch and shows OFFLINE.
+ */
+async function settle<T extends { error?: AuthError | null }>(call: Promise<T>): Promise<T | { data: null; error: AuthError }> {
+  try {
+    return await call;
+  } catch (thrown) {
+    const status = (thrown as { status?: unknown })?.status;
+    if (typeof status !== "number") throw thrown;
+    const inner = (thrown as { error?: AuthError }).error;
+    return {
+      data: null,
+      error: { status, code: inner?.code ?? (thrown as AuthError).code, message: inner?.message ?? (thrown as AuthError).message },
+    };
+  }
+}
+
 /** Plain words for the errors people can act on. */
-function explain(error: { status?: number; code?: string; message?: string } | null | undefined, fallback: string) {
+function explain(error: AuthError | null | undefined, fallback: string) {
   if (!error) return fallback;
   if (error.status === 429) return "Too many tries. Wait a minute, then try again.";
   if (error.code?.includes("OTP") || error.code?.includes("CODE")) return "That code is wrong or has run out. Check it, or ask for a new one.";
@@ -70,7 +91,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   };
 
   async function signedIn() {
-    const { data } = await authClient.getSession();
+    const { data } = await settle(authClient.getSession());
     return Boolean(data?.user);
   }
 
@@ -81,7 +102,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       const parsed = SignUp.safeParse(form);
       if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Check the form and try again.");
       return run(async () => {
-        const result = await authClient.signUp.email(parsed.data);
+        const result = await settle(authClient.signUp.email(parsed.data));
         if (result.error) return setError(explain(result.error, result.error.message ?? "I couldn't create your account. Try again in a moment."));
         if (await signedIn()) return goHome();
         setStep({ kind: "code", email: parsed.data.email, purpose: "email-verification" });
@@ -92,7 +113,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       const parsed = SignIn.safeParse(form);
       if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Check the form and try again.");
       return run(async () => {
-        const result = await authClient.signIn.email(parsed.data);
+        const result = await settle(authClient.signIn.email(parsed.data));
         if (result.error?.status === 403 || result.error?.code === "EMAIL_NOT_VERIFIED") {
           // Neon Auth has just emailed a code to confirm the address.
           return setStep({ kind: "code", email: parsed.data.email, purpose: "email-verification" });
@@ -106,11 +127,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
     if (!email.success) return setError(email.error.issues[0]?.message ?? "Check your email and try again.");
     return run(async () => {
       if (method === "code") {
-        const result = await authClient.emailOtp.sendVerificationOtp({ email: email.data, type: "sign-in" });
+        const result = await settle(authClient.emailOtp.sendVerificationOtp({ email: email.data, type: "sign-in" }));
         if (result.error) return setError(explain(result.error, "I couldn't send a code. Try again in a moment."));
         setStep({ kind: "code", email: email.data, purpose: "sign-in" });
       } else {
-        const result = await authClient.signIn.magicLink({ email: email.data, callbackURL: "/home" });
+        const result = await settle(authClient.signIn.magicLink({ email: email.data, callbackURL: "/home" }));
         if (result.error) return setError(explain(result.error, "I couldn't send a link. Try again in a moment."));
         setStep({ kind: "link-sent", email: email.data });
       }
@@ -125,8 +146,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
     run(async () => {
       const result =
         step.purpose === "sign-in"
-          ? await authClient.signIn.emailOtp({ email: step.email, otp: code.data })
-          : await authClient.emailOtp.verifyEmail({ email: step.email, otp: code.data });
+          ? await settle(authClient.signIn.emailOtp({ email: step.email, otp: code.data }))
+          : await settle(authClient.emailOtp.verifyEmail({ email: step.email, otp: code.data }));
       if (result.error) return setError(explain(result.error, "That code is wrong or has run out. Check it, or ask for a new one."));
       if (await signedIn()) return goHome();
       // Confirmed, but not signed in yet: send them to sign in with their password.
@@ -139,8 +160,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
     run(async () => {
       const result =
         step.kind === "link-sent"
-          ? await authClient.signIn.magicLink({ email: step.email, callbackURL: "/home" })
-          : await authClient.emailOtp.sendVerificationOtp({ email: step.email, type: step.purpose });
+          ? await settle(authClient.signIn.magicLink({ email: step.email, callbackURL: "/home" }))
+          : await settle(authClient.emailOtp.sendVerificationOtp({ email: step.email, type: step.purpose }));
       if (result.error) return setError(explain(result.error, "I couldn't send it again. Try again in a moment."));
       setNote(step.kind === "link-sent" ? "A new link is on its way." : "A new code is on its way.");
     });
