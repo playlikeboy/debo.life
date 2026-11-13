@@ -12,7 +12,8 @@ if (!url) throw new Error("DATABASE_URL_UNPOOLED is not set. Run `neon env pull`
 
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./src/schema.ts",
+  // Each area keeps its tables in its own file: schema.ts, schema-tasks.ts, ...
+  schema: ["./src/schema.ts", "./src/schema-*.ts"],
   out: "./migrations",
   // Neon Auth owns the neon_auth schema. Only ever touch our own tables.
   schemaFilter: ["public"],
