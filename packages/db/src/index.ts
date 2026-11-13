@@ -85,3 +85,10 @@ export async function checkDatabase(connectionString: string): Promise<{ serverV
     return { serverVersion: row.server_version };
   });
 }
+export {
+  Autonomy,
+  DEFAULT_SETTINGS,
+  getUserSettings,
+  updateUserSettings,
+  UserSettings,
+} from "./settings";
