@@ -5,12 +5,12 @@ import { join } from "node:path";
 import { test } from "node:test";
 import {
   accessKeyFromEnv,
-  assertApiDeploymentConfig,
   browserWorkerUrl,
   type Config,
   defaultDataDir,
   readConfig,
   shadowedEnvKeys,
+  telemetryOptedIn,
 } from "../apps/server/src/config.ts";
 
 const sampleConfig: Config = {
@@ -24,38 +24,29 @@ const sampleConfig: Config = {
   allowedOrigins: ["http://localhost:8081"],
 };
 
-function liveConfig(intelligenceApiKey?: string): Config {
-  return {
-    ...sampleConfig,
-    mode: "live",
-    agentBackend: "model",
-    intelligenceApiKey,
-  };
-}
-
-const missingKeyMessage =
-  "Debo requires CPK_INTELLIGENCE_API_KEY. " +
-  "Run `npx copilotkit@latest login` and `npx copilotkit@latest project select`, " +
-  "then set the generated server-only key. " +
-  "See https://docs.copilotkit.ai/intelligence/connect-your-runtime";
-
-test("every API mode rejects a missing or blank Intelligence key", () => {
-  for (const mode of [sampleConfig, liveConfig()]) {
-    for (const key of [undefined, "", " \t\n"]) {
-      assert.throws(() => assertApiDeploymentConfig({ ...mode, intelligenceApiKey: key }), {
-        name: "Error",
-        message: missingKeyMessage,
-      });
-    }
-  }
+test("no Intelligence key is needed to read config in sample or live mode", (t) => {
+  const previous = { ...process.env };
+  t.after(() => {
+    process.env = previous;
+  });
+  delete process.env.CPK_INTELLIGENCE_API_KEY;
+  process.env.HOST = "127.0.0.1";
+  process.env.WORKSPACE_MODE = "sample";
+  assert.equal(readConfig().mode, "sample");
+  process.env.WORKSPACE_MODE = "live";
+  process.env.OPENFUSE_ACCESS_KEY = "a".repeat(32);
+  process.env.TOKEN_ENCRYPTION_KEY = Buffer.alloc(32, 1).toString("base64");
+  assert.equal(readConfig().mode, "live");
+  assert.equal("intelligenceApiKey" in readConfig(), false);
 });
 
-test("every API mode accepts a non-empty Intelligence key", () => {
-  for (const mode of [sampleConfig, liveConfig()]) {
-    assert.doesNotThrow(() =>
-      assertApiDeploymentConfig({ ...mode, intelligenceApiKey: "test-project-key-never-sent" }),
-    );
-  }
+test("telemetry is opt-in: only DEBO_TELEMETRY on, true or 1 counts", () => {
+  for (const value of ["on", "ON", "true", "1", " on "])
+    assert.equal(telemetryOptedIn({ DEBO_TELEMETRY: value }), true, value);
+  for (const value of [undefined, "", "off", "false", "0", "yes", "enabled"])
+    assert.equal(telemetryOptedIn({ DEBO_TELEMETRY: value }), false, String(value));
+  // The old CopilotKit variables never opt anyone in.
+  assert.equal(telemetryOptedIn({ CPK_TELEMETRY_ID: "x" }), false);
 });
 
 test("web search is enabled by default with an explicit opt-out", (t) => {
@@ -66,7 +57,6 @@ test("web search is enabled by default with an explicit opt-out", (t) => {
   process.env.WORKSPACE_MODE = "sample";
   process.env.AGENT_BACKEND = "model";
   process.env.HOST = "127.0.0.1";
-  process.env.CPK_INTELLIGENCE_API_KEY = "test-project-key-never-sent";
   delete process.env.WEB_SEARCH_ENABLED;
   assert.equal(readConfig().webSearchEnabled, true);
   for (const value of ["true", "", "1", "TRUE"]) {
@@ -82,11 +72,9 @@ test("Jev mode is off by default and validates explicit modes", async () => {
   const old = {
     JEV_MODE: process.env.JEV_MODE,
     TYPESAFE_API_KEY: process.env.TYPESAFE_API_KEY,
-    CPK_INTELLIGENCE_API_KEY: process.env.CPK_INTELLIGENCE_API_KEY,
   };
   try {
-    process.env.CPK_INTELLIGENCE_API_KEY = "test-project-key-never-sent";
-    delete process.env.JEV_MODE;
+      delete process.env.JEV_MODE;
     assert.equal(readConfig().jevMode, "off");
     process.env.JEV_MODE = "sample";
     assert.equal(readConfig().jevMode, "sample");
@@ -128,12 +116,10 @@ test("computer provider defaults to Docker and e2b-desktop requires a server-sid
     "E2B_API_KEY",
     "COMPUTER_E2B_TEMPLATE",
     "COMPUTER_DEPLOYMENT_ID",
-    "CPK_INTELLIGENCE_API_KEY",
   ];
   const old = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
   try {
-    process.env.CPK_INTELLIGENCE_API_KEY = "test-project-key-never-sent";
-    for (const key of keys.slice(0, 5)) delete process.env[key];
+      for (const key of keys.slice(0, 5)) delete process.env[key];
     assert.equal(readConfig().computerProvider, "docker");
     process.env.COMPUTER_DEPLOYMENT_ID = " ";
     assert.equal(readConfig().computerDeploymentId, undefined);

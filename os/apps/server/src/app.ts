@@ -1,7 +1,6 @@
 import "./config.ts";
 import { randomUUID } from "node:crypto";
 import { MessageSchema } from "@ag-ui/core";
-import { CopilotKitIntelligence } from "@copilotkit/runtime/v2";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
@@ -17,7 +16,7 @@ import { createAuth } from "./auth.ts";
 import { BrowserService } from "./browser.ts";
 import { ComputerService, type DockerRunner, resolveComputerDeployment } from "./computer.ts";
 import { computerRoutes } from "./computer-routes.ts";
-import { assertApiDeploymentConfig, type Config } from "./config.ts";
+import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { agentRoutes } from "./engine/routes.ts";
 import { AgentService } from "./engine/service.ts";
@@ -25,6 +24,8 @@ import { AppError } from "./errors.ts";
 import { Files } from "./files.ts";
 import { GoogleAuth } from "./google-auth.ts";
 import { rateLimit } from "./rate-limit.ts";
+import { DatabaseAgentRunner, threadOwner } from "./thread-runner.ts";
+import { assertThreadId, ThreadStore } from "./threads.ts";
 import { WorkspaceService } from "./workspace.ts";
 
 export async function createApp(
@@ -32,7 +33,6 @@ export async function createApp(
   config: Config,
   options: { docker?: DockerRunner } = {},
 ) {
-  assertApiDeploymentConfig(config);
   await resolveComputerDeployment(config);
   const auth = await createAuth(db, config),
     files = new Files(db, config, auth),
@@ -48,8 +48,8 @@ export async function createApp(
   const browser = new BrowserService(db, config, auth, files);
   const computer = new ComputerService(db, config, options.docker);
   const agent = new AgentService(db, config, workspace, files, actions, browser, computer);
-  const intelligence = new CopilotKitIntelligence({ apiKey: config.intelligenceApiKey });
-  const runtime = makeRuntime(config, agent, auth, intelligence);
+  const threads = new ThreadStore(db);
+  const runtime = makeRuntime(config, agent, auth, new DatabaseAgentRunner(threads));
   const app = new Hono<{ Variables: { owner: string } }>();
   const origins = new Set([...config.allowedOrigins, new URL(config.publicUrl).origin]);
   app.use("*", async (c, next) => {
@@ -214,28 +214,32 @@ export async function createApp(
       201,
     );
   });
-  app.get("/api/main-thread", async (c) => {
-    const owner = c.get("owner");
-    await db.insertIfAbsent(owner, "conversation-settings", {
-      id: "main",
-      threadId: randomUUID(),
-      existing: false,
-    });
-    const main = await db.get<{ threadId: string }>(owner, "conversation-settings", "main");
-    if (!main) throw new AppError("Main conversation could not be loaded", 503);
-    try {
-      await intelligence.getOrCreateThread({
-        threadId: main.threadId,
-        userId: owner,
-        agentId: "default",
-      });
-    } catch {
-      throw new AppError(
-        "Main conversation is unavailable. Check the Rich Threads connection and try again.",
-        502,
-      );
-    }
-    return c.json({ threadId: main.threadId, existing: true });
+  app.get("/api/main-thread", async (c) =>
+    c.json({ threadId: await threads.mainThreadId(c.get("owner")), existing: true }),
+  );
+  app.get("/api/threads", async (c) => {
+    const limit = Number(c.req.query("limit"));
+    return c.json(
+      await threads.list(c.get("owner"), {
+        includeArchived: c.req.query("includeArchived") === "true",
+        limit: Number.isFinite(limit) && limit > 0 ? limit : undefined,
+        cursor: c.req.query("cursor"),
+      }),
+    );
+  });
+  app.patch("/api/threads/:id", async (c) => {
+    const body = z.object({ name: z.string() }).parse(await c.req.json());
+    return c.json(await threads.rename(c.get("owner"), assertThreadId(c.req.param("id")), body.name));
+  });
+  app.post("/api/threads/:id/archive", async (c) =>
+    c.json(await threads.archive(c.get("owner"), assertThreadId(c.req.param("id")))),
+  );
+  app.post("/api/threads/:id/restore", async (c) =>
+    c.json(await threads.restore(c.get("owner"), assertThreadId(c.req.param("id")))),
+  );
+  app.get("/api/threads/:id/messages", async (c) => {
+    const history = await threads.history(c.get("owner"), assertThreadId(c.req.param("id")));
+    return c.json({ messages: history.messages });
   });
   app.get("/api/conversation", async (c) =>
     c.json((await db.get(c.get("owner"), "conversations", "default")) ?? { messages: [] }),
@@ -344,7 +348,8 @@ export async function createApp(
         "Configure a model and provider API key, or a valid AG-UI endpoint, to start chat",
         503,
       );
-    const response = await runtime.fetch(c.req.raw);
+    // The runner reads the owner from here, so each person only reaches their own threads.
+    const response = await threadOwner.run(c.get("owner"), () => runtime.fetch(c.req.raw));
     // Runtime 1.70 emits SSE strings; a WHATWG Response body requires byte chunks.
     const encoder = new TextEncoder();
     const body = response.body?.pipeThrough(

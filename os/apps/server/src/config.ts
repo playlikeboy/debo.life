@@ -23,9 +23,28 @@ if (existsSync(".env")) {
           : "Unset them to use the .env values."),
     );
 }
-// Capture the full setup/activation funnel while preserving explicit SDK opt-outs
-// and any deployment-specific sampling rate. Config loads before runtime imports.
-process.env.COPILOTKIT_TELEMETRY_SAMPLE_RATE ??= "1";
+/** Telemetry is off unless the operator sets DEBO_TELEMETRY=on. See docs/TELEMETRY.md. */
+export function telemetryOptedIn(env: Record<string, string | undefined> = process.env) {
+  return ["on", "true", "1"].includes(env.DEBO_TELEMETRY?.trim().toLowerCase() ?? "");
+}
+// Config loads before the runtime is imported, so this decides what the SDK sees.
+// Off by default: the CopilotKit SDK would otherwise report usage on its own.
+if (telemetryOptedIn()) {
+  process.env.COPILOTKIT_TELEMETRY_SAMPLE_RATE ??= "1";
+  // The operator opted in explicitly, so a stale opt-out variable must not silently win.
+  if (process.env.DO_NOT_TRACK === "1" || process.env.DO_NOT_TRACK === "true") {
+    console.warn("[Debo] DO_NOT_TRACK is set, so telemetry stays off even though DEBO_TELEMETRY=on.");
+    process.env.COPILOTKIT_TELEMETRY_DISABLED = "true";
+  }
+} else {
+  process.env.COPILOTKIT_TELEMETRY_DISABLED = "true";
+  // Never leave an account identity around for the SDK to attach to anything.
+  delete process.env.CPK_TELEMETRY_ID;
+}
+if (process.env.CPK_INTELLIGENCE_API_KEY?.trim())
+  console.warn(
+    "[Debo] CPK_INTELLIGENCE_API_KEY is ignored. Debo keeps conversations in its own database and sends them to no one.",
+  );
 
 export interface Config {
   mode: "sample" | "live";
@@ -43,7 +62,6 @@ export interface Config {
   agentBackend: "sample" | "model" | "agui";
   agentUrl?: string;
   agentToken?: string;
-  intelligenceApiKey?: string;
   googleClientId?: string;
   googleClientSecret?: string;
   googleRedirectUri: string;
@@ -68,25 +86,9 @@ export type ComputerProvider = "docker" | "e2b-desktop";
 /** Pinned so live rankings do not shift when TypeSafe moves the `jev-latest` alias. */
 export const defaultJevModel = "jev-1.13.0";
 
-export const intelligenceKeyRequiredMessage =
-  "Debo requires CPK_INTELLIGENCE_API_KEY. " +
-  "Run `npx copilotkit@latest login` and `npx copilotkit@latest project select`, " +
-  "then set the generated server-only key. " +
-  "See https://docs.copilotkit.ai/intelligence/connect-your-runtime";
-
 export function required(name: string, message: string, value = process.env[name]): string {
   if (!value?.trim()) throw new Error(message);
   return value.trim();
-}
-
-export function assertApiDeploymentConfig(
-  config: Config,
-): asserts config is Config & { intelligenceApiKey: string } {
-  required(
-    "CPK_INTELLIGENCE_API_KEY",
-    intelligenceKeyRequiredMessage,
-    config.intelligenceApiKey ?? "",
-  );
 }
 
 /** Accept a full worker URL, or host:port from a platform that omits the scheme. */
@@ -166,7 +168,6 @@ export function readConfig(): Config {
     agentBackend: backend,
     agentUrl: process.env.AGENT_URL,
     agentToken: process.env.AGENT_TOKEN,
-    intelligenceApiKey: required("CPK_INTELLIGENCE_API_KEY", intelligenceKeyRequiredMessage),
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
     googleRedirectUri: `${publicUrl}/api/google/callback`,

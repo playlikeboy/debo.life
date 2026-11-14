@@ -1,8 +1,8 @@
 import "./config.ts";
 import { HttpAgent } from "@ag-ui/client";
 import {
+  type AgentRunner,
   type AgentsFactory,
-  type CopilotKitIntelligence,
   CopilotRuntime,
   createCopilotHonoHandler,
 } from "@copilotkit/runtime/v2";
@@ -29,7 +29,7 @@ export function makeRuntime(
   config: Config,
   service: AgentService,
   auth: Auth,
-  intelligence: CopilotKitIntelligence,
+  runner: AgentRunner,
 ) {
   // Built on first use, then shared so live mode reuses one TypeSafe client across requests.
   let jevAdapter: JevAdapter | undefined;
@@ -57,14 +57,10 @@ export function makeRuntime(
   });
   const runtime = new CopilotRuntime({
     agents,
-    intelligence,
-    // The shared CopilotKit sink carries this tag onto existing PostHog events.
+    // Debo's own Postgres-backed runner. No CopilotKit Intelligence service is used.
+    runner,
+    // Only used if the operator opts in to telemetry (see config.ts and docs/TELEMETRY.md).
     telemetryProperties: { accessibility_title: "Debo" },
-    identifyUser: async (request) => ({
-      id: await auth.owner(request.headers.get("authorization") ?? undefined),
-      name: "Debo user",
-    }),
-    generateThreadNames: false,
   });
   return createCopilotHonoHandler({ runtime, basePath: "/api/copilotkit" });
 }

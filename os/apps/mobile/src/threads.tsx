@@ -1,4 +1,3 @@
-import { useThreads } from "@copilotkit/react-native/headless";
 import {
   Archive,
   CalendarDays,
@@ -11,6 +10,7 @@ import {
 } from "lucide-react-native";
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { useSavedThreads } from "./thread-list";
 import { Button, colors, ErrorNotice, Field, LinkRow, Sheet, s } from "./ui";
 import { useWorkspace } from "./workspace";
 
@@ -112,7 +112,7 @@ export function ThreadsSheet({ onClose }: { onClose: () => void }) {
     start,
   } = useFuseThread();
   const { workspace, open, navigate, refresh } = useWorkspace();
-  const threads = useThreads({ agentId: "default", enabled, includeArchived: true, limit: 20 });
+  const threads = useSavedThreads(enabled, 20);
   const [editing, setEditing] = useState<string>();
   const [name, setName] = useState("");
   const [error, setError] = useState("");
