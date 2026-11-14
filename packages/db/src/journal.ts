@@ -119,7 +119,8 @@ export async function deleteEntry(connectionString: string, userId: string, sour
 export type FoundPiece = {
   chunkId: string;
   sourceId: string;
-  kind: SourceKind;
+  /** Missing on pieces made before kinds existed: those are journal entries. */
+  kind?: SourceKind;
   title: string;
   happenedAt: Date;
   text: string;

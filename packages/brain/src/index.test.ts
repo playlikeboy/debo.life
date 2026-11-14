@@ -102,6 +102,15 @@ describe("brain: askStream", () => {
     expect(calls.usage).toEqual([3, 20]);
   });
 
+  it("names a voice note or a video as the source, not 'Journal'", async () => {
+    for (const [kind, label] of [["voice", "Voice note, 14 March"], ["video", "Video, 14 March"]] as const) {
+      const { store } = fakeStore({ found: [{ ...piece, kind }] });
+      const brain = createBrain({ store, llm: fakeLlm({ found: true }), log: quiet });
+      const events = await collect(brain.askStream(ME, "Who did I walk with?"));
+      expect(events[0]).toEqual({ type: "sources", sources: [{ id: ENTRY, label }] });
+    }
+  });
+
   it("says unknown when nothing is found and it is not small talk", async () => {
     const { store, calls } = fakeStore({ found: [] });
     const answerCalled = { n: 0 };
