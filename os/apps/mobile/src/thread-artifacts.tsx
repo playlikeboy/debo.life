@@ -5,7 +5,7 @@ import type { Artifact, BrowserSession } from "../../../packages/domain/src";
 import type { AgentArtifact, AgentTask } from "../../../packages/domain/src/agent";
 import { ArtifactCard, TaskCard } from "./agent-ui";
 import { BrowserThreadCard } from "./computer";
-import { Button, Card, colors, ErrorNotice, s } from "./ui";
+import { Button, Card, colors, ErrorNotice, fontSize, radius, s } from "./ui";
 import { useWorkspace } from "./workspace";
 
 export function FileThreadCard({ file }: { file: Artifact }) {
@@ -17,9 +17,18 @@ export function FileThreadCard({ file }: { file: Artifact }) {
       onPress={() => open({ type: "file", file })}
       style={{ width: "100%", maxWidth: 440 }}
     >
-      <Card style={{ padding: 18, backgroundColor: "#F0F1F2", gap: 18 }}>
-        <View style={{ borderRadius: 12, padding: 22, backgroundColor: "#FFF", gap: 14 }}>
-          <Text style={[s.heading, { fontSize: 18 }]}>{file.name.replace(/\.pdf$/i, "")}</Text>
+      <Card style={{ padding: 18, backgroundColor: colors.subtle, gap: 18 }}>
+        <View
+          style={{
+            borderRadius: radius.container,
+            padding: 22,
+            backgroundColor: colors.card,
+            gap: 14,
+          }}
+        >
+          <Text style={[s.heading, { fontSize: fontSize.lg }]}>
+            {file.name.replace(/\.pdf$/i, "")}
+          </Text>
           {file.fields?.length ? (
             file.fields.slice(0, 4).map((field) => (
               <View
@@ -31,10 +40,12 @@ export function FileThreadCard({ file }: { file: Artifact }) {
                   paddingBottom: 9,
                 }}
               >
-                <Text style={[s.small, { fontSize: 9 }]}>
+                <Text style={[s.small, { fontSize: fontSize.sm }]}>
                   {field.name.replace(/_/g, " ").toUpperCase()}
                 </Text>
-                <Text style={[s.text, { fontSize: 12 }]}>{field.value || "—"}</Text>
+                <Text style={[s.text, { fontSize: fontSize.supporting }]}>
+                  {field.value || "—"}
+                </Text>
               </View>
             ))
           ) : (
@@ -44,8 +55,10 @@ export function FileThreadCard({ file }: { file: Artifact }) {
           )}
         </View>
         <View style={[s.row, { gap: 13 }]}>
-          <View style={{ backgroundColor: "#FC2359", padding: 9, borderRadius: 9 }}>
-            <FileText size={23} color="#FFF" />
+          <View
+            style={{ backgroundColor: colors.dangerBg, padding: 9, borderRadius: radius.element }}
+          >
+            <FileText size={23} color={colors.danger} />
           </View>
           <View style={{ flex: 1, gap: 3 }}>
             <Text numberOfLines={2} style={s.heading}>

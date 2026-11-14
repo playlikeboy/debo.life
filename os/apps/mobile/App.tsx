@@ -42,7 +42,19 @@ import { Details } from "./src/details";
 import { BrowserScreen, CalendarScreen, FilesScreen, MailScreen } from "./src/screens";
 import { AccountCard, NeonGate, useAuthInfo } from "./src/neon-gate";
 import { ThreadsProvider, ThreadsSheet, useFuseThread } from "./src/threads";
-import { Button, Card, colors, ErrorNotice, Field, IconButton, Mascot, s } from "./src/ui";
+import {
+  Button,
+  Card,
+  colors,
+  ErrorNotice,
+  Field,
+  fontSize,
+  IconButton,
+  Mascot,
+  radius,
+  s,
+  shadow,
+} from "./src/ui";
 import { type Detail, useWorkspace, WorkspaceContext } from "./src/workspace";
 
 const nav: { id: Section; label: string; icon: LucideIcon }[] = [
@@ -146,7 +158,12 @@ function AccessKeyApp() {
           <View style={{ width: "100%", maxWidth: 420, gap: 22, alignItems: "center" }}>
             <Mascot size={72} />
             <Text
-              style={{ fontSize: 32, color: colors.text, letterSpacing: -1, fontWeight: "500" }}
+              style={{
+                fontSize: fontSize["3xl"],
+                color: colors.text,
+                letterSpacing: -1,
+                fontWeight: "500",
+              }}
             >
               Welcome to Debo.
             </Text>
@@ -361,7 +378,7 @@ function WorkspaceShell({
                 <Mascot size={desktop ? 58 : 49} variant={data?.identity.avatar} />
                 <Text
                   style={{
-                    fontSize: 16,
+                    fontSize: fontSize.lg,
                     fontWeight: "600",
                     color: colors.text,
                     letterSpacing: -0.4,
@@ -371,7 +388,7 @@ function WorkspaceShell({
                 </Text>
                 <Text
                   numberOfLines={1}
-                  style={{ fontSize: 11, color: colors.muted, marginBottom: 6 }}
+                  style={{ fontSize: fontSize.sm, color: colors.muted, marginBottom: 6 }}
                 >
                   {status}
                 </Text>
@@ -390,7 +407,7 @@ function WorkspaceShell({
                   style={{
                     width: 6,
                     height: 6,
-                    borderRadius: 4,
+                    borderRadius: radius.inner,
                     position: "absolute",
                     top: 7,
                     right: 9,
@@ -417,7 +434,9 @@ function WorkspaceShell({
                     Back to Apps
                   </Button>
                 )}
-                <Text style={[s.title, { fontSize: 25, marginBottom: 22 }]}>{title?.title}</Text>
+                <Text style={[s.title, { fontSize: fontSize["2xl"], marginBottom: 22 }]}>
+                  {title?.title}
+                </Text>
                 <ErrorNotice error={error} />
                 <Screen />
                 {section === "apps" && <AccountCard />}
@@ -476,15 +495,11 @@ function WorkspaceShell({
                 width: "100%",
                 maxWidth: 370,
                 padding: 5,
-                backgroundColor: "#FFF",
-                borderRadius: 40,
-                shadowColor: "#132631",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.07,
-                shadowRadius: 18,
-                elevation: 3,
+                backgroundColor: colors.card,
+                borderRadius: radius.full,
+                boxShadow: shadow.low,
                 borderWidth: 1,
-                borderColor: "#F8F8F8",
+                borderColor: colors.line,
               }}
             >
               {nav.map((item) => {
@@ -501,8 +516,8 @@ function WorkspaceShell({
                       height: 47,
                       alignItems: "center",
                       justifyContent: "center",
-                      backgroundColor: active ? "#F0F1F2" : "transparent",
-                      borderRadius: 28,
+                      backgroundColor: active ? colors.subtle : "transparent",
+                      borderRadius: radius.chat,
                     }}
                   >
                     <item.icon size={23} strokeWidth={1.8} color={colors.text} />
@@ -523,20 +538,22 @@ function WorkspaceShell({
                 {
                   gap: 10,
                   padding: 14,
-                  backgroundColor: colors.text,
-                  borderRadius: 20,
+                  backgroundColor: colors.ink,
+                  borderRadius: radius.page,
                   maxWidth: 560,
                 },
               ]}
             >
               <Check size={16} color={colors.blue} />
-              <Text style={{ color: "#FFF", fontSize: 13, flexShrink: 1 }}>{toast}</Text>
+              <Text style={{ color: colors.onInk, fontSize: fontSize.base, flexShrink: 1 }}>
+                {toast}
+              </Text>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Dismiss notification"
                 onPress={clearToast}
               >
-                <X size={16} color="#FFF" />
+                <X size={16} color={colors.onInk} />
               </Pressable>
             </View>
           </View>

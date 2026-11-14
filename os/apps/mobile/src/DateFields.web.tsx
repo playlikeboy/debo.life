@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import { colors, s } from "./ui";
+import { colors, fontSize, radius, s } from "./ui";
 
 interface DateFieldsProps {
   label: string;
@@ -11,11 +11,11 @@ interface DateFieldsProps {
 export default function DateFields({ label, date, time, allDay, onChange }: DateFieldsProps) {
   const style = {
     border: `1px solid ${colors.line}`,
-    borderRadius: 12,
+    borderRadius: radius.container,
     padding: 13,
-    fontSize: 14,
+    fontSize: fontSize.base,
     color: colors.text,
-    background: "#FFF",
+    background: colors.card,
     fontFamily: "inherit",
     width: "100%",
     boxSizing: "border-box" as const,

@@ -44,12 +44,14 @@ import {
   Empty,
   ErrorNotice,
   Field,
+  fontSize,
   LinkRow,
   Mascot,
+  radius,
   resultSummary,
+  s,
   SectionHeading,
   Sheet,
-  s,
 } from "./ui";
 import { useWorkspace } from "./workspace";
 
@@ -116,8 +118,8 @@ export function TaskCard({
         style={{
           padding: compact ? 15 : 20,
           gap: 11,
-          borderRadius: 22,
-          backgroundColor: "#F0F1F2",
+          borderRadius: radius.page,
+          backgroundColor: colors.subtle,
         }}
       >
         <View style={[s.row, { gap: 10 }]}>
@@ -139,13 +141,13 @@ export function TaskCard({
           <ChevronRight size={17} color={colors.muted} />
         </View>
         {!!task.plan.length && (
-          <View style={{ height: 4, backgroundColor: colors.line, borderRadius: 4 }}>
+          <View style={{ height: 4, backgroundColor: colors.line, borderRadius: radius.inner }}>
             <View
               style={{
                 height: 4,
                 width: `${Math.round((done / task.plan.length) * 100)}%`,
-                backgroundColor: "#6AAEE0",
-                borderRadius: 4,
+                backgroundColor: colors.blueDark,
+                borderRadius: radius.inner,
               }}
             />
           </View>
@@ -204,7 +206,7 @@ export function AgentActivityScreen() {
       {!tasks.length && (
         <Empty
           icon={ListChecks}
-          title="A place for the work"
+          title="No work here yet"
           detail="Delegate a task in Chat. Its plan, progress and results stay here."
         />
       )}
@@ -549,7 +551,7 @@ export function TaskDetail({ taskId }: { taskId: string }) {
                 <Image
                   accessibilityLabel="Agent browser preview"
                   source={{ uri: api.url(browser.previewUrl) }}
-                  style={{ width: "100%", aspectRatio: 1.6, borderRadius: 12 }}
+                  style={{ width: "100%", aspectRatio: 1.6, borderRadius: radius.container }}
                 />
               )}
               <Button
@@ -683,7 +685,13 @@ export function ArtifactCard({ artifact }: { artifact: AgentArtifact }) {
               </View>
             ))
           ) : (
-            <Text selectable style={[s.text, { fontSize: typeof value === "number" ? 24 : 14 }]}>
+            <Text
+              selectable
+              style={[
+                s.text,
+                { fontSize: typeof value === "number" ? fontSize.xl : fontSize.base },
+              ]}
+            >
               {display(value)}
             </Text>
           )}
@@ -731,7 +739,7 @@ function FinanceArtifact({ artifact }: { artifact: AgentArtifact }) {
   const period = record(artifact.data.period);
   return (
     <Card
-      style={{ gap: 12, padding: 10, backgroundColor: "#EEEEF0", maxWidth: 440, width: "100%" }}
+      style={{ gap: 12, padding: 10, backgroundColor: colors.subtle, maxWidth: 440, width: "100%" }}
     >
       <Pressable
         accessibilityRole="button"
@@ -742,9 +750,9 @@ function FinanceArtifact({ artifact }: { artifact: AgentArtifact }) {
         <View
           style={{
             minHeight: 200,
-            borderRadius: 16,
+            borderRadius: radius.container,
             overflow: "hidden",
-            backgroundColor: "#080B10",
+            backgroundColor: colors.ink,
             padding: 20,
           }}
         >
@@ -752,15 +760,21 @@ function FinanceArtifact({ artifact }: { artifact: AgentArtifact }) {
             <Svg width="100%" height="100%">
               <Defs>
                 <LinearGradient id="finance" x1="0" y1="0" x2="0.5" y2="1">
-                  <Stop offset="0" stopColor="#281066" />
-                  <Stop offset="0.5" stopColor="#163BBF" />
-                  <Stop offset="1" stopColor="#148CE8" />
+                  <Stop offset="0" stopColor={colors.ink} />
+                  <Stop offset="1" stopColor={colors.accent} />
                 </LinearGradient>
               </Defs>
               <Rect width="100%" height="100%" fill="url(#finance)" />
             </Svg>
           </View>
-          <Text style={{ color: "#D4DCFC", fontSize: 11, lineHeight: 18, marginBottom: 20 }}>
+          <Text
+            style={{
+              color: colors.onAccent,
+              fontSize: fontSize.sm,
+              lineHeight: 18,
+              marginBottom: 20,
+            }}
+          >
             Read from your imported transactions.{"\n"}
             {String(period?.from ?? "")} — {String(period?.to ?? "")}
             {"\n"}
@@ -776,30 +790,37 @@ function FinanceArtifact({ artifact }: { artifact: AgentArtifact }) {
             ).map(([label, key]) => (
               <View
                 key={key}
-                style={{ flex: 1, padding: 11, borderRadius: 12, backgroundColor: "#1D2025" }}
+                style={{
+                  flex: 1,
+                  padding: 11,
+                  borderRadius: radius.container,
+                  backgroundColor: colors.accent,
+                }}
               >
-                <Text style={{ color: "#A4A7AD", fontSize: 9 }}>{label}</Text>
+                <Text style={{ color: colors.onAccent, fontSize: fontSize.sm }}>{label}</Text>
                 <Text
                   selectable
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.65}
                   style={{
-                    fontSize: 17,
+                    fontSize: fontSize.lg,
                     fontWeight: "600",
-                    color: key === "saved" ? "#58D3AE" : "#FFF",
+                    color: colors.onAccent,
                     marginTop: 5,
                   }}
                 >
                   {amount(artifact.data[key])}
                 </Text>
-                <Text style={{ color: "#7E8289", fontSize: 8, marginTop: 4 }}>source currency</Text>
+                <Text style={{ color: colors.onAccent, fontSize: fontSize.sm, marginTop: 4 }}>
+                  source currency
+                </Text>
               </View>
             ))}
           </View>
         </View>
         <View style={[s.row, { gap: 11, paddingHorizontal: 8, paddingTop: 13, paddingBottom: 4 }]}>
-          <Text style={{ fontSize: 25 }}>💸</Text>
+          <Text style={{ fontSize: fontSize["2xl"] }}>💸</Text>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={[s.text, { fontWeight: "600" }]}>Finance tracker</Text>
             <Text style={s.small}>Spending, savings, and a plan for what’s next.</Text>
@@ -819,13 +840,15 @@ function FinanceArtifact({ artifact }: { artifact: AgentArtifact }) {
                   <Text style={s.text}>{String(row.name)}</Text>
                   <Text style={s.text}>{amount(row.amount)}</Text>
                 </View>
-                <View style={{ height: 7, backgroundColor: "#DFE8EB", borderRadius: 8 }}>
+                <View
+                  style={{ height: 7, backgroundColor: colors.line, borderRadius: radius.element }}
+                >
                   <View
                     style={{
                       width: `${Math.min(100, (Number(row.amount) / spending) * 100)}%`,
                       height: 7,
                       backgroundColor: colors.blueDark,
-                      borderRadius: 8,
+                      borderRadius: radius.element,
                     }}
                   />
                 </View>
@@ -1066,7 +1089,7 @@ export function IdeasScreen() {
       {!ideas.length && (
         <Empty
           icon={Lightbulb}
-          title="Room for a good idea"
+          title="No ideas yet"
           detail="Find ideas from the sources you have granted access to. Each suggestion includes its evidence."
         />
       )}
@@ -1126,7 +1149,7 @@ function IdeaCard({ idea }: { idea: Idea }) {
         onPress={() => setExpanded(!expanded)}
         style={{ flexDirection: "row", gap: 14 }}
       >
-        <Text style={{ fontSize: 27, width: 34, paddingTop: 3 }}>
+        <Text style={{ fontSize: fontSize["2xl"], width: 34, paddingTop: 3 }}>
           {/document|permission|form/i.test(idea.title)
             ? "📋"
             : /money|spend|saving/i.test(idea.title)
@@ -1138,7 +1161,7 @@ function IdeaCard({ idea }: { idea: Idea }) {
                   : "💡"}
         </Text>
         <View style={{ flex: 1, gap: 5 }}>
-          <Text style={[s.heading, { fontSize: 16, lineHeight: 23 }]}>{idea.title}</Text>
+          <Text style={[s.heading, { fontSize: fontSize.lg, lineHeight: 23 }]}>{idea.title}</Text>
           <Text style={s.muted}>{idea.reason}</Text>
         </View>
       </Pressable>
@@ -1146,12 +1169,7 @@ function IdeaCard({ idea }: { idea: Idea }) {
         <View style={{ gap: 15, marginTop: 18, paddingLeft: 48 }}>
           <EvidenceList items={idea.evidence} />
           {editing && (
-            <Field
-              label="What should Debo do?"
-              value={prompt}
-              onChangeText={setPrompt}
-              multiline
-            />
+            <Field label="What should Debo do?" value={prompt} onChangeText={setPrompt} multiline />
           )}
           <ErrorNotice error={error} />
           <View style={[s.row, { gap: 8, flexWrap: "wrap" }]}>
@@ -1194,13 +1212,13 @@ export function GoalsScreen() {
               style={{
                 width: 16,
                 height: 16,
-                borderRadius: 8,
+                borderRadius: radius.element,
                 borderWidth: 5,
-                borderColor: "#D9F1E2",
-                backgroundColor: "#24A46B",
+                borderColor: colors.line,
+                backgroundColor: colors.success,
               }}
             />
-            <Text style={[s.heading, { color: "#189A58" }]}>Tracking</Text>
+            <Text style={[s.heading, { color: colors.success }]}>Tracking</Text>
           </View>
           <Button small icon={Plus} onPress={() => setAdding("Tracking")}>
             Track
@@ -1214,7 +1232,7 @@ export function GoalsScreen() {
             onPress={() => setSelectedMonitor(item.id)}
             style={[s.row, { gap: 12, paddingVertical: 13 }]}
           >
-            <Square size={21} color="#A7AAAC" />
+            <Square size={21} color={colors.muted} />
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={s.text}>{item.title}</Text>
               <Text numberOfLines={1} style={s.muted}>
@@ -1223,7 +1241,7 @@ export function GoalsScreen() {
                   : statusLabel(item.status)}
               </Text>
             </View>
-            <ChevronRight size={18} color="#A3A6A8" />
+            <ChevronRight size={18} color={colors.muted} />
           </Pressable>
         ))}
         {!monitors.length && (
@@ -1244,10 +1262,10 @@ export function GoalsScreen() {
             style={{
               width: 16,
               height: 16,
-              borderRadius: 8,
+              borderRadius: radius.element,
               borderWidth: 5,
-              borderColor: "#D7E9FA",
-              backgroundColor: "#3D9BDE",
+              borderColor: colors.line,
+              backgroundColor: colors.blueDark,
             }}
           />
           <Text style={[s.heading, { color: colors.blueDark }]}>Goals</Text>
@@ -1262,7 +1280,7 @@ export function GoalsScreen() {
           >
             <Square
               size={21}
-              color="#A7AAAC"
+              color={colors.muted}
               fill={item.status === "completed" ? colors.green : "transparent"}
             />
             <View style={{ flex: 1, gap: 4 }}>
@@ -1271,7 +1289,7 @@ export function GoalsScreen() {
                 {item.description || statusLabel(item.status)}
               </Text>
             </View>
-            <ChevronRight size={18} color="#A3A6A8" />
+            <ChevronRight size={18} color={colors.muted} />
           </Pressable>
         ))}
         {!data?.goals.length && (
@@ -1295,9 +1313,9 @@ export function GoalsScreen() {
           onPress={() => setAdding(item.name)}
           style={[s.row, { gap: 12, minHeight: 38 }]}
         >
-          <item.icon size={23} color="#989C9F" />
-          <Text style={[s.text, { flex: 1, color: "#666A6D" }]}>{item.name}</Text>
-          <Plus size={18} color="#989C9F" />
+          <item.icon size={23} color={colors.muted} />
+          <Text style={[s.text, { flex: 1, color: colors.muted }]}>{item.name}</Text>
+          <Plus size={18} color={colors.muted} />
         </Pressable>
       ))}
       {adding && (
@@ -1792,7 +1810,7 @@ export function AppsScreen() {
       />
       <ConnectionsScreen query={query} />
       <Text style={s.heading}>On your computer</Text>
-      <Card style={{ paddingVertical: 3, backgroundColor: "#F4F5F6" }}>
+      <Card style={{ paddingVertical: 3, backgroundColor: colors.subtle }}>
         {shortcuts
           .filter((item) =>
             `${item.title} ${item.detail}`.toLowerCase().includes(query.toLowerCase()),
@@ -1826,7 +1844,7 @@ export function AppsScreen() {
                   onPress={() => setAvatar(item)}
                   style={{
                     padding: 7,
-                    borderRadius: 24,
+                    borderRadius: radius.page,
                     backgroundColor: avatar === item ? colors.sky : colors.canvas,
                   }}
                 >

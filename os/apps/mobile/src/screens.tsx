@@ -49,14 +49,16 @@ import {
   dateLabel,
   Empty,
   ErrorNotice,
+  fontSize,
   IconButton,
   LinkRow,
   Mascot,
+  radius,
   relativeDate,
   resultSummary,
+  s,
   SectionHeading,
   Sheet,
-  s,
   timeLabel,
 } from "./ui";
 import { useWorkspace } from "./workspace";
@@ -82,8 +84,8 @@ export function TodayScreen() {
       <View
         style={[
           {
-            backgroundColor: "#E8F2F8",
-            borderRadius: 24,
+            backgroundColor: colors.blue,
+            borderRadius: radius.page,
             padding: 32,
             minHeight: 228,
             overflow: "hidden",
@@ -94,11 +96,11 @@ export function TodayScreen() {
         <View style={{ flex: 1, gap: 15, zIndex: 1 }}>
           <View style={[s.row, { gap: 7 }]}>
             <Sparkles size={13} color={colors.blueDark} />
-            <Text style={[s.label, { color: colors.blueDark }]}>A little clarity, every day</Text>
+            <Text style={[s.label, { color: colors.blueText }]}>A little clarity, every day</Text>
           </View>
           <Text
             style={{
-              fontSize: wide ? 39 : 29,
+              fontSize: wide ? fontSize["4xl"] : fontSize["2xl"],
               lineHeight: wide ? 45 : 36,
               letterSpacing: -1.7,
               fontWeight: "500",
@@ -107,7 +109,7 @@ export function TodayScreen() {
           >
             Your day, with a little{"\n"}more room to breathe.
           </Text>
-          <Text style={[s.muted, { maxWidth: 420, color: "#617680" }]}>
+          <Text style={[s.muted, { maxWidth: 420, color: colors.muted }]}>
             {events.length ? `${events.length} things on your calendar` : "Your calendar has room"}
             {unread.length ? `, ${unread.length} unread emails` : ""}.{"\n"}Let’s make space for
             what matters.
@@ -128,8 +130,8 @@ export function TodayScreen() {
                 position: "absolute",
                 width: 190,
                 height: 190,
-                borderRadius: 100,
-                backgroundColor: "#DAEAF2",
+                borderRadius: radius.full,
+                backgroundColor: colors.blue,
               }}
             />
             <View
@@ -137,9 +139,9 @@ export function TodayScreen() {
                 position: "absolute",
                 width: 145,
                 height: 145,
-                borderRadius: 80,
+                borderRadius: radius.full,
                 borderWidth: 1,
-                borderColor: "#C8DBE6",
+                borderColor: colors.line,
               }}
             />
             <Mascot size={94} />
@@ -152,13 +154,13 @@ export function TodayScreen() {
                   left: -19,
                   padding: 11,
                   gap: 7,
-                  backgroundColor: "#FFF",
-                  borderRadius: 13,
+                  backgroundColor: colors.card,
+                  borderRadius: radius.container,
                   transform: [{ rotate: "-7deg" }],
                 },
               ]}
             >
-              <Check size={14} color="#739174" />
+              <Check size={14} color={colors.success} />
               <Text style={s.small}>A lighter day</Text>
             </View>
             <View
@@ -170,8 +172,8 @@ export function TodayScreen() {
                   right: -8,
                   padding: 12,
                   gap: 8,
-                  backgroundColor: "#FFF",
-                  borderRadius: 13,
+                  backgroundColor: colors.card,
+                  borderRadius: radius.container,
                   transform: [{ rotate: "5deg" }],
                 },
               ]}
@@ -217,20 +219,34 @@ export function TodayScreen() {
           >
             <Card style={{ padding: 21, height: 126 }}>
               <View style={s.between}>
-                <Text style={[s.label, { fontSize: 9, letterSpacing: 1 }]}>{item.label}</Text>
+                <Text style={[s.label, { fontSize: fontSize.sm, letterSpacing: 1 }]}>
+                  {item.label}
+                </Text>
                 <View
                   style={[
                     s.iconBox,
-                    { width: 31, height: 31, borderRadius: 10, backgroundColor: item.tint },
+                    {
+                      width: 31,
+                      height: 31,
+                      borderRadius: radius.element,
+                      backgroundColor: item.tint,
+                    },
                   ]}
                 >
                   <item.icon size={15} color={colors.text} />
                 </View>
               </View>
-              <Text style={{ fontSize: 29, color: colors.text, letterSpacing: -1, marginTop: -2 }}>
+              <Text
+                style={{
+                  fontSize: fontSize["2xl"],
+                  color: colors.text,
+                  letterSpacing: -1,
+                  marginTop: -2,
+                }}
+              >
                 {String(item.value).padStart(2, "0")}
               </Text>
-              <Text style={[s.small, { fontSize: 10, marginTop: 3 }]}>{item.note}</Text>
+              <Text style={[s.small, { fontSize: fontSize.sm, marginTop: 3 }]}>{item.note}</Text>
             </Card>
           </Pressable>
         ))}
@@ -247,8 +263,8 @@ export function TodayScreen() {
           ) : (
             <Empty
               icon={CalendarDays}
-              title="Some breathing room"
-              detail="No events scheduled today."
+              title="Nothing on your calendar today"
+              detail="You have no events today."
             />
           )}
           <Pressable
@@ -292,19 +308,29 @@ export function TodayScreen() {
                 <Avatar name={m.sender} index={i} />
                 <View style={{ flex: 1, gap: 3 }}>
                   <View style={s.between}>
-                    <Text style={[s.text, { fontSize: 12, fontWeight: "600" }]}>{m.sender}</Text>
-                    <Text style={[s.small, { fontSize: 10 }]}>{timeLabel(m.date)}</Text>
+                    <Text style={[s.text, { fontSize: fontSize.supporting, fontWeight: "600" }]}>
+                      {m.sender}
+                    </Text>
+                    <Text style={[s.small, { fontSize: fontSize.sm }]}>{timeLabel(m.date)}</Text>
                   </View>
-                  <Text numberOfLines={1} style={[s.text, { fontSize: 12, lineHeight: 18 }]}>
+                  <Text
+                    numberOfLines={1}
+                    style={[s.text, { fontSize: fontSize.supporting, lineHeight: 18 }]}
+                  >
                     {m.subject}
                   </Text>
-                  <Text numberOfLines={1} style={[s.small, { fontSize: 11 }]}>
+                  <Text numberOfLines={1} style={[s.small, { fontSize: fontSize.sm }]}>
                     {m.body.replace(/\n/g, " ")}
                   </Text>
                 </View>
                 {m.unread && (
                   <View
-                    style={{ width: 5, height: 5, borderRadius: 4, backgroundColor: "#78ABD0" }}
+                    style={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: radius.inner,
+                      backgroundColor: colors.blueDark,
+                    }}
                   />
                 )}
               </Pressable>
@@ -319,7 +345,7 @@ export function TodayScreen() {
         </Card>
       </View>
       <View style={{ flexDirection: wide ? "row" : "column", gap: 22 }}>
-        <Card style={{ flex: 1, backgroundColor: "#F0F0E7" }}>
+        <Card style={{ flex: 1, backgroundColor: colors.subtle }}>
           <SectionHeading title="A hand with the little things" />
           <Text style={[s.muted, { marginBottom: 15 }]}>
             Start with a thought. We’ll take it from there.
@@ -334,10 +360,10 @@ export function TodayScreen() {
               onPress={() => ask(prompt)}
               style={[
                 s.between,
-                { borderTopWidth: 1, borderTopColor: "#E1E2D9", paddingVertical: 13 },
+                { borderTopWidth: 1, borderTopColor: colors.line, paddingVertical: 13 },
               ]}
             >
-              <Text style={[s.text, { fontSize: 12 }]}>{prompt}</Text>
+              <Text style={[s.text, { fontSize: fontSize.supporting }]}>{prompt}</Text>
               <ArrowUpRight size={15} color={colors.muted} />
             </Pressable>
           ))}
@@ -369,7 +395,7 @@ export function TodayScreen() {
                     <Check size={14} color={colors.text} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[s.text, { fontSize: 12 }]}>{a.title}</Text>
+                    <Text style={[s.text, { fontSize: fontSize.supporting }]}>{a.title}</Text>
                     <Text style={s.small}>{relativeDate(a.date)}</Text>
                   </View>
                 </View>
@@ -390,13 +416,13 @@ function Avatar({ name, index = 0 }: { name: string; index?: number }) {
       style={{
         width: 35,
         height: 35,
-        borderRadius: 12,
+        borderRadius: radius.container,
         backgroundColor: [colors.orange, colors.lavender, colors.green, colors.sky][index % 4],
         justifyContent: "center",
         alignItems: "center",
       }}
     >
-      <Text style={{ color: colors.text, fontSize: 11, fontWeight: "500" }}>
+      <Text style={{ color: colors.text, fontSize: fontSize.sm, fontWeight: "500" }}>
         {name
           .split(" ")
           .map((p) => p[0])
@@ -422,24 +448,24 @@ export function AgendaRow({
       style={[s.row, { gap: 16, paddingVertical: 14 }]}
     >
       <View style={{ width: 65 }}>
-        <Text style={[s.text, { fontSize: 11 }]}>
+        <Text style={[s.text, { fontSize: fontSize.sm }]}>
           {e.allDay ? "All day" : timeLabel(e.start, e.timeZone)}
         </Text>
         {!e.allDay && (
-          <Text style={[s.small, { fontSize: 10 }]}>{timeLabel(e.end, e.timeZone)}</Text>
+          <Text style={[s.small, { fontSize: fontSize.sm }]}>{timeLabel(e.end, e.timeZone)}</Text>
         )}
       </View>
       <View
         style={{
           width: 3,
           height: 42,
-          borderRadius: 4,
-          backgroundColor: ["#BCDAEB", "#C7D6AB", "#D9CDEA"][index % 3],
+          borderRadius: radius.inner,
+          backgroundColor: [colors.blue, colors.green, colors.lavender][index % 3],
         }}
       />
       <View style={{ flex: 1, gap: 3 }}>
-        <Text style={[s.text, { fontSize: 13, fontWeight: "500" }]}>{e.title}</Text>
-        <Text numberOfLines={1} style={[s.small, { fontSize: 11 }]}>
+        <Text style={[s.text, { fontSize: fontSize.base, fontWeight: "500" }]}>{e.title}</Text>
+        <Text numberOfLines={1} style={[s.small, { fontSize: fontSize.sm }]}>
           {e.location || (e.attendees.length ? `${e.attendees.length} attendees` : "Time for you")}
         </Text>
       </View>
@@ -486,10 +512,10 @@ export function MailScreen() {
               gap: 9,
               flex: 1,
               minWidth: 200,
-              backgroundColor: "#FFF",
+              backgroundColor: colors.card,
               borderWidth: 1,
               borderColor: colors.line,
-              borderRadius: 12,
+              borderRadius: radius.container,
               paddingHorizontal: 14,
             },
           ]}
@@ -501,7 +527,7 @@ export function MailScreen() {
             placeholderTextColor={colors.muted}
             value={query}
             onChangeText={setQuery}
-            style={{ flex: 1, paddingVertical: 13, fontSize: 13, color: colors.text }}
+            style={{ flex: 1, paddingVertical: 13, fontSize: fontSize.base, color: colors.text }}
           />
         </View>
         <Button onPress={() => open({ type: "email" })} primary icon={Plus}>
@@ -535,8 +561,8 @@ export function MailScreen() {
           ) : (
             <Empty
               icon={Mail}
-              title="A fresh page"
-              detail="Messages you save as drafts will be here when you’re ready."
+              title="No drafts yet"
+              detail="Messages you save as drafts will show up here."
             />
           )
         ) : items.length ? (
@@ -555,7 +581,9 @@ export function MailScreen() {
                   <Text style={[s.text, { fontWeight: m.unread ? "600" : "400" }]}>{m.sender}</Text>
                   <Text style={s.small}>{dateLabel(m.date)}</Text>
                 </View>
-                <Text style={[s.text, { fontWeight: "500", fontSize: 13 }]}>{m.subject}</Text>
+                <Text style={[s.text, { fontWeight: "500", fontSize: fontSize.base }]}>
+                  {m.subject}
+                </Text>
                 <Text style={s.muted} numberOfLines={1}>
                   {m.body.replace(/\n/g, " ")}
                 </Text>
@@ -570,7 +598,12 @@ export function MailScreen() {
               </View>
               {m.unread && (
                 <View
-                  style={{ width: 6, height: 6, borderRadius: 4, backgroundColor: "#83B5D3" }}
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: radius.inner,
+                    backgroundColor: colors.blueDark,
+                  }}
                 />
               )}
             </Pressable>
@@ -743,7 +776,7 @@ export function CalendarScreen() {
                   alignItems: "center",
                   paddingVertical: 17,
                   gap: 9,
-                  borderRadius: 14,
+                  borderRadius: radius.container,
                   backgroundColor: key === date ? colors.sky : "transparent",
                 }}
               >
@@ -751,7 +784,7 @@ export function CalendarScreen() {
                 <Text
                   style={[
                     s.title,
-                    { fontSize: 22, color: key === date ? colors.blueDark : colors.text },
+                    { fontSize: fontSize.xl, color: key === date ? colors.blueDark : colors.text },
                   ]}
                 >
                   {day.getDate()}
@@ -760,11 +793,11 @@ export function CalendarScreen() {
                   style={{
                     height: 4,
                     width: 4,
-                    borderRadius: 4,
+                    borderRadius: radius.inner,
                     backgroundColor: [...events, ...w.events].some(
                       (e) => e.calendarId === calendarId && eventDate(e) === key,
                     )
-                      ? "#8DB6CA"
+                      ? colors.blueDark
                       : "transparent",
                   }}
                 />
@@ -810,11 +843,11 @@ export function CalendarScreen() {
           !error && (
             <Empty
               icon={CalendarDays}
-              title="A little open space"
+              title="No events here"
               detail={
                 all
-                  ? "There’s nothing scheduled for the next 30 days."
-                  : "There’s nothing on the calendar for this day."
+                  ? "You have no events in the next 30 days."
+                  : "You have no events on this day."
               }
             >
               {writable && (
@@ -917,7 +950,7 @@ export function BrowserScreen() {
                   style={{
                     height: 180,
                     width: "100%",
-                    borderRadius: 12,
+                    borderRadius: radius.container,
                     backgroundColor: colors.canvas,
                   }}
                 />
@@ -999,7 +1032,7 @@ export function FilesScreen() {
               <View
                 style={{
                   height: 175,
-                  backgroundColor: "#EDEFEA",
+                  backgroundColor: colors.subtle,
                   justifyContent: "center",
                   alignItems: "center",
                 }}
@@ -1008,27 +1041,27 @@ export function FilesScreen() {
                   style={{
                     width: 93,
                     height: 121,
-                    borderRadius: 5,
-                    backgroundColor: "#FFF",
+                    borderRadius: radius.inner,
+                    backgroundColor: colors.card,
                     padding: 14,
                     transform: [{ rotate: "-4deg" }],
                     borderWidth: 1,
-                    borderColor: "#DDE3DD",
+                    borderColor: colors.line,
                   }}
                 >
                   <View style={[s.row, { gap: 5, marginBottom: 15 }]}>
                     <FileText size={13} color={colors.blueDark} />
-                    <Text style={{ fontSize: 7, color: colors.blueDark }}>DOCUMENT</Text>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.blueDark }}>DOCUMENT</Text>
                   </View>
                   {[100, 75, 90, 95, 60].map((width, i) => (
                     <View
                       key={width}
                       style={{
                         height: 3,
-                        backgroundColor: i === 0 ? "#A4BED0" : "#E3E7E3",
+                        backgroundColor: i === 0 ? colors.blueLine : colors.line,
                         width: `${width}%`,
                         marginBottom: 7,
-                        borderRadius: 3,
+                        borderRadius: radius.inner,
                       }}
                     />
                   ))}
@@ -1038,7 +1071,7 @@ export function FilesScreen() {
                 </View>
               </View>
               <View style={{ padding: 21, gap: 6 }}>
-                <Text numberOfLines={1} style={[s.heading, { fontSize: 14 }]}>
+                <Text numberOfLines={1} style={[s.heading, { fontSize: fontSize.base }]}>
                   {f.name}
                 </Text>
                 <Text style={s.small}>
@@ -1115,7 +1148,7 @@ export function ActivityScreen() {
               <Chip
                 tint={
                   a.status === "failed"
-                    ? "#FBEFED"
+                    ? colors.dangerBg
                     : a.status === "awaiting_review"
                       ? colors.lavender
                       : colors.canvas
@@ -1164,7 +1197,7 @@ export function ActivityScreen() {
           ) : (
             <Empty
               icon={Clock3}
-              title="The beginning of something lighter"
+              title="No activity yet"
               detail="Your actions and their results will be recorded here."
             />
           )}
@@ -1224,12 +1257,12 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
   const google = w.connections.find((c) => c.id === "google");
   const connected = google?.status === "connected" || google?.status === "sample";
   const rows = [
-    { id: "gmail", name: "Gmail", icon: Mail, color: "#EA5B4D", connected, group: "google" },
+    { id: "gmail", name: "Gmail", icon: Mail, color: colors.danger, connected, group: "google" },
     {
       id: "calendar",
       name: "Google Calendar",
       icon: CalendarDays,
-      color: "#4285F4",
+      color: colors.blueDark,
       connected,
       group: "google",
     },
@@ -1237,7 +1270,7 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
       id: "browser",
       name: "Agent computer",
       icon: Globe2,
-      color: "#1987CF",
+      color: colors.blueDark,
       connected: w.connections.some((c) => c.id === "browser" && c.status === "connected"),
       group: "browser",
     },
@@ -1245,7 +1278,7 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
       id: "openbot",
       name: "OpenBot",
       icon: Sparkles,
-      color: "#6866A6",
+      color: colors.muted,
       connected: false,
       group: "openbot",
     },
@@ -1264,7 +1297,13 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
                   : "Connected"
                 : "Available integrations"}
             </Text>
-            <View style={{ paddingHorizontal: 16, borderRadius: 23, backgroundColor: "#F3F4F5" }}>
+            <View
+              style={{
+                paddingHorizontal: 16,
+                borderRadius: radius.page,
+                backgroundColor: colors.subtle,
+              }}
+            >
               {group.map((row, index) => (
                 <Pressable
                   key={row.id}
@@ -1279,7 +1318,7 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
                       gap: 14,
                       minHeight: 61,
                       borderBottomWidth: index < group.length - 1 ? 1 : 0,
-                      borderBottomColor: "#E5E7E9",
+                      borderBottomColor: colors.line,
                     },
                   ]}
                 >
@@ -1287,8 +1326,8 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
                     style={{
                       width: 29,
                       height: 29,
-                      borderRadius: 7,
-                      backgroundColor: "#FFF",
+                      borderRadius: radius.inner,
+                      backgroundColor: colors.card,
                       alignItems: "center",
                       justifyContent: "center",
                     }}
@@ -1300,11 +1339,11 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
                     <Text style={s.small}>Local data</Text>
                   )}
                   {row.connected ? (
-                    <ChevronRight size={18} color="#A4A7AA" />
+                    <ChevronRight size={18} color={colors.muted} />
                   ) : (
                     <Text
                       style={{
-                        fontSize: 13,
+                        fontSize: fontSize.base,
                         color: row.group === "google" ? colors.blueDark : colors.muted,
                       }}
                     >
@@ -1380,8 +1419,8 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
                 has not been configured.
               </Text>
               <Text style={s.muted}>
-                Your current computer uses Debo’s persistent Chromium worker. OpenBot
-                integration will expand the execution backend while keeping this interface.
+                Your current computer uses Debo’s persistent Chromium worker. OpenBot integration
+                will expand the execution backend while keeping this interface.
               </Text>
             </View>
           )}
@@ -1399,7 +1438,9 @@ function SettingsLine({ label, value }: { label: string; value: string }) {
       ]}
     >
       <Text style={s.muted}>{label}</Text>
-      <Text style={[s.text, { fontSize: 12, flexShrink: 1, textAlign: "right" }]}>{value}</Text>
+      <Text style={[s.text, { fontSize: fontSize.supporting, flexShrink: 1, textAlign: "right" }]}>
+        {value}
+      </Text>
     </View>
   );
 }

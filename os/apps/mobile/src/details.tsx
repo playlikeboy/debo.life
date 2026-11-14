@@ -49,11 +49,12 @@ import {
   Empty,
   ErrorNotice,
   Field,
+  fontSize,
   LinkRow,
   resultSummary,
+  s,
   SectionHeading,
   Sheet,
-  s,
   timeLabel,
 } from "./ui";
 import { type Detail, useWorkspace } from "./workspace";
@@ -323,7 +324,7 @@ function EmailEditor({ draft }: { draft?: Partial<EmailDraft> & { id?: string } 
       />
       {w.files.length > 0 && (
         <Card style={{ padding: 16, marginBottom: 18 }}>
-          <Text style={[s.heading, { fontSize: 13, marginBottom: 5 }]}>Attachments</Text>
+          <Text style={[s.heading, { fontSize: fontSize.base, marginBottom: 5 }]}>Attachments</Text>
           {w.files.map((f) => (
             <CheckRow
               key={f.id}

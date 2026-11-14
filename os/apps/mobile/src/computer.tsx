@@ -15,7 +15,18 @@ import { browserAddress } from "./browser-address";
 import { useComputerDraft } from "./computer-drafts";
 import { computerStatus } from "./computer-status";
 import { LinuxWorkspace } from "./computer-workspace";
-import { Button, Card, colors, ErrorNotice, Field, LinkRow, Sheet, s } from "./ui";
+import {
+  Button,
+  Card,
+  colors,
+  ErrorNotice,
+  Field,
+  fontSize,
+  LinkRow,
+  radius,
+  s,
+  Sheet,
+} from "./ui";
 import { useWorkspace } from "./workspace";
 
 export function ComputerEntry() {
@@ -37,19 +48,21 @@ export function ComputerEntry() {
           gap: 6,
           paddingHorizontal: 12,
           paddingVertical: 7,
-          borderRadius: 20,
-          backgroundColor: "#F1F3F4",
+          borderRadius: radius.page,
+          backgroundColor: colors.subtle,
         },
       ]}
     >
       <Monitor size={13} color={colors.muted} />
-      <Text style={{ fontSize: 12, color: colors.muted }}>Computer · {status}</Text>
+      <Text style={{ fontSize: fontSize.supporting, color: colors.muted }}>
+        Computer · {status}
+      </Text>
       <View
         style={{
           width: 5,
           height: 5,
-          borderRadius: 3,
-          backgroundColor: available ? "#57AD85" : "#ACB0B5",
+          borderRadius: radius.inner,
+          backgroundColor: available ? colors.success : colors.muted,
         }}
       />
     </Pressable>
@@ -63,10 +76,10 @@ export function BrowserThreadCard({ browser }: { browser: BrowserSession }) {
   }, [browser.previewUrl, browser.updatedAt]);
   return (
     <Card
-      style={{ padding: 13, backgroundColor: "#EEEEF0", gap: 12, maxWidth: 440, width: "100%" }}
+      style={{ padding: 13, backgroundColor: colors.subtle, gap: 12, maxWidth: 440, width: "100%" }}
     >
       <View style={[s.row, { gap: 10 }]}>
-        <View style={[s.iconBox, { width: 36, height: 36, borderRadius: 9 }]}>
+        <View style={[s.iconBox, { width: 36, height: 36, borderRadius: radius.element }]}>
           <Globe2 size={21} color={colors.blueDark} />
         </View>
         <View style={{ flex: 1 }}>
@@ -84,7 +97,12 @@ export function BrowserThreadCard({ browser }: { browser: BrowserSession }) {
         <Image
           accessibilityLabel={`Browser preview: ${browser.title}`}
           source={{ uri: browser.previewUrl }}
-          style={{ width: "100%", aspectRatio: 1.6, borderRadius: 11, backgroundColor: "#FFF" }}
+          style={{
+            width: "100%",
+            aspectRatio: 1.6,
+            borderRadius: radius.container,
+            backgroundColor: colors.card,
+          }}
           resizeMode="contain"
           onError={() => setFailed(true)}
         />
@@ -92,8 +110,8 @@ export function BrowserThreadCard({ browser }: { browser: BrowserSession }) {
         <View
           style={{
             padding: 24,
-            borderRadius: 12,
-            backgroundColor: "#FFF",
+            borderRadius: radius.container,
+            backgroundColor: colors.card,
             alignItems: "center",
             gap: 10,
           }}
@@ -175,7 +193,10 @@ export function ComputerSheet() {
       <View style={{ gap: 20 }}>
         {shown === "Browser" && (
           <View
-            style={[s.row, { gap: 12, padding: 18, borderRadius: 20, backgroundColor: colors.sky }]}
+            style={[
+              s.row,
+              { gap: 12, padding: 18, borderRadius: radius.page, backgroundColor: colors.sky },
+            ]}
           >
             <Monitor size={28} color={colors.blueDark} />
             <View style={{ flex: 1 }}>

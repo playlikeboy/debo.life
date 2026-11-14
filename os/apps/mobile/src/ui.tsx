@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Image,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,100 +16,106 @@ import {
   type ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-export const colors = {
-  canvas: "#FCFCFC",
-  card: "#FFFFFF",
-  text: "#11191C",
-  muted: "#697176",
-  line: "#EEEEF0",
-  blue: "#C8E7FF",
-  blueDark: "#1473C8",
-  sky: "#EDF7FD",
-  green: "#E3F3E8",
-  lavender: "#F0EEFA",
-  orange: "#FDF0DF",
-  danger: "#AA4A45",
-};
+import {
+  borderWidth,
+  fontSize,
+  fontStack,
+  radius,
+  shadow,
+  sizeElement,
+  spacing,
+  textStyle,
+} from "./astryx-tokens";
+import { colors } from "./palette";
+
+export { colors };
+export { fontSize, radius, shadow, sizeElement, spacing, textStyle };
+
+/** Body font stack on the web. Native apps use the system font. */
+const face = Platform.OS === "web" ? { fontFamily: fontStack.body } : {};
+export const fontFamily = face.fontFamily;
+
 export const s = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center" },
   between: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  text: { color: colors.text, fontSize: 15, lineHeight: 23 },
-  muted: { color: colors.muted, fontSize: 14, lineHeight: 21 },
-  small: { color: colors.muted, fontSize: 11, lineHeight: 17 },
-  label: {
-    color: colors.muted,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-  },
-  title: { color: colors.text, fontSize: 23, fontWeight: "600", letterSpacing: -0.7 },
-  heading: { color: colors.text, fontSize: 16, fontWeight: "600", letterSpacing: -0.25 },
+  text: { ...face, color: colors.text, ...textStyle.body },
+  muted: { ...face, color: colors.muted, ...textStyle.body },
+  small: { ...face, color: colors.muted, ...textStyle.supporting },
+  label: { ...face, color: colors.muted, ...textStyle.heading5 },
+  title: { ...face, color: colors.text, ...textStyle.heading2 },
+  heading: { ...face, color: colors.text, ...textStyle.heading3 },
   card: {
     backgroundColor: colors.card,
-    borderRadius: 23,
+    borderRadius: radius.page,
     borderWidth: 0,
     borderColor: colors.line,
-    padding: 20,
+    padding: spacing[5],
   },
-  divider: { height: 1, backgroundColor: colors.line, marginVertical: 18 },
+  divider: { height: borderWidth, backgroundColor: colors.line, marginVertical: spacing[4] },
   input: {
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 19,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    ...face,
+    borderWidth,
+    borderColor: colors.inputBorder,
+    borderRadius: radius.container,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     color: colors.text,
-    fontSize: 16,
-    backgroundColor: "#FFF",
-    minHeight: 45,
+    fontSize: fontSize.lg,
+    backgroundColor: colors.card,
+    minHeight: sizeElement.lg,
   },
-  field: { gap: 7, marginBottom: 16 },
+  field: { gap: spacing[2], marginBottom: spacing[4] },
   button: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 17,
-    minHeight: 42,
-    paddingVertical: 10,
-    borderRadius: 24,
+    gap: spacing[2],
+    paddingHorizontal: spacing[4],
+    minHeight: spacing[11],
+    paddingVertical: spacing[2],
+    borderRadius: radius.page,
   },
-  primary: { backgroundColor: colors.blue },
-  secondary: { backgroundColor: "#F1F2F3" },
-  buttonText: { fontSize: 14, fontWeight: "600" },
+  primary: { backgroundColor: colors.accent },
+  secondary: { backgroundColor: colors.subtle },
+  buttonText: { ...face, ...textStyle.label },
   chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: radius.page,
     alignSelf: "flex-start",
-    backgroundColor: colors.canvas,
+    backgroundColor: colors.subtle,
   },
-  chipText: { fontSize: 10, fontWeight: "600", color: colors.muted },
+  chipText: { ...face, fontSize: fontSize.sm, fontWeight: "600", color: colors.text },
   iconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
+    width: spacing[11],
+    height: spacing[11],
+    borderRadius: radius.container,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: colors.sky,
   },
-  error: { padding: 16, borderRadius: 14, backgroundColor: "#FBEFED", marginVertical: 10, gap: 4 },
+  error: {
+    padding: spacing[4],
+    borderRadius: radius.container,
+    backgroundColor: colors.dangerBg,
+    marginVertical: spacing[3],
+    gap: spacing[1],
+  },
   modalShade: {
     flex: 1,
-    backgroundColor: "rgba(35,48,44,0.25)",
+    backgroundColor: colors.scrim,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: spacing[5],
   },
   sheet: {
     backgroundColor: colors.canvas,
-    borderRadius: 26,
+    borderRadius: radius.page,
     width: "100%",
     maxWidth: 790,
     maxHeight: "94%",
     overflow: "hidden",
-    borderWidth: 1,
+    borderWidth,
     borderColor: colors.line,
   },
 });
@@ -133,7 +140,7 @@ export function Button({
   danger?: boolean;
   style?: ViewStyle;
 }) {
-  const color = danger ? colors.danger : colors.text;
+  const color = primary ? colors.onAccent : danger ? colors.danger : colors.text;
   return (
     <Pressable
       accessibilityRole="button"
@@ -143,7 +150,11 @@ export function Button({
       style={({ pressed }) => [
         s.button,
         primary ? s.primary : s.secondary,
-        small && { minHeight: 38, paddingVertical: 7, paddingHorizontal: 13 },
+        small && {
+          minHeight: sizeElement.md,
+          paddingVertical: spacing[1.5],
+          paddingHorizontal: spacing[3],
+        },
         (disabled || busy) && { opacity: 0.5 },
         pressed && { transform: [{ scale: 0.98 }] },
         style,
@@ -174,12 +185,12 @@ export function IconButton({
       onPress={onPress}
       style={({ pressed }) => [
         {
-          width: 44,
-          height: 44,
+          width: spacing[11],
+          height: spacing[11],
           alignItems: "center",
           justifyContent: "center",
-          borderRadius: 22,
-          backgroundColor: pressed ? colors.line : "#FFFFFF",
+          borderRadius: radius.full,
+          backgroundColor: pressed ? colors.line : colors.card,
         },
       ]}
     >
@@ -226,8 +237,17 @@ export function Empty({
   children?: ReactNode;
 }) {
   return (
-    <View style={{ alignItems: "center", padding: 40, gap: 13 }}>
-      <View style={[s.iconBox, { width: 55, height: 55, borderRadius: 18 }]}>
+    <View style={{ alignItems: "center", padding: spacing[10], gap: spacing[3] }}>
+      <View
+        style={[
+          s.iconBox,
+          {
+            width: spacing[12] + spacing[2],
+            height: spacing[12] + spacing[2],
+            borderRadius: radius.page,
+          },
+        ]}
+      >
         <Icon size={24} color={colors.blueDark} />
       </View>
       <Text style={s.heading}>{title}</Text>
@@ -270,7 +290,7 @@ export function Sheet({
             compact && {
               borderBottomLeftRadius: 0,
               borderBottomRightRadius: 0,
-              paddingBottom: Math.max(insets.bottom, 12),
+              paddingBottom: Math.max(insets.bottom, spacing[3]),
               maxHeight: "94%",
             },
           ]}
@@ -279,21 +299,25 @@ export function Sheet({
             <View
               style={{
                 alignSelf: "center",
-                width: 34,
-                height: 4,
-                borderRadius: 3,
-                backgroundColor: "#D8DBDE",
-                marginTop: 10,
+                width: spacing[8],
+                height: spacing[1],
+                borderRadius: radius.inner,
+                backgroundColor: colors.lineStrong,
+                marginTop: spacing[2],
               }}
             />
           )}
           <View
             style={[
               s.between,
-              { padding: compact ? 20 : 24, borderBottomWidth: 1, borderBottomColor: colors.line },
+              {
+                padding: compact ? spacing[5] : spacing[6],
+                borderBottomWidth: borderWidth,
+                borderBottomColor: colors.line,
+              },
             ]}
           >
-            <View style={{ flex: 1, gap: 4 }}>
+            <View style={{ flex: 1, gap: spacing[1] }}>
               <Text style={s.title}>{title}</Text>
               {!!subtitle && <Text style={s.muted}>{subtitle}</Text>}
             </View>
@@ -301,7 +325,7 @@ export function Sheet({
           </View>
           <ScrollView
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ padding: compact ? 20 : 24 }}
+            contentContainerStyle={{ padding: compact ? spacing[5] : spacing[6] }}
           >
             {children}
           </ScrollView>
@@ -324,21 +348,21 @@ export function CheckRow({
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
       onPress={onPress}
-      style={[s.row, { gap: 10, paddingVertical: 9 }]}
+      style={[s.row, { gap: spacing[3], paddingVertical: spacing[2] }]}
     >
       <View
         style={{
-          width: 19,
-          height: 19,
-          borderRadius: 5,
-          borderWidth: 1,
-          borderColor: checked ? colors.text : colors.line,
-          backgroundColor: checked ? colors.text : "#FFF",
+          width: spacing[5],
+          height: spacing[5],
+          borderRadius: radius.inner,
+          borderWidth,
+          borderColor: checked ? colors.text : colors.inputBorder,
+          backgroundColor: checked ? colors.text : colors.card,
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        {checked && <Check size={13} color="#FFF" />}
+        {checked && <Check size={13} color={colors.onInk} />}
       </View>
       <Text style={[s.text, { flex: 1 }]}>{label}</Text>
     </Pressable>
@@ -354,10 +378,14 @@ export function SectionHeading({
   onPress?: () => void;
 }) {
   return (
-    <View style={[s.between, { marginBottom: 19 }]}>
+    <View style={[s.between, { marginBottom: spacing[5] }]}>
       <Text style={s.heading}>{title}</Text>
       {action && onPress && (
-        <Pressable accessibilityRole="button" onPress={onPress} style={[s.row, { gap: 5 }]}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onPress}
+          style={[s.row, { gap: spacing[1] }]}
+        >
           <Text style={[s.small, { color: colors.text }]}>{action}</Text>
           <ArrowUpRight size={13} color={colors.muted} />
         </Pressable>
@@ -384,14 +412,14 @@ export function LinkRow({
       onPress={onPress}
       style={({ pressed }) => [
         s.row,
-        { paddingVertical: 13, gap: 14, borderRadius: 10 },
+        { paddingVertical: spacing[3], gap: spacing[3], borderRadius: radius.element },
         pressed && { backgroundColor: colors.canvas },
       ]}
     >
       <View style={[s.iconBox, { backgroundColor: tint || colors.sky }]}>
         <Icon size={19} color={colors.text} />
       </View>
-      <View style={{ flex: 1, gap: 3 }}>
+      <View style={{ flex: 1, gap: spacing[1] }}>
         <Text style={[s.text, { fontWeight: "500" }]}>{title}</Text>
         {!!detail && <Text style={s.small}>{detail}</Text>}
       </View>
@@ -407,10 +435,11 @@ export function Mascot({
   size?: number;
   variant?: "sky" | "sand" | "lilac";
 }) {
+  // Soft Butter-theme tints behind Debo. The mascot art itself is never recoloured.
   const palette = {
-    sky: "#ECF5FA",
-    sand: "#FAF0DF",
-    lilac: "#F1ECF9",
+    sky: colors.blue,
+    sand: colors.orange,
+    lilac: colors.lavender,
   }[variant];
   return (
     <View accessibilityLabel="Debo" style={{ width: size, height: size }}>
@@ -421,7 +450,7 @@ export function Mascot({
           left: size * 0.12,
           width: size * 0.76,
           height: size * 0.76,
-          borderRadius: size,
+          borderRadius: radius.full,
           backgroundColor: palette,
         }}
       />

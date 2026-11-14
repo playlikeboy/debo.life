@@ -8,7 +8,7 @@ import {
   retryChoiceAvailable,
   selectionText,
 } from "./jev-actions";
-import { Button, Card, colors, ErrorNotice, s } from "./ui";
+import { Button, Card, colors, ErrorNotice, radius, s } from "./ui";
 
 type JevInteraction = {
   threadId: string | null;
@@ -219,7 +219,12 @@ export function JevToolCard({ result, loading }: { result: unknown; loading: boo
           {panel.options.map((option, index) => (
             <View
               key={option.id}
-              style={{ borderRadius: 16, padding: 14, gap: 9, backgroundColor: "#F6F7F8" }}
+              style={{
+                borderRadius: radius.container,
+                padding: 14,
+                gap: 9,
+                backgroundColor: colors.subtle,
+              }}
             >
               <Text style={[s.text, { fontWeight: "600" }]}>{option.label}</Text>
               {!!option.details.length && (

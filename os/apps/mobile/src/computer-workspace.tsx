@@ -22,7 +22,19 @@ import type {
 } from "../../../packages/domain/src/computer";
 import { useComputerDraft } from "./computer-drafts";
 import { DesktopStream } from "./desktop-stream";
-import { Button, Card, colors, Empty, ErrorNotice, Field, LinkRow, s, timeLabel } from "./ui";
+import {
+  Button,
+  Card,
+  colors,
+  Empty,
+  ErrorNotice,
+  Field,
+  fontSize,
+  LinkRow,
+  radius,
+  s,
+  timeLabel,
+} from "./ui";
 import { useWorkspace } from "./workspace";
 
 const mono = Platform.OS === "ios" ? "Menlo" : "monospace";
@@ -213,8 +225,17 @@ export function LinuxWorkspace({
         <>
           <View style={{ display: tab === "Terminal" ? "flex" : "none", gap: 16 }}>
             {editingCommand || command.length > 0 || snapshot.commands.length === 0 ? (
-              <View style={{ borderRadius: 22, backgroundColor: "#F1F3F4", padding: 18, gap: 8 }}>
-                <Text style={{ color: colors.muted, fontSize: 12, fontFamily: mono }}>
+              <View
+                style={{
+                  borderRadius: radius.page,
+                  backgroundColor: colors.subtle,
+                  padding: 18,
+                  gap: 8,
+                }}
+              >
+                <Text
+                  style={{ color: colors.muted, fontSize: fontSize.supporting, fontFamily: mono }}
+                >
                   TERMINAL
                 </Text>
                 <Field
@@ -258,7 +279,9 @@ export function LinuxWorkspace({
                 >
                   Run command
                 </Button>
-                <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18 }}>
+                <Text
+                  style={{ color: colors.muted, fontSize: fontSize.supporting, lineHeight: 18 }}
+                >
                   {snapshot.network === "enabled"
                     ? "Runs on your computer with internet access. Start GUI apps with >/dev/null 2>&1 & to open them on the Desktop tab."
                     : "Runs on your computer. Network access is off. Use Browser for the web."}
@@ -343,7 +366,7 @@ function CommandReceipt({ run }: { run: ComputerCommand }) {
             {
               color:
                 run.status === "succeeded"
-                  ? "#248258"
+                  ? colors.success
                   : run.status === "running"
                     ? colors.blueDark
                     : colors.danger,
@@ -357,13 +380,16 @@ function CommandReceipt({ run }: { run: ComputerCommand }) {
       </View>
       <Text
         selectable
-        style={[s.text, { fontFamily: mono, fontSize: 13 }]}
+        style={[s.text, { fontFamily: mono, fontSize: fontSize.base }]}
       >{`$ ${run.command}`}</Text>
       <Text style={[s.small, { fontFamily: mono }]}>{run.cwd}</Text>
       {expanded && (
         <>
           {!!run.stdout && (
-            <Text selectable style={[s.text, { fontFamily: mono, fontSize: 12, lineHeight: 19 }]}>
+            <Text
+              selectable
+              style={[s.text, { fontFamily: mono, fontSize: fontSize.supporting, lineHeight: 19 }]}
+            >
               {run.stdout}
             </Text>
           )}
@@ -372,7 +398,12 @@ function CommandReceipt({ run }: { run: ComputerCommand }) {
               selectable
               style={[
                 s.text,
-                { fontFamily: mono, fontSize: 12, lineHeight: 19, color: colors.danger },
+                {
+                  fontFamily: mono,
+                  fontSize: fontSize.supporting,
+                  lineHeight: 19,
+                  color: colors.danger,
+                },
               ]}
             >
               {run.stderr}
@@ -537,7 +568,7 @@ function ComputerFiles({ running, active }: { running: boolean; active: boolean 
         {editor?.path || path}
       </Text>
       <ErrorNotice error={error} />
-      {!!notice && <Text style={[s.small, { color: "#248258" }]}>{notice}</Text>}
+      {!!notice && <Text style={[s.small, { color: colors.success }]}>{notice}</Text>}
       {!running && (
         <Text style={s.muted}>Start the computer to browse or edit its saved files.</Text>
       )}
@@ -561,7 +592,7 @@ function ComputerFiles({ running, active }: { running: boolean; active: boolean 
             smartInsertDelete={false}
             keyboardType="ascii-capable"
             autoCapitalize="none"
-            style={{ fontFamily: mono, minHeight: 240, fontSize: 13 }}
+            style={{ fontFamily: mono, minHeight: 240, fontSize: fontSize.base }}
           />
           <View style={[s.row, { flexWrap: "wrap", gap: 8 }]}>
             <Button
@@ -714,7 +745,7 @@ function ComputerFiles({ running, active }: { running: boolean; active: boolean 
             directory.entries.length === 0 && (
               <Empty
                 icon={Folder}
-                title="A little space to create"
+                title="No files yet"
                 detail="Add a file here, or ask your agent to make one in its workspace."
               />
             )}

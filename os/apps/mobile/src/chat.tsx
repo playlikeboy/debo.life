@@ -42,7 +42,7 @@ import { MailToolCard } from "./mail-tool-card";
 import { SearchToolCard } from "./search-tool-card";
 import { FileThreadCard, TaskThreadCard } from "./thread-artifacts";
 import { type Selection, useFuseThread } from "./threads";
-import { Button, Card, CheckRow, colors, ErrorNotice, s } from "./ui";
+import { Button, Card, CheckRow, colors, ErrorNotice, fontSize, radius, s, shadow } from "./ui";
 import { useWorkspace } from "./workspace";
 
 const displayParameters = z.record(z.string(), z.unknown());
@@ -528,7 +528,7 @@ export function ChatScreen({
           >
             <Text
               style={{
-                fontSize: 28,
+                fontSize: fontSize["2xl"],
                 letterSpacing: -1,
                 color: colors.text,
                 textAlign: "center",
@@ -587,14 +587,14 @@ export function ChatScreen({
                     style={{
                       paddingHorizontal: 16,
                       paddingVertical: 13,
-                      borderRadius: 22,
+                      borderRadius: radius.page,
                       borderBottomRightRadius: user ? 7 : 22,
                       borderBottomLeftRadius: user ? 22 : 7,
-                      backgroundColor: user ? colors.blue : "#EEEEF0",
+                      backgroundColor: user ? colors.blue : colors.subtle,
                     }}
                   >
                     {user ? (
-                      <Text selectable style={[s.text, { fontSize: 16, lineHeight: 24 }]}>
+                      <Text selectable style={[s.text, { fontSize: fontSize.lg, lineHeight: 24 }]}>
                         {text}
                       </Text>
                     ) : (
@@ -717,8 +717,8 @@ export function ChatScreen({
                 gap: 7,
                 paddingHorizontal: 19,
                 paddingVertical: 18,
-                backgroundColor: "#EEEEF0",
-                borderRadius: 28,
+                backgroundColor: colors.subtle,
+                borderRadius: radius.chat,
               },
             ]}
           >
@@ -728,7 +728,7 @@ export function ChatScreen({
                 style={{
                   width: 8,
                   height: 8,
-                  borderRadius: 4,
+                  borderRadius: radius.inner,
                   backgroundColor: colors.muted,
                   opacity,
                 }}
@@ -859,16 +859,12 @@ export function ChatScreen({
         )}
         <View
           style={{
-            backgroundColor: "#FFF",
-            borderRadius: 32,
+            backgroundColor: colors.card,
+            borderRadius: radius.chat,
             borderWidth: 1,
-            borderColor: focused ? "#C7E4F9" : "#EEF0F2",
+            borderColor: focused ? colors.blueDark : colors.inputBorder,
             padding: 8,
-            shadowColor: "#18384B",
-            shadowOpacity: focused ? 0.1 : 0.06,
-            shadowRadius: 20,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: 4,
+            boxShadow: focused ? shadow.med : shadow.low,
           }}
         >
           {attachments.length > 0 && (
@@ -887,7 +883,7 @@ export function ChatScreen({
                         gap: 7,
                         maxWidth: "100%",
                         backgroundColor: colors.sky,
-                        borderRadius: 16,
+                        borderRadius: radius.container,
                         paddingHorizontal: 11,
                         paddingVertical: 8,
                       },
@@ -896,7 +892,7 @@ export function ChatScreen({
                     <FileText size={14} color={colors.blueDark} />
                     <Text
                       numberOfLines={1}
-                      style={{ flexShrink: 1, fontSize: 12, color: colors.text }}
+                      style={{ flexShrink: 1, fontSize: fontSize.supporting, color: colors.text }}
                     >
                       {f.name}
                     </Text>
@@ -916,11 +912,18 @@ export function ChatScreen({
                 height: 44,
                 alignItems: "center",
                 justifyContent: "center",
-                borderRadius: 24,
+                borderRadius: radius.page,
                 backgroundColor: picking || pressed ? colors.sky : "transparent",
               })}
             >
-              <Text style={{ color: colors.text, fontSize: 29, fontWeight: "300", lineHeight: 32 }}>
+              <Text
+                style={{
+                  color: colors.text,
+                  fontSize: fontSize["2xl"],
+                  fontWeight: "300",
+                  lineHeight: 32,
+                }}
+              >
                 +
               </Text>
             </Pressable>
@@ -940,7 +943,7 @@ export function ChatScreen({
                       : "Loading conversation…"
                     : "Message…"
               }
-              placeholderTextColor="#949B9F"
+              placeholderTextColor={colors.muted}
               selectionColor={colors.blueDark}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
@@ -950,7 +953,7 @@ export function ChatScreen({
                 height: inputHeight,
                 minHeight: 44,
                 maxHeight: 140,
-                fontSize: 17,
+                fontSize: fontSize.lg,
                 lineHeight: 24,
                 paddingHorizontal: 2,
                 paddingTop: 10,
@@ -981,8 +984,8 @@ export function ChatScreen({
               style={({ pressed }) => ({
                 width: 44,
                 height: 44,
-                borderRadius: 24,
-                backgroundColor: replying || draft.trim() ? colors.blue : "#F3F5F6",
+                borderRadius: radius.page,
+                backgroundColor: replying || draft.trim() ? colors.blue : colors.subtle,
                 alignItems: "center",
                 justifyContent: "center",
                 transform: [{ scale: pressed ? 0.94 : 1 }],
@@ -994,7 +997,7 @@ export function ChatScreen({
                 <ArrowUp
                   size={25}
                   strokeWidth={1.8}
-                  color={draft.trim() ? colors.text : "#9CB5C5"}
+                  color={draft.trim() ? colors.text : colors.disabled}
                 />
               )}
             </Pressable>

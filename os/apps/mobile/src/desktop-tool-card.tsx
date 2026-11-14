@@ -5,7 +5,7 @@ import { z } from "zod";
 import type { ComputerSnapshot } from "../../../packages/domain/src/computer";
 import { useComputerDraft } from "./computer-drafts";
 import { DesktopStream } from "./desktop-stream";
-import { Button, Card, colors, ErrorNotice, s } from "./ui";
+import { Button, Card, colors, ErrorNotice, fontSize, radius, s } from "./ui";
 import { useWorkspace } from "./workspace";
 
 const resultSchema = z.object({
@@ -90,15 +90,15 @@ export function DesktopToolCard({
   }
   return (
     <Card
-      style={{ padding: 13, backgroundColor: "#EEEEF0", gap: 12, width: "100%", maxWidth: 640 }}
+      style={{ padding: 13, backgroundColor: colors.subtle, gap: 12, width: "100%", maxWidth: 640 }}
     >
       <View style={[s.row, { gap: 10 }]}>
-        <View style={[s.iconBox, { width: 36, height: 36, borderRadius: 10 }]}>
+        <View style={[s.iconBox, { width: 36, height: 36, borderRadius: radius.element }]}>
           <Monitor size={21} color={colors.blueDark} />
         </View>
         <View style={{ flex: 1, gap: 1 }}>
           <Text style={[s.text, { fontWeight: "600" }]}>Desktop</Text>
-          <Text numberOfLines={1} style={[s.small, { fontSize: 12 }]}>
+          <Text numberOfLines={1} style={[s.small, { fontSize: fontSize.supporting }]}>
             {loading
               ? "Using the desktop…"
               : value?.error
@@ -110,7 +110,14 @@ export function DesktopToolCard({
       </View>
       <ErrorNotice error={value?.error || error} />
       {latest && snapshot && !running ? (
-        <View style={{ backgroundColor: "#FAFAFB", borderRadius: 12, padding: 16, gap: 10 }}>
+        <View
+          style={{
+            backgroundColor: colors.canvas,
+            borderRadius: radius.container,
+            padding: 16,
+            gap: 10,
+          }}
+        >
           <Text style={s.small}>
             The computer is offline. Start it to see the desktop; apps that were open are closed.
           </Text>
@@ -130,7 +137,7 @@ export function DesktopToolCard({
                   uri: api.url(`/api/computer/desktop/screenshot?receipt=${value.receiptId}`),
                   headers: { Authorization: `Bearer ${api.token}` },
                 }}
-                style={{ width: "100%", aspectRatio: 1.6, borderRadius: 12 }}
+                style={{ width: "100%", aspectRatio: 1.6, borderRadius: radius.container }}
                 resizeMode="contain"
               />
             )}
