@@ -9,7 +9,7 @@ export function useOpenEntry() {
   const { navigate } = useWorkspace();
   return (id: string) => {
     entryFocus.set(id);
-    navigate("journal");
+    navigate("journal", { entryId: id });
   };
 }
 

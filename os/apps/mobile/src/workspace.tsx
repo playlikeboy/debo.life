@@ -11,6 +11,7 @@ import type {
   Workspace,
 } from "../../../packages/domain/src";
 import type { FuseApi } from "./api";
+import type { Route, RouteParams } from "./routes";
 export type Detail =
   | { type: "mail"; mail: Mail }
   | { type: "email"; draft?: Partial<EmailDraft> & { id?: string } }
@@ -27,7 +28,9 @@ export interface WorkspaceContextValue {
   workspace: Workspace;
   api: FuseApi;
   section: Section;
-  navigate: (section: Section) => void;
+  /** Where we are, including a conversation or journal entry named in the address. */
+  route: Route | null;
+  navigate: (section: Section, params?: RouteParams) => void;
   refresh: () => Promise<void>;
   open: (detail: Detail) => void;
   close: () => void;

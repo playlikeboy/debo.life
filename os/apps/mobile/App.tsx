@@ -13,10 +13,12 @@ import {
   Shapes,
   X,
 } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { createElement, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   AppState,
+  Linking,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -57,6 +59,8 @@ import {
   s,
   shadow,
 } from "./src/ui";
+import { entryFocus } from "./src/debo-data";
+import { canonicalSection, parsePath, pathFor, pathFromUrl, type Route, type RouteParams, titleFor } from "./src/routes";
 import { type Detail, useWorkspace, WorkspaceContext } from "./src/workspace";
 
 const nav: { id: Section; label: string; icon: LucideIcon }[] = [
@@ -87,6 +91,21 @@ const titles: Partial<Record<Section, { title: string; subtitle: string }>> = {
   journal: { title: "Your journal", subtitle: "Write about your day. Only you can read it." },
   knows: { title: "What Debo knows", subtitle: "Memories, each with its source." },
 };
+/** Shown when the address matches no screen. */
+function NotFound() {
+  const { navigate } = useWorkspace();
+  return (
+    <View style={{ gap: 16, alignItems: "flex-start" }}>
+      <Text accessibilityRole="header" style={[s.title, { fontSize: fontSize["2xl"] }]}>
+        That page isn't here
+      </Text>
+      <Text style={s.muted}>The link may be old or mistyped. Your chat is one tap away.</Text>
+      <Button primary onPress={() => navigate("chat")}>
+        Go to Chat
+      </Button>
+    </View>
+  );
+}
 /**
  * Asks the API how people sign in. Neon Auth (one account per person) shows email
  * sign-in. A local or demo install keeps the shared access key screen.
@@ -199,10 +218,48 @@ function AccessKeyApp() {
     </SafeAreaProvider>
   );
 }
+const onWeb = Platform.OS === "web";
+/**
+ * Where the person is. On the web the address bar is the truth: each move adds a
+ * browser history entry, so back, forward and reload work. On the phone the route
+ * lives in memory and debo:// links move it. null means "no screen at this address".
+ */
+function useRouter() {
+  const [route, setRoute] = useState<Route | null>(() =>
+    onWeb ? parsePath(window.location.pathname) : { section: "chat" },
+  );
+  useEffect(() => {
+    if (onWeb) document.title = titleFor(route);
+    if (onWeb && route && window.location.pathname !== pathFor(route.section, route))
+      window.history.replaceState(null, "", pathFor(route.section, route));
+  }, [route]);
+  useEffect(() => {
+    if (onWeb) {
+      const listener = () => setRoute(parsePath(window.location.pathname));
+      window.addEventListener("popstate", listener);
+      return () => window.removeEventListener("popstate", listener);
+    }
+    const apply = (url: string | null) => {
+      const next = url ? parsePath(pathFromUrl(url)) : null;
+      if (next) setRoute(next);
+    };
+    void Linking.getInitialURL().then(apply);
+    const subscription = Linking.addEventListener("url", (event) => apply(event.url));
+    return () => subscription.remove();
+  }, []);
+  const go = useCallback((section: Section, params?: RouteParams) => {
+    const next: Route = { section: canonicalSection(section), ...params };
+    const path = pathFor(next.section, params);
+    if (onWeb && window.location.pathname !== path) window.history.pushState(null, "", path);
+    setRoute(next);
+  }, []);
+  return { route, go };
+}
 function WorkspaceApp({ token, sessionKey }: { token: string; sessionKey?: string }) {
   const api = useMemo(() => new FuseApi(token), [token]);
   const [workspace, setWorkspace] = useState<Workspace>();
-  const [section, setSection] = useState<Section>("chat");
+  const { route, go } = useRouter();
+  const section: Section = route?.section ?? "chat";
   const [detail, setDetail] = useState<Detail>();
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
@@ -226,17 +283,18 @@ function WorkspaceApp({ token, sessionKey }: { token: string; sessionKey?: strin
     const timer = setTimeout(() => setToast(""), 5500);
     return () => clearTimeout(timer);
   }, [toast]);
-  const navigate = useCallback(
-    (next: Section) =>
-      setSection(next === "today" ? "chat" : next === "connections" ? "apps" : next),
-    [],
-  );
+  const navigate = go;
+  // /journal/<entry> opens that entry. Other addresses clear the choice.
+  const wantedEntry = route?.section === "journal" ? route.entryId : undefined;
+  useEffect(() => {
+    if (wantedEntry || entryFocus.get()) entryFocus.set(wantedEntry);
+  }, [wantedEntry]);
   const open = useCallback((next: Detail) => setDetail(next), []);
   const close = useCallback(() => setDetail(undefined), []);
   const ask = useCallback((text: string) => {
     setPrompt({ id: Date.now(), text });
-    setSection("chat");
-  }, []);
+    go("chat");
+  }, [go]);
   if (!workspace)
     return (
       <SafeAreaView
@@ -267,13 +325,14 @@ function WorkspaceApp({ token, sessionKey }: { token: string; sessionKey?: strin
     );
   return (
     <WorkspaceContext.Provider
-      value={{ workspace, api, section, navigate, refresh, open, close, notify: setToast, ask }}
+      value={{ workspace, api, section, route, navigate, refresh, open, close, notify: setToast, ask }}
     >
       <AgentWorkspaceProvider>
         <ComputerDraftProvider key={sessionKey ?? token}>
           <ThreadsProvider>
             <WorkspaceShell
               detail={detail}
+              notFound={route === null}
               toast={toast}
               clearToast={() => setToast("")}
               error={error}
@@ -287,18 +346,22 @@ function WorkspaceApp({ token, sessionKey }: { token: string; sessionKey?: strin
 }
 function WorkspaceShell({
   detail,
+  notFound,
   toast,
   clearToast,
   error,
   prompt,
 }: {
   detail?: Detail;
+  notFound: boolean;
   toast: string;
   clearToast: () => void;
   error: string;
   prompt?: { id: number; text: string };
 }) {
-  const { workspace, section, navigate, open } = useWorkspace();
+  const { workspace, section: routed, navigate, open } = useWorkspace();
+  /** "none" while the address matches no screen. */
+  const section: Section | "none" = notFound ? "none" : routed;
   const { data } = useAgentWorkspace();
   const {
     selection,
@@ -329,9 +392,11 @@ function WorkspaceShell({
     : data?.tasks.some((task) => task.status === "queued")
       ? "Picking up your next task…"
       : "Here when you need me";
-  const title = titles[section] || titles.apps;
+  const title = section === "none" ? undefined : titles[section] || titles.apps;
   const Screen =
-    section === "talk"
+    section === "none"
+      ? NotFound
+      : section === "talk"
       ? TalkScreen
       : section === "mail"
       ? MailScreen
@@ -442,9 +507,14 @@ function WorkspaceShell({
                     Back to Apps
                   </Button>
                 )}
-                <Text style={[s.title, { fontSize: fontSize["2xl"], marginBottom: 22 }]}>
-                  {title?.title}
-                </Text>
+                {title && (
+                  <Text
+                    accessibilityRole="header"
+                    style={[s.title, { fontSize: fontSize["2xl"], marginBottom: 22 }]}
+                  >
+                    {title.title}
+                  </Text>
+                )}
                 <ErrorNotice error={error} />
                 <Screen />
                 {section === "apps" && <AccountCard />}
@@ -512,6 +582,34 @@ function WorkspaceShell({
             >
               {nav.map((item) => {
                 const active = section === item.id || (item.id === "apps" && utility);
+                const tabStyle = {
+                  flex: 1,
+                  height: 47,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: active ? colors.subtle : "transparent",
+                  borderRadius: radius.chat,
+                } as const;
+                const icon = <item.icon size={23} strokeWidth={1.8} color={colors.text} />;
+                // On the web a tab is a real link, so middle-click and "open in new tab" work.
+                if (onWeb)
+                  return createElement(
+                    "a",
+                    {
+                      key: item.id,
+                      href: pathFor(item.id),
+                      "aria-label": item.label,
+                      "aria-current": active ? "page" : undefined,
+                      onClick: (event: MouseEvent) => {
+                        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+                          return;
+                        event.preventDefault();
+                        navigate(item.id);
+                      },
+                      style: { ...tabStyle, display: "flex", textDecoration: "none" },
+                    },
+                    icon,
+                  );
                 return (
                   <Pressable
                     key={item.id}
@@ -519,16 +617,9 @@ function WorkspaceShell({
                     accessibilityLabel={item.label}
                     accessibilityState={{ selected: active }}
                     onPress={() => navigate(item.id)}
-                    style={{
-                      flex: 1,
-                      height: 47,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: active ? colors.subtle : "transparent",
-                      borderRadius: radius.chat,
-                    }}
+                    style={tabStyle}
                   >
-                    <item.icon size={23} strokeWidth={1.8} color={colors.text} />
+                    {icon}
                   </Pressable>
                 );
               })}

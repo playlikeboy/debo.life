@@ -35,7 +35,7 @@ const ThreadContext = createContext<{
   claimPrompt: (id: number) => boolean;
 } | null>(null);
 export function ThreadsProvider({ children }: { children: ReactNode }) {
-  const { workspace, navigate, api } = useWorkspace();
+  const { workspace, navigate, api, route, section } = useWorkspace();
   const handledPrompt = useRef(0);
   const enabled = workspace.runtime.richThreads === true;
   const [selection, setSelection] = useState<Selection>({ id: "local", existing: false });
@@ -69,8 +69,19 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
   function select(next: Selection) {
     setSelection(next);
     setVisited((items) => (items.some((item) => item.id === next.id) ? items : [...items, next]));
-    navigate("chat");
+    navigate("chat", { threadId: next.id === mainId ? undefined : next.id });
   }
+  // The address picks the conversation: /chat is the main chat, /chat/<id> a side chat.
+  // This also handles back, forward, reload and links opened from elsewhere.
+  const wanted = route?.threadId;
+  useEffect(() => {
+    if (!enabled || loading || section !== "chat") return;
+    const id = wanted ?? mainId;
+    if (id === selection.id) return;
+    const next = { id, existing: true };
+    setSelection(next);
+    setVisited((items) => (items.some((item) => item.id === id) ? items : [...items, next]));
+  }, [enabled, loading, section, wanted, mainId, selection.id]);
   return (
     <ThreadContext.Provider
       value={{
