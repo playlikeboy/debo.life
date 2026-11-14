@@ -11,7 +11,8 @@
       "!**/android",
       "!**/.openfuse",
       "!**/.openmuse",
-      "!**/artifacts"
+      "!**/artifacts",
+      "!**/astryx-tokens.ts"
     ]
   },
   "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100 },

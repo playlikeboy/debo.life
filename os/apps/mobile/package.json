@@ -10,6 +10,7 @@
     "build:ios": "expo export --platform ios --output-dir dist/ios",
     "build:android": "expo export --platform android --output-dir dist/android",
     "typecheck": "tsc --noEmit",
+    "sync:tokens": "node ../../scripts/sync-astryx-tokens.mjs",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },
@@ -44,6 +45,8 @@
     "zod": "^4.1.0"
   },
   "devDependencies": {
+    "@astryxdesign/core": "0.7.16",
+    "@astryxdesign/theme-butter": "0.7.16",
     "@config-plugins/react-native-blob-util": "^12.0.0",
     "@config-plugins/react-native-pdf": "^12.0.0",
     "@types/markdown-it": "14.1.2",
