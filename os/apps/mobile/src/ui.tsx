@@ -399,7 +399,7 @@ export function LinkRow({
     </Pressable>
   );
 }
-/** OpenFuse's original capybara, shared by every assistant surface. */
+/** Debo, the mascot, shared by every assistant surface. */
 export function Mascot({
   size = 42,
   variant = "sky",
@@ -413,7 +413,7 @@ export function Mascot({
     lilac: "#F1ECF9",
   }[variant];
   return (
-    <View accessibilityLabel="OpenFuse capybara" style={{ width: size, height: size }}>
+    <View accessibilityLabel="Debo" style={{ width: size, height: size }}>
       <View
         style={{
           position: "absolute",
@@ -426,7 +426,7 @@ export function Mascot({
         }}
       />
       <Image
-        source={require("../assets/capybara.png")}
+        source={require("../assets/debo.png")}
         resizeMode="contain"
         style={{ width: size, height: size }}
         accessible={false}

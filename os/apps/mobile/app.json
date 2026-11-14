@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "OpenFuse",
-    "slug": "openfuse",
-    "scheme": "openfuse",
+    "name": "Debo",
+    "slug": "debo",
+    "scheme": "debo",
     "version": "0.1.0",
     "orientation": "default",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "ios": { "supportsTablet": true, "bundleIdentifier": "app.openfuse.mobile" },
-    "android": { "package": "app.openfuse.mobile" },
-    "web": { "bundler": "metro", "name": "OpenFuse — a little room for everything" },
+    "ios": { "supportsTablet": true, "bundleIdentifier": "life.debo.app" },
+    "android": { "package": "life.debo.app" },
+    "web": { "bundler": "metro", "name": "Debo: remembers your life" },
     "plugins": [
       "expo-document-picker",
       "@config-plugins/react-native-blob-util",

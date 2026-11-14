@@ -17,7 +17,7 @@ if (existsSync(".env")) {
   process.loadEnvFile(".env");
   if (shadowed.length)
     console.warn(
-      `[OpenFuse] Using ${shadowed.join(", ")} from the environment instead of .env. ` +
+      `[Debo] Using ${shadowed.join(", ")} from the environment instead of .env. ` +
         (shadowed.length === 1
           ? "Unset it to use the .env value."
           : "Unset them to use the .env values."),
@@ -69,7 +69,7 @@ export type ComputerProvider = "docker" | "e2b-desktop";
 export const defaultJevModel = "jev-1.13.0";
 
 export const intelligenceKeyRequiredMessage =
-  "OpenFuse requires CPK_INTELLIGENCE_API_KEY. " +
+  "Debo requires CPK_INTELLIGENCE_API_KEY. " +
   "Run `npx copilotkit@latest login` and `npx copilotkit@latest project select`, " +
   "then set the generated server-only key. " +
   "See https://docs.copilotkit.ai/intelligence/connect-your-runtime";

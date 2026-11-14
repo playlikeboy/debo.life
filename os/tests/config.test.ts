@@ -34,7 +34,7 @@ function liveConfig(intelligenceApiKey?: string): Config {
 }
 
 const missingKeyMessage =
-  "OpenFuse requires CPK_INTELLIGENCE_API_KEY. " +
+  "Debo requires CPK_INTELLIGENCE_API_KEY. " +
   "Run `npx copilotkit@latest login` and `npx copilotkit@latest project select`, " +
   "then set the generated server-only key. " +
   "See https://docs.copilotkit.ai/intelligence/connect-your-runtime";
