@@ -1,26 +1,38 @@
 # Voice
 
-Status: plan, phase 3. Do not start before "ask my life" works well in text.
+Status: built (decision 25), not yet tested with a real microphone on the live site. The pieces below are deployed; the checklist at the end says what has been verified.
 
 ## What the person gets
 
-They press "Talk to Debo", speak, and hear Debo answer in a warm voice. They can interrupt. The sources Debo used appear on screen while it speaks.
+On `/home/voice` ("Talk to Debo") they press "Start talking", allow the microphone, and speak in English, Hindi or a mix. Debo answers out loud from their own entries and shows the source chips on screen. They can talk over Debo, press "Stop Debo", turn the microphone off, type instead, or end the conversation.
 
 ## How it works
 
 ```
-Browser mic  ->  LiveKit room  ->  apps/voice-agent
-                                     speech-to-text
-                                     @debo/memory (find)
-                                     @debo/llm (answer)
-                                     text-to-speech
-Browser speaker  <-  LiveKit room  <-
+Browser (/home/voice)                 debo.life (Cloudflare Worker)          LiveKit Cloud (ap-south)
+  "Start talking"  ── POST /api/voice/token ──>  signs a 10-minute room token
+                                                 identity = the person's user id
+                                                 dispatches agent "debo-voice"
+  mic audio  ─────────────── WebRTC ──────────────────────────────────>  apps/voice-agent
+                                                                          Deepgram Nova-3 (multi) hears
+                                                 POST /api/voice/brain <── question + recent turns
+                                                 askStream (the one brain)  (Bearer VOICE_AGENT_SECRET)
+                                                 NDJSON: sources, text ──>  Cartesia Sonic-3 speaks
+  speaker, captions (lk.transcription), source chips (debo.sources)  <──
 ```
 
-- **LiveKit Agents** runs the session: live audio, knowing when the person stopped talking, handling interruptions.
-- `apps/voice-agent` is a long-running worker. It does not run on serverless.
-- The worker uses the same `@debo/memory` and `@debo/llm` as text chat. Voice is a second way in, not a second brain.
-- `apps/web` creates a short-lived LiveKit token for the signed-in person and opens the room.
+- **One brain.** The agent has no model of its own for answers: its `llmNode` streams from `/api/voice/brain`, which runs `askStream`, the same pipeline as chat. The daily limit, usage rows, the activity record, "I don't have anything about that yet" and small talk (decision 24) all behave the same as in chat.
+- **Identity.** The browser never chooses who it is. `/api/voice/token` reads the session and puts the user id in the token as the participant identity. The agent passes that id to `/api/voice/brain` together with a shared secret that only the agent and the Worker know.
+- **Models.** Speech to text: Deepgram Nova-3 with `language: "multi"` (English and Hindi, including switching mid-sentence), through LiveKit Inference. Text to speech: Cartesia Sonic-3, Hindi pronunciation by default (`VOICE_TTS_LANGUAGE=hi`), which also reads English. End of turn: LiveKit's turn detector. No extra provider keys: LiveKit Inference bills through the LiveKit project.
+- **Interrupting.** Speaking over Debo stops it (LiveKit's interruption handling cancels the brain request). "Stop Debo" calls the agent's `debo.interrupt` RPC.
+- **Transcripts.** If "Keep voice transcripts" is on in Settings (the default), each exchange is saved as a chat, so it shows in Chat and can be deleted there. Audio is never stored by Debo.
+- **Follow-ups.** The agent sends the recent turns with each question. `askStream` does not use them yet (the brain work that adds history is in progress), so a follow-up like "and after that?" is searched on its own words for now.
+
+## Running and deploying
+
+- Secrets: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and `VOICE_AGENT_SECRET` are Worker secrets on `debo-web` and GitHub secrets. The agent gets `VOICE_AGENT_SECRET` and `DEBO_URL` as LiveKit agent secrets; LiveKit injects its own keys.
+- `apps/voice-agent` is its own project, outside the pnpm workspace, because LiveKit Cloud builds it alone from its `Dockerfile` and `pnpm-lock.yaml`.
+- Deploy a new version: `cd apps/voice-agent && lk agent deploy`. Status and logs: `lk agent status`, `lk agent logs`.
 
 ## Debo's voice
 
@@ -38,16 +50,12 @@ Browser speaker  <-  LiveKit room  <-
 4. **Voice cannot do risky things.** Forgetting memories, connecting apps, changing plans and deleting the account need a tap on screen.
 5. **Count the minutes.** Voice costs much more than text. Record seconds in `usage` and show the person what they have left.
 
-## Choices to make in phase 3
+## Still to do
 
-| Choice | How to decide |
-|---|---|
-| Speech-to-text provider | Test on real speech, including mixed Hindi and English. Compare accuracy, delay and cost. |
-| Text-to-speech provider and voice | Shortlist three voices, test with five people, pick the one they trust most. |
-| Self-host LiveKit or use its cloud | Start with the cloud. Revisit when cost matters. |
-| Agent language (Python or Node) | The worker must call `@debo/memory`. If the Node SDK is ready enough, use it and share code. If not, use Python and call the web app's API. Check the current LiveKit docs before choosing. |
-
-Write the choices in [`DECISIONS.md`](./DECISIONS.md).
+- Test with real speech on the live site, including mixed Hindi and English, and write the results here.
+- Choose Debo's own voice (the current one is a stock Cartesia voice) with a few real listeners.
+- Count voice minutes in `usage` (rule 5). LiveKit's dashboard shows them today; Debo's daily limit counts only the answer tokens.
+- Use the conversation history in `askStream` for follow-ups.
 
 ## Quality bar
 

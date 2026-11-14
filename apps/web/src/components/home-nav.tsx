@@ -7,6 +7,7 @@ const links = [
   { href: "/home", label: "Home" },
   { href: "/home/journal", label: "Journal" },
   { href: "/home/chat", label: "Chat" },
+  { href: "/home/voice", label: "Talk" },
   { href: "/home/memories", label: "What Debo knows" },
   { href: "/home/activity", label: "What Debo did" },
 ];

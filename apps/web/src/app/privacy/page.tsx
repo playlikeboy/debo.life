@@ -97,7 +97,19 @@ export default function PrivacyPage() {
           Neon says its AI gateway follows Databricks&rsquo; rules. Databricks says it does not use what paying
           customers send to train any AI. It may keep your text for up to 30 days, only to spot abuse.
         </p>
-        <p className="text-ink-soft">We checked these companies&rsquo; terms on 10 November 2026.</p>
+        <p>
+          When you talk to Debo out loud, your voice goes to LiveKit (LiveKit, Inc.), which carries the call. LiveKit
+          turns your speech into text with Deepgram and turns Debo&rsquo;s answer into speech with Cartesia. Only the
+          text of your question reaches Debo&rsquo;s answer pipeline, the same as typing it. Debo does not record your
+          voice.
+        </p>
+        <p>
+          We have not yet checked LiveKit&rsquo;s, Deepgram&rsquo;s or Cartesia&rsquo;s terms on training AI and on how
+          long they keep audio. Until we do, assume they may keep it for a time. If that worries you, type instead.
+        </p>
+        <p className="text-ink-soft">
+          We checked Anthropic&rsquo;s, Neon&rsquo;s and Databricks&rsquo; terms on 10 November 2026.
+        </p>
         <p>
           When you save or change an entry, its text also goes to Mem0. Mem0 uses AI to pick out the facts worth
           remembering, and stores them as your memories. Mem0 says it uses AI providers such as OpenAI and Anthropic.
