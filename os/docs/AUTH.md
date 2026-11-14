@@ -12,7 +12,7 @@ Live mode with `NEON_AUTH_JWKS_URL` set must use `neon`. The server refuses to s
 ## How a request is signed in (neon mode)
 
 1. The app sends email and password to Neon Auth over HTTP (`/sign-in/email`, `/sign-up/email`, `/email-otp/verify-email`). The same code runs on web, iOS and Android.
-2. Neon Auth answers with a session token in the `set-auth-token` header. The app keeps it in the Keychain or Keystore (`expo-secure-store`) on a phone, and in `localStorage` on the web.
+2. Neon Auth starts a session and keeps it in a cookie (`HttpOnly`, `Secure`, `SameSite=None`). The browser, or the phone's network layer, holds that cookie; the app never sees its value and stores only a marker that says a session should exist. Every call to Neon Auth is sent with `credentials: "include"`. If a Neon Auth has the Better Auth bearer plugin on, it also answers with a `set-auth-token` header, and the app then keeps that token (Keychain or Keystore on a phone, `localStorage` on the web) and sends it as a Bearer.
 3. The app calls `GET /get-session` with that token and reads a short-lived JWT from the `set-auth-jwt` header. If the header is missing it calls `GET /token`. The JWT lasts 15 minutes. The app swaps in a new one 90 seconds before it runs out.
 4. The app sends the JWT to the Debo API as `Authorization: Bearer <jwt>`.
 5. The API checks the JWT with `jose` against the public keys at `NEON_AUTH_JWKS_URL`: algorithm EdDSA only, issuer equal to the origin of `NEON_AUTH_BASE_URL`, audience equal to that origin when the token has one, expiry required. The `sub` claim must be a uuid. It becomes the owner of every row the request touches. Nothing is stored for the session on the API side, and no token is logged.
@@ -55,5 +55,5 @@ Deleting rows is not the whole job. These live elsewhere and need their own step
 
 ## What is not verified yet
 
-- The sign-in calls follow Better Auth's documented routes and the way `@neon/auth` 0.8 reads `set-auth-jwt`. They have not been run against Debo's live Neon Auth branch. Check that sign-in responses carry `set-auth-token` and that `get-session` carries `set-auth-jwt`.
+- Checked against Debo's live Neon Auth on 14 November 2026: sign-in answers with a session cookie and no `set-auth-token` header (the bearer plugin is off), `get-session` with the cookie answers with `set-auth-jwt`, and `/token` returns the same JWT. The app's origin must be in Neon Auth's trusted domains, or sign-in answers 403 `INVALID_ORIGIN`. The cookie session has not been tried on an iPhone or Android phone yet.
 - The `aud` claim is checked only when the token has one. Neon documents it as the auth URL's origin.

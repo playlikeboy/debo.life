@@ -4,10 +4,15 @@
  * tests can run it with a fake `fetch`.
  *
  * How a session works:
- * 1. Sign-in answers with the session token in the `set-auth-token` header (the
- *    Better Auth bearer plugin). The app keeps that token in secure storage.
- * 2. `GET /get-session` with that token as a Bearer answers with a short-lived JWT in
- *    the `set-auth-jwt` header (the JWT plugin). `GET /token` returns the same JWT.
+ * 1. Sign-in starts a session. Debo's Neon Auth keeps it in a cookie
+ *    (HttpOnly, Secure, SameSite=None) that the browser or the phone's network
+ *    layer holds; the app never sees its value. Every request here is sent with
+ *    `credentials: "include"` so that cookie travels. The app stores only the
+ *    marker COOKIE_SESSION, meaning "there should be a cookie session".
+ *    If a Neon Auth has the Better Auth bearer plugin on, sign-in also answers
+ *    with a `set-auth-token` header; then that token is stored and sent as a Bearer.
+ * 2. `GET /get-session` answers with a short-lived JWT in the `set-auth-jwt`
+ *    header (the JWT plugin). `GET /token` returns the same JWT.
  * 3. The Debo API takes the JWT as its Bearer token and checks it against Neon Auth's
  *    public keys. It lasts 15 minutes, so the app asks for a fresh one before then.
  */
@@ -41,6 +46,9 @@ export interface JwtSession {
   expiresAt: number;
 }
 
+/** Stored in place of a token when the session lives in Neon Auth's cookie. Never sent anywhere. */
+export const COOKIE_SESSION = "cookie";
+
 const OFFLINE = "I couldn't reach the sign-in service. Check your connection and try again.";
 const TROUBLE = "Sign-in is having trouble right now. Try again in a moment.";
 
@@ -62,22 +70,22 @@ export class NeonAuthClient {
     const response = await this.post("/sign-in/email", { email, password });
     if (response.status === 403) return { status: "needs-code", email };
     if (!response.ok) throw await explain(response, "sign-in");
-    return this.signedIn(response, email);
+    const result = await this.signedIn(response, email);
+    if (!result) throw new AuthProblem(TROUBLE, "server");
+    return result;
   }
 
   async signUp(name: string, email: string, password: string): Promise<SignInResult> {
     const response = await this.post("/sign-up/email", { name, email, password });
     if (!response.ok) throw await explain(response, "sign-up");
-    // New accounts must confirm their email first. If a token came back, they are already in.
-    const token = response.headers.get("set-auth-token");
-    return token ? this.signedIn(response, email) : { status: "needs-code", email };
+    // New accounts must confirm their email first. If a session came back, they are already in.
+    return (await this.signedIn(response, email)) ?? { status: "needs-code", email };
   }
 
   async verifyEmail(email: string, code: string): Promise<SignInResult> {
     const response = await this.post("/email-otp/verify-email", { email, otp: code });
     if (!response.ok) throw await explain(response, "code");
-    const token = response.headers.get("set-auth-token");
-    return token ? this.signedIn(response, email) : { status: "confirmed", email };
+    return (await this.signedIn(response, email)) ?? { status: "confirmed", email };
   }
 
   async resendCode(email: string): Promise<void> {
@@ -113,10 +121,15 @@ export class NeonAuthClient {
     }
   }
 
-  private async signedIn(response: Response, email: string): Promise<SignInResult> {
-    const sessionToken = response.headers.get("set-auth-token");
-    if (!sessionToken) throw new AuthProblem(TROUBLE, "server");
-    const body = (await readJson(response)) as { user?: NeonUser } | null;
+  /** The session a reply started, or null when it started none (for example, email not confirmed yet). */
+  private async signedIn(response: Response, email: string): Promise<SignInResult | null> {
+    const body = (await readJson(response)) as { user?: NeonUser; token?: unknown } | null;
+    // The bearer header when the plugin is on; otherwise a token in the reply
+    // means Neon Auth set its session cookie.
+    const sessionToken =
+      response.headers.get("set-auth-token") ??
+      (typeof body?.token === "string" && body.token ? COOKIE_SESSION : null);
+    if (!sessionToken) return null;
     return {
       status: "signed-in",
       sessionToken,
@@ -137,8 +150,12 @@ export class NeonAuthClient {
         method: options.method ?? "GET",
         headers: {
           ...(options.body === undefined ? {} : { "Content-Type": "application/json" }),
-          ...(options.sessionToken ? { Authorization: `Bearer ${options.sessionToken}` } : {}),
+          ...(options.sessionToken && options.sessionToken !== COOKIE_SESSION
+            ? { Authorization: `Bearer ${options.sessionToken}` }
+            : {}),
         },
+        // Lets Neon Auth's session cookie be set and sent back, on web and on phones.
+        credentials: "include",
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
       });
     } catch {

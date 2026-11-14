@@ -1,15 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AuthProblem, jwtExpiry, NeonAuthClient, refreshDelay } from "../src/neon-auth.ts";
+import {
+  AuthProblem,
+  COOKIE_SESSION,
+  jwtExpiry,
+  NeonAuthClient,
+  refreshDelay,
+} from "../src/neon-auth.ts";
 
 type Reply = { status?: number; body?: unknown; headers?: Record<string, string> };
 /** A fake Neon Auth: answers by path, and records what was asked. */
 function fake(replies: Record<string, Reply | "offline">) {
-  const calls: { path: string; method?: string; auth?: string }[] = [];
+  const calls: { path: string; method?: string; auth?: string; credentials?: string }[] = [];
   const impl = (async (url: string | URL | Request, init?: RequestInit) => {
     const path = new URL(String(url)).pathname.replace("/neondb/auth", "");
     const headers = init?.headers as Record<string, string> | undefined;
-    calls.push({ path, method: init?.method, auth: headers?.Authorization });
+    calls.push({
+      path,
+      method: init?.method,
+      auth: headers?.Authorization,
+      credentials: init?.credentials,
+    });
     const reply = replies[path];
     if (!reply || reply === "offline") throw new TypeError("Network request failed");
     return new Response(reply.body === undefined ? null : JSON.stringify(reply.body), {
@@ -133,4 +144,34 @@ test("refresh happens 90 seconds before the JWT runs out, and never in a tight l
   assert.equal(refreshDelay(1_000_000 + 15 * 60_000, 1_000_000), 15 * 60_000 - 90_000);
   assert.equal(refreshDelay(1_000_000, 1_000_000), 15_000);
   assert.equal(jwtExpiry("not-a-jwt", 5), 5 + 600_000);
+});
+
+test("sign-in with a cookie session: no bearer header, cookies are included, the marker is never sent", async () => {
+  // This is how Debo's own Neon Auth answers: a token in the body, a session cookie, no set-auth-token.
+  const jwt = jwtWithExp(2_000_000_000);
+  const { client, calls } = fake({
+    "/sign-in/email": { body: { token: "opaque-session", user } },
+    "/get-session": { body: { user }, headers: { "set-auth-jwt": jwt } },
+  });
+  const result = await client.signIn("a@example.com", "right-password");
+  assert.equal(result.status, "signed-in");
+  assert.ok(result.status === "signed-in");
+  assert.equal(result.sessionToken, COOKIE_SESSION);
+  const session = await client.jwtFor(result.sessionToken);
+  assert.equal(session?.jwt, jwt);
+  assert.deepEqual(
+    calls.map((call) => [call.path, call.auth, call.credentials]),
+    [
+      ["/sign-in/email", undefined, "include"],
+      ["/get-session", undefined, "include"],
+    ],
+  );
+});
+
+test("sign-up that still needs the email code is not treated as signed in", async () => {
+  const { client } = fake({ "/sign-up/email": { body: { token: null, user } } });
+  assert.deepEqual(await client.signUp("Ada", "a@example.com", "long-enough"), {
+    status: "needs-code",
+    email: "a@example.com",
+  });
 });
