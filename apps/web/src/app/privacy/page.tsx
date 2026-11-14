@@ -37,7 +37,7 @@ export default function PrivacyPage() {
       </a>
 
       <h1 className="h-section mt-8">How Debo handles your data</h1>
-      <p className="mt-4 text-[1.125rem] text-ink-soft">Last updated 11 November 2026.</p>
+      <p className="mt-4 text-[1.125rem] text-ink-soft">Last updated 14 November 2026.</p>
 
       <div className="mt-8 max-w-[40rem] rounded-[24px] border-2 border-ink bg-paper p-6">
         <p>
@@ -147,6 +147,25 @@ export default function PrivacyPage() {
               Delete your account from your home page. That deletes your memories in Mem0, your account, every entry,
               every piece, every chat and any files, right away.
             </>,
+          ]}
+        />
+      </Section>
+
+      <Section id="new-app" title="The new Debo app (early version)">
+        <p>
+          A new version of Debo is being tried at app.debo.life. You sign in with the same account, and it reads and
+          writes the same journal entries and memories described on this page, with the same companies involved.
+        </p>
+        <List
+          items={[
+            <>Chats, tasks and settings you make in the new app are stored in the same Neon database, kept apart from the older app&rsquo;s chats.</>,
+            <>The new app runs on Cloudflare, like this website.</>,
+            <>
+              &ldquo;Delete my data&rdquo; in the new app deletes your journal entries, your memories and everything you made
+              in the new app. It does not yet delete your account itself or your chats from this website. To delete
+              everything, use &ldquo;Delete my account&rdquo; on your home page here.
+            </>,
+            <>&ldquo;Download my data&rdquo; in the new app gives you one file with your entries, memories and what you made there.</>,
           ]}
         />
       </Section>
