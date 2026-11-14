@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/assets/debo-banner.svg" alt="Debo, a round yellow character with big dark eyes, next to the words: Debo, a friendly assistant that remembers your life." width="100%">
+  <img src="./docs/assets/debo-banner.svg" alt="Debo, a small red tomato, next to the words: Debo, a friendly assistant that remembers your life." width="100%">
 </p>
 
 <p align="center"><strong>A friendly assistant that remembers your life, and always shows where it learned it.</strong></p>

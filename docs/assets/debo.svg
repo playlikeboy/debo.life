@@ -1,17 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Debo, a round yellow character with big dark eyes and pink cheeks">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Debo, a small red tomato">
   <title>Debo</title>
-  <ellipse cx="120" cy="226" rx="66" ry="8" fill="#1b1f4b" opacity="0.12"/>
-  <path d="M120 38C180 38 216 86 216 142C216 196 176 218 120 218C64 218 24 196 24 142C24 86 60 38 120 38Z" fill="#ffd23f" stroke="#1b1f4b" stroke-width="6" stroke-linejoin="round"/>
-  <path d="M116 40C108 22 124 10 136 18C144 24 138 35 129 31" fill="none" stroke="#1b1f4b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-  <ellipse cx="70" cy="92" rx="14" ry="7" fill="#ffffff" opacity="0.75" transform="rotate(-35 70 92)"/>
-  <circle cx="88" cy="74" r="4" fill="#ffffff" opacity="0.75"/>
-  <ellipse cx="62" cy="164" rx="17" ry="11" fill="#ffb3c7"/>
-  <ellipse cx="178" cy="164" rx="17" ry="11" fill="#ffb3c7"/>
-  <ellipse cx="88" cy="136" rx="16" ry="19" fill="#1b1f4b"/>
-  <circle cx="94" cy="128" r="6" fill="#ffffff"/>
-  <circle cx="83" cy="145" r="2.8" fill="#ffffff"/>
-  <ellipse cx="152" cy="136" rx="16" ry="19" fill="#1b1f4b"/>
-  <circle cx="158" cy="128" r="6" fill="#ffffff"/>
-  <circle cx="147" cy="145" r="2.8" fill="#ffffff"/>
-  <path d="M107 160Q113.5 169 120 160Q126.5 169 133 160" fill="none" stroke="#1b1f4b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="120" cy="226" rx="70" ry="8" fill="#1b1b1b" opacity="0.14"/>
+  <path d="M120 66C150 52 204 60 221 118C234 174 190 218 120 218C50 218 6 174 19 118C36 60 90 52 120 66Z" fill="#e5392b"/>
+  <path d="M221 118C234 174 190 218 120 218C62 218 22 188 17 142C40 190 100 200 150 186C196 172 214 150 221 118Z" fill="#c42a20"/>
+  <ellipse cx="56" cy="112" rx="17" ry="8" fill="#ffffff" opacity="0.4" transform="rotate(-48 56 112)"/>
+  <circle cx="45" cy="134" r="4.5" fill="#ffffff" opacity="0.4"/>
+  <g fill="#3f9b45">
+    <path d="M120 66C108 58 84 56 64 70C86 76 106 76 120 66Z"/>
+    <path d="M120 66C132 58 156 56 176 70C154 76 134 76 120 66Z"/>
+    <path d="M120 66C102 66 82 78 76 96C98 94 114 84 120 66Z"/>
+    <path d="M120 66C138 66 158 78 164 96C142 94 126 84 120 66Z"/>
+  </g>
+  <path d="M120 70C112 82 114 96 120 104C126 96 128 82 120 70Z" fill="#2f7d33"/>
+  <path d="M120 70C119 56 122 46 130 38" fill="none" stroke="#2f7d33" stroke-width="9" stroke-linecap="round"/>
+  <ellipse cx="60" cy="158" rx="16" ry="10" fill="#ffb0a8" opacity="0.85"/>
+  <ellipse cx="180" cy="158" rx="16" ry="10" fill="#ffb0a8" opacity="0.85"/>
+  <ellipse cx="88" cy="136" rx="13" ry="16" fill="#1b1b1b"/>
+  <circle cx="93" cy="130" r="5" fill="#ffffff"/>
+  <circle cx="84" cy="142" r="2.2" fill="#ffffff"/>
+  <ellipse cx="152" cy="136" rx="13" ry="16" fill="#1b1b1b"/>
+  <circle cx="157" cy="130" r="5" fill="#ffffff"/>
+  <circle cx="148" cy="142" r="2.2" fill="#ffffff"/>
+  <path d="M106 158Q120 174 134 158" fill="none" stroke="#1b1b1b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

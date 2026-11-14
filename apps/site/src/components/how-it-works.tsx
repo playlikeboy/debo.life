@@ -39,7 +39,7 @@ export function HowItWorks() {
           <Card key={item.step} padding={5} variant="muted">
             <VStack gap={3}>
               <HStack gap={2} vAlign="center">
-                <Badge variant="yellow" label={`Step ${item.step}`} />
+                <Badge variant="neutral" label={`Step ${item.step}`} />
               </HStack>
               <Heading level={3}>{item.title}</Heading>
               <Text as="p" color="secondary">

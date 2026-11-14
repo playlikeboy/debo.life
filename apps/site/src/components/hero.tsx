@@ -26,7 +26,7 @@ export function Hero() {
       <VStack hAlign="center">
         <img
           src="/debo.svg"
-          alt="Debo, a round yellow character with big dark eyes and pink cheeks"
+          alt="Debo, a small red tomato"
           width={240}
           height={240}
         />

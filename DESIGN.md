@@ -12,7 +12,9 @@ Debo should feel like a small, kind friend who keeps your things safe. Two words
 
 ## Debo, the mascot
 
-A soft, round, butter-yellow character shaped like a rice cake, a little wider at the bottom. It has big, dark, shiny eyes set low on the face (two white highlights each), pink cheeks, a small "ω" smile, one curl of hair on top and a flat white shine spot. Drawn in SVG, no image files. The one drawing lives in `apps/web/src/components/debo-art.tsx`; the live mascot, the logo, the favicon and the share image all use it.
+A small, round, slightly squat red tomato with a soft highlight, a green leafy top with a short stem, two friendly dark eyes with small highlights, light blush cheeks and a small smile. It is drawn in flat SVG shapes with no outline. The master drawing is `docs/assets/debo.svg`; the landing page (`apps/site`), the app (`os/apps/mobile`) and the share image use copies of it. The older `apps/web` page still draws the earlier yellow character in `apps/web/src/components/debo-art.tsx` and is being replaced.
+
+The new landing page and the app take their colours from Astryx's default Neutral theme (`@astryxdesign/theme-neutral`), not from the table below, which describes `apps/web`. Debo is the one red thing on those screens.
 
 - Its eyes follow the pointer. This is the one playful moment on a screen. Do not add a second.
 - Debo appears once per screen at most. It is a character, not a pattern.
