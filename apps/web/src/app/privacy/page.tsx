@@ -104,6 +104,15 @@ export default function PrivacyPage() {
           voice.
         </p>
         <p>
+          In the new app, a call works like chat. What you say, as text, goes to the same assistant that answers in
+          chat, so it can use your journal, your tasks and the apps you connected, and the AI that writes the answer
+          (Anthropic) receives it as it does for a typed question. Each call is saved as a chat that you can read and
+          delete in Chat. Anything that sends, posts, creates, changes or deletes still waits for your yes on screen.
+          If you ask Debo to act as someone, for example a friend, the role you asked for is saved with your account
+          so she keeps it next time. You can see it, change it or stop it in the Apps screen, under &ldquo;A role for Debo&rdquo;, and it is removed when you
+          delete your account.
+        </p>
+        <p>
           We have not yet checked LiveKit&rsquo;s, Deepgram&rsquo;s or Cartesia&rsquo;s terms on training AI and on how
           long they keep audio. Until we do, assume they may keep it for a time. If that worries you, type instead.
         </p>
