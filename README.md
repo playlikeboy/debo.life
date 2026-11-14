@@ -27,7 +27,7 @@ Debo is for people who want to remember their own life better without building a
 
 ## What works today
 
-Debo is an early version. It runs at [debo.life](https://debo.life). Some parts are built and some are still planned.
+Debo is an early version. The landing page is at [about.debo.life](https://about.debo.life) and the app is at [my.debo.life](https://my.debo.life). [debo.life](https://debo.life) sends people to those two and keeps the privacy page and the server routes. Some parts are built and some are still planned.
 
 | Feature | Status | Notes |
 |---|---|---|

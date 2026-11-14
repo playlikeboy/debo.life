@@ -5,7 +5,7 @@ Rules for every AI agent and human working in this repo. Read this file first, e
 ## What this project is
 
 - **Name:** Debo
-- **Website:** https://debo.life
+- **Website:** https://about.debo.life (landing page, `apps/site`). The app is https://my.debo.life (`os/apps/mobile`). https://debo.life only redirects to those two, and still serves `/privacy` and the `/api/*` routes from `apps/web`.
 - **Repo:** https://github.com/playlikeboy/debo.life
 - **One line:** Debo is a friendly assistant that remembers your life, so you can ask it anything about your own past and plans.
 - **Who it is for:** ordinary people, not developers. Assume the reader has never heard the words "vector", "token" or "MCP".
@@ -14,7 +14,7 @@ Debo keeps a person's journals, voice notes, papers and photos, and answers ques
 
 ## Status: be honest about it
 
-Only the landing page in `apps/web` exists. Everything else in `docs/` is a plan.
+The landing page is `apps/site`. The old web app in `apps/web` is retired: its screens redirect to the new app. Check the code, not the plan docs, for what is built.
 
 - Never write "Debo does X" in user-facing text unless X is built and working.
 - Never invent numbers, users, reviews, logos, awards or security claims.

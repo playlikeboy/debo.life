@@ -5,12 +5,13 @@ One repo, pnpm workspaces, Turborepo.
 ## Layout
 
 ```
-debo.life/
+debo.life/   (the new app is in os/apps/mobile, served at my.debo.life)
   AGENTS.md  CLAUDE.md  DESIGN.md  README.md
   package.json  pnpm-workspace.yaml  turbo.json  .env.example
   docs/
   apps/
-    web/            @debo/web       Next.js 15. Landing page now, product later.
+    web/            @debo/web       Old web app, retired. Redirects to the new app and keeps /privacy and /api/*.
+    site/           @debo/site      Landing page at about.debo.life (Astryx)
     voice-agent/    @debo/voice-agent  LiveKit Agents worker
     mcp-server/     @debo/mcp-server   MCP server
   packages/

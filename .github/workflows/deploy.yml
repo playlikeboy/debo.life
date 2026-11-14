@@ -58,6 +58,6 @@ jobs:
 
       - name: Check the live site
         run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' https://debo.life/)
-          echo "debo.life returned $code"
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://debo.life/privacy)
+          echo "debo.life/privacy returned $code"
           test "$code" = "200"

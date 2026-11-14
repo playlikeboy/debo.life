@@ -104,6 +104,8 @@ The deploy workflow also runs migrations.
 
 ## End-to-end test
 
+The test below drives the old web screens, which now redirect to my.debo.life, so it no longer passes. Keep it only as a reference until it is replaced.
+
 `apps/web/e2e/journal.spec.ts` walks through the whole loop in a real browser with a throwaway account: sign up, write an entry, ask about it (expects an answer with a source chip), ask something it cannot know (expects "I don't have anything about that yet"), delete the entry, delete the account.
 
 ```bash
@@ -128,7 +130,7 @@ pnpm --filter @debo/web run deploy
 
 That builds the app with OpenNext and runs `wrangler deploy`. Wrangler needs `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` in your shell, or run `npx wrangler login` first.
 
-- The Worker is called `debo-web` and serves `debo.life` and `www.debo.life`, set in `apps/web/wrangler.jsonc`.
+- The Worker is called `debo-web` and serves `debo.life` and `www.debo.life`, set in `apps/web/wrangler.jsonc`. Since the new app and landing page exist, `apps/web/src/proxy.ts` redirects `/` to https://about.debo.life and the old `/home/*` and `/auth/*` screens to https://my.debo.life. `/privacy` and every `/api/*` route (sign-in email webhook, voice, export, delete account) are outside that redirect and work as before. The landing page itself is the separate Worker `debo-site` (`apps/site`, workflow `deploy-site.yml`) at about.debo.life.
 - The database is reached through a Cloudflare Hyperdrive binding called `HYPERDRIVE` (config `debo-db`). **Query caching is off** on that config (`npx wrangler hyperdrive update <id> --caching-disabled true`). With caching on, a person's new entry did not show up for up to a minute, and their journal query results would be cached at the edge. Keep it off. This is a Cloudflare setting, not a file in the repo.
 - Secrets are set once per value with `npx wrangler secret put <NAME>` in `apps/web`. Use the names in `.env.example`. Never put them in `wrangler.jsonc`. The Worker needs: `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `NEON_AI_GATEWAY_BASE_URL`, `NEON_AI_GATEWAY_TOKEN` and `ANTHROPIC_API_KEY`. Optional: `DAILY_TOKEN_LIMIT` (tokens per person per day on our key, default 40,000).
 
