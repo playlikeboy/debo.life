@@ -1,6 +1,6 @@
 # Voice
 
-Status: built (decision 25), not yet tested with a real microphone on the live site. The pieces below are deployed; the checklist at the end says what has been verified.
+Status: built and deployed (decision 25). Verified on 14 November 2026 on debo.life with a browser's fake microphone: the token is signed, the `debo-voice` agent joins the room in `ap-south`, speaks its greeting with live captions, answers a typed question through `/api/voice/brain` with the right source chip ("Journal, 11 November") and speaks the answer, and "End conversation" turns the microphone off. Not yet verified: real speech, including mixed Hindi and English, and interrupting by voice.
 
 ## What the person gets
 
