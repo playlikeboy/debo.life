@@ -30,6 +30,7 @@ import { rateLimit } from "./rate-limit.ts";
 import { DatabaseAgentRunner, threadOwner } from "./thread-runner.ts";
 import { assertThreadId, ThreadStore } from "./threads.ts";
 import { EngineVoiceBrain, type VoiceBrain } from "./voice/brain.ts";
+import { JournalVoiceBrain } from "./voice/journal-brain.ts";
 import { voiceAgentRoutes, voiceTokenRoutes } from "./voice/routes.ts";
 import { WorkspaceService } from "./workspace.ts";
 
@@ -150,7 +151,11 @@ export async function createApp(
     );
   });
   // The voice agent has no owner session; it proves itself with VOICE_AGENT_SECRET.
-  const voiceBrain = options.voiceBrain ?? new EngineVoiceBrain(config, agent);
+  // Voice answers from the person's journal when Debo's brain is set up, so
+  // spoken answers carry the same sources as chat. Otherwise the chat engine answers.
+  const voiceBrain =
+    options.voiceBrain ??
+    (debo.status().ask ? new JournalVoiceBrain(debo) : new EngineVoiceBrain(config, agent));
   app.route("/api/voice", voiceAgentRoutes(voiceBrain, options.voiceEnv));
   app.use("/api/*", async (c, next) => {
     // A signed URL grants only the requests its page makes: reads, and the console's input.

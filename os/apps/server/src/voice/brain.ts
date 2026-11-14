@@ -51,8 +51,8 @@ export const VOICE_ERROR_MESSAGE =
 /**
  * The fallback brain: answers with the conversation engine that already runs
  * Debo's chat (the same agent the Chat tab uses). It has no journal search
- * yet, so it shows no source chips. Journal answers with sources come from
- * the brain in ../debo/ once that lands; docs/VOICE.md has the one-line swap.
+ * so it shows no source chips. It is used only when Debo's journal brain is
+ * not set up; otherwise createApp uses JournalVoiceBrain (journal-brain.ts).
  *
  * Voice cannot do risky things (docs/VOICE.md rule 4): this runs the chat
  * agent with no client tools, and anything that sends, posts or deletes still
