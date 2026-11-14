@@ -80,11 +80,11 @@ const PRIVACY: Qa[] = [
 const SAFETY: Qa[] = [
   {
     q: "Is the companion persona built?",
-    a: "No. Today Debo has an editable name and tone and a mascot with moods. A companion or role-play mode is planned, and we will not ship it before the safety rules below exist.",
+    a: "A first version is live. A person can ask Debo to take a role (a friend, a partner, a coach, a study buddy) in chat or by voice. Debo keeps the role across chats and calls until told to stop, and the person can see and stop it on the Apps screen. The role is stored with the person's account and is exported and deleted with it. It has not been tested with real users yet.",
   },
   {
-    q: "What rules would it follow?",
-    a: "Our product rules already say Debo never pretends to be a person, gives no medical, legal or financial advice, never guesses facts about a person's life, and never acts outside Debo without a clear yes. A companion mode would add: an on-screen reminder that it is an AI; no claims to feel pain or to need the person; no encouragement of dependence or secrecy; a plain pointer to real people and to local help if a person talks about hurting themselves; extra care with anyone who says they are a minor; and clear controls to turn the persona off and delete the chat history. These are plans. They are not built or tested.",
+    q: "What rules does it follow?",
+    a: "Our product rules already say Debo never pretends to be a person, gives no medical, legal or financial advice, never guesses facts about a person's life, and never acts outside Debo without a clear yes. In a role, Debo is told to: say honestly that it is an AI when sincerely asked; produce no sexually explicit content; drop the role and be caring and direct if the person seems to be a minor or in crisis. Today these rules are instructions to the AI model, so they depend on the model following them; there is no separate filter yet. Still planned: an on-screen reminder that it is an AI, no encouragement of dependence or secrecy, a pointer to local help when a person talks about hurting themselves, and tests of all of this with real people.",
   },
   {
     q: "Is any of this checked by an expert?",
@@ -140,7 +140,7 @@ export default function Diligence() {
       </Band>
 
       <Band id="safety" variant="muted">
-        <Intro id="safety" badge="Safety" title="Safety of the companion persona" lead="This is a plan, because the persona is not built." />
+        <Intro id="safety" badge="Safety" title="Safety of the companion persona" lead="A first version is live. The rules are partly built and not yet tested with real users." />
         <Faq items={SAFETY} />
       </Band>
 

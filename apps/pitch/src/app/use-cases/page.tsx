@@ -73,9 +73,9 @@ const STORIES: Story[] = [
     who: "Arjun, 24, lonely in a new city",
     title: "A friend who remembers",
     story: "Arjun wants to chat in the evening, to a character that is warm, a little playful, remembers his week, and is clear that it is not a person. It also knows when to point him to real people and help if he sounds in trouble.",
-    works: "Today: an editable name and tone (warm, concise or thoughtful) and a mascot with moods. The companion or role-play mode itself, with its safety rules, is not built.",
-    status: "Planned",
-    note: "We treat this as the riskiest use case. The rules we would build first are on the diligence page.",
+    works: "Today: Debo talks like a warm friend in chat and by voice, in English, Hindi or a mix. Asked to take a role, it keeps it across chats and calls until told to stop. The mascot shows moods. Safety rules are instructions to the AI model for now.",
+    status: "Built, needs live tests",
+    note: "We treat this as the riskiest use case. The rules in place and the ones still planned are on the diligence page.",
   },
 ];
 

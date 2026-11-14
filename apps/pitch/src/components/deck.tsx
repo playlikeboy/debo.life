@@ -113,7 +113,7 @@ export function Solution() {
           { title: "Talk to Debo", badge: "Built, partly tested", badgeVariant: "info", body: "Speak in English, Hindi or a mix and hear the answer. Tested in the web app with a fake microphone; not yet on a real phone." },
           { title: "What Debo knows", badge: "Built", badgeVariant: "success", body: "Every memory, with its source. Fix it or forget it." },
           { title: "Connected apps and a browser", badge: "Built, needs live tests", badgeVariant: "info", body: "Through Composio, Debo can read from apps such as Gmail. Anything that sends, posts or changes waits for a yes on screen. Voice can never give that yes. Debo can also browse the public web." },
-          { title: "Companion and role-play", badge: "Planned", badgeVariant: "warning", body: "A warmer, more playful character for people who want a friend, with firm safety rules. Today Debo has an editable name and tone, and a mascot with moods. The companion mode itself is not built." },
+          { title: "Companion and role-play", badge: "Built, needs live tests", badgeVariant: "info", body: "A warm, playful character for people who want a friend. Asked to take a role, Debo keeps it across chats and voice calls until told to stop. First version is live; safety rules are instructions to the AI model and are not yet tested with real users." },
         ]}
       />
     </Band>
@@ -349,7 +349,7 @@ export function Roadmap() {
           { title: "Now: make it safe to invite people", body: "Confirm which Mem0 plan Debo is on, and that it does not train on entries. Check the voice providers' data terms. Run recordings against the real storage and speech services. Measure real cost per person.", badge: "Next", badgeVariant: "info" },
           { title: "Then: charge fairly", body: "Plans and payments through a hosted checkout, monthly limits shown to the person, a founding paid cohort.", badge: "Next", badgeVariant: "info" },
           { title: "Then: the phone", body: "Recording and speaking inside the phone app, tested on real devices. Hindi and mixed-speech quality tests.", badge: "Planned", badgeVariant: "warning" },
-          { title: "Later: companion mode and more", body: "A companion character with safety rules, quick capture from messaging apps, use Debo's memory from other AI tools, on-this-day and weekly look-backs.", badge: "Planned", badgeVariant: "warning" },
+          { title: "Later: safer companion mode and more", body: "Tested safety rules for the companion character, quick capture from messaging apps, use Debo's memory from other AI tools, on-this-day and weekly look-backs.", badge: "Planned", badgeVariant: "warning" },
         ]}
       />
     </Band>
