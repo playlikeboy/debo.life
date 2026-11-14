@@ -1274,7 +1274,11 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
       connected: w.connections.some((c) => c.id === "browser" && c.status === "connected"),
       group: "browser",
     },
-  ].filter((row) => `${row.name} ${row.group}`.toLowerCase().includes(query.toLowerCase()));
+  ]
+    // Gmail and Calendar are connected in "Connect your apps" below. The older Google rows only
+    // stay while that older connection is on, so there are never two "Connect" buttons for Gmail.
+    .filter((row) => row.group !== "google" || row.connected)
+    .filter((row) => `${row.name} ${row.group}`.toLowerCase().includes(query.toLowerCase()));
   return (
     <View style={{ gap: 22 }}>
       {[true, false].map((isConnected) => {
