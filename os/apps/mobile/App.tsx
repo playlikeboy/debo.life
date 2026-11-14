@@ -8,7 +8,6 @@ import {
   type LucideIcon,
   Menu,
   MessageCircle,
-  Mic,
   PanelsTopLeft,
   Shapes,
   X,
@@ -69,7 +68,6 @@ import { type Detail, useWorkspace, WorkspaceContext } from "./src/workspace";
 
 const nav: { id: Section; label: string; icon: LucideIcon }[] = [
   { id: "chat", label: "Chat", icon: MessageCircle },
-  { id: "talk", label: "Talk", icon: Mic },
   { id: "journal", label: "Journal", icon: BookOpen },
   { id: "knows", label: "What Debo knows", icon: Brain },
   { id: "activity", label: "Tasks", icon: PanelsTopLeft },
@@ -603,10 +601,8 @@ function WorkspaceShell({
               }}
             >
               {nav.map((item) => {
-                const active =
-                  current === "talk"
-                    ? item.id === "talk"
-                    : section === item.id || (item.id === "apps" && utility);
+                // Talk is not a tab: it is a popup over the screen underneath.
+                const active = section === item.id || (item.id === "apps" && utility);
                 const tabStyle = {
                   flex: 1,
                   height: 47,

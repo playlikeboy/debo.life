@@ -57,3 +57,12 @@ test("each screen has a page title", () => {
   assert.equal(titleFor({ section: "activity" }), "Tasks · Debo");
   assert.equal(titleFor(null), "That page isn't here · Debo");
 });
+test("Talk is not a tab in the bottom bar, but /talk still opens it", async () => {
+  const { readFileSync } = await import("node:fs");
+  const app = readFileSync(new URL("../App.tsx", import.meta.url), "utf8");
+  const start = app.indexOf("const nav:");
+  const nav = app.slice(start, app.indexOf("];", start));
+  assert.ok(nav.includes('id: "chat"'));
+  assert.ok(!nav.includes('id: "talk"'));
+  assert.deepEqual(parsePath("/talk"), { section: "talk" });
+});
