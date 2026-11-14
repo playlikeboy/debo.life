@@ -1,5 +1,9 @@
 import { Container, getContainer } from "@cloudflare/containers";
 
+// Required for outboundByHost below: the Containers runtime looks for this export
+// on the Worker entry and refuses to start the container without it.
+export { ContainerProxy } from "@cloudflare/containers";
+
 interface Env {
   API: DurableObjectNamespace<DeboApi>;
   /** Service binding to the private debo-os-browser Worker. */
