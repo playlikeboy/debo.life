@@ -23,6 +23,9 @@ export interface Pose {
   wave: number;
   mouthOpen: number; // height of the open mouth 0..1
   mouthW: number; // width of the open mouth
+  eyeShut: number; // 1 = eyes closed as two short lines (a deliberate "not looking")
+  pout: number; // small pursed mouth
+  bodyX: number; // turn away: slide sideways
   talk: number; // 1 = the open mouth follows Debo's voice
   blush: number;
   blushScale: number;
@@ -38,7 +41,7 @@ export interface Pose {
 export const basePose: Pose = {
   bodyY: 0, tilt: 0, sx: 1, sy: 1, gazeX: 0, gazeY: 0, eyeOpen: 1, eyeWide: 1, eyeHappy: 0,
   browOn: 0, browAngle: 0, browLift: 0, smile: 1, open: 0, flat: 0, frown: 0, wave: 0,
-  mouthOpen: 0.3, mouthW: 1, talk: 0, blush: 0.85, blushScale: 1, puff: 0, leafL: 0, leafR: 0,
+  mouthOpen: 0.3, mouthW: 1, eyeShut: 0, pout: 0, bodyX: 0, talk: 0, blush: 0.85, blushScale: 1, puff: 0, leafL: 0, leafR: 0,
   sweat: 0, steam: 0, dots: 0, spark: 0,
 };
 
@@ -75,9 +78,11 @@ export const poses: Record<Mood, Pose> = {
     browOn: 1, browAngle: -15, browLift: -5, smile: 0, wave: 1, eyeWide: 1.06, gazeY: 2, sweat: 1,
     leafL: 10, leafR: 10, bodyY: 2, blush: 0.55,
   }),
+  // Pretend anger: turned away, chin up, eyes shut, one cheek puffed, a pursed mouth.
+  // The face loop adds the sideways peek, the hmph and the leaf flick.
   pouty: p({
-    puff: 1, smile: 0, frown: 1, gazeX: -10, gazeY: 1, tilt: 5, browOn: 1, browAngle: 4, browLift: 0,
-    blush: 1, blushScale: 1.3, leafL: 20, leafR: 20, sx: 1.03, sy: 0.98, eyeOpen: 0.7,
+    puff: 1, smile: 0, pout: 1, eyeShut: 1, eyeOpen: 0, bodyX: -5, bodyY: -3, tilt: 7, sy: 1.03,
+    browOn: 1, browAngle: 7, browLift: 1, blush: 1, blushScale: 1.35, leafL: -2, leafR: -2,
   }),
   angry: p({
     browOn: 1, browAngle: 24, browLift: 3, smile: 0, frown: 1, eyeOpen: 0.82, sx: 1.04, sy: 0.98,
@@ -89,7 +94,7 @@ export const poses: Record<Mood, Pose> = {
 export function stillPose(pose: Pose): Pose {
   return {
     ...pose,
-    bodyY: 0, tilt: 0, sx: 1, sy: 1, gazeX: 0, gazeY: 0, eyeWide: 1, browLift: 0, leafL: 0, leafR: 0,
+    bodyY: 0, bodyX: 0, tilt: 0, sx: 1, sy: 1, gazeX: 0, gazeY: 0, eyeWide: 1, browLift: 0, leafL: 0, leafR: 0,
     blushScale: 1, mouthOpen: pose.open > 0.5 ? Math.min(0.5, pose.mouthOpen) : pose.mouthOpen,
   };
 }

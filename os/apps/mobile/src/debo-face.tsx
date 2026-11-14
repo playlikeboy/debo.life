@@ -26,7 +26,7 @@ import { deboLevels, deboMood, useDeboMood } from "./debo-mood-store";
 const native = Platform.OS !== "web";
 /** Channels that change what is drawn (not where). They cross-fade instead of travelling. */
 const fades = new Set<string>([
-  "browOn", "browAngle", "smile", "open", "flat", "frown", "wave", "eyeHappy", "puff", "blush",
+  "browOn", "browAngle", "smile", "eyeShut", "pout", "open", "flat", "frown", "wave", "eyeHappy", "puff", "blush",
   "sweat", "steam", "dots", "spark",
 ]);
 type PoseKey = keyof Pose;
@@ -43,7 +43,7 @@ function createValues() {
     pose,
     breath: v(), sway: v(), blink: v(1), glX: v(), glY: v(), wobble: v(), hop: v(), trem: v(),
     speak: v(), flick: v(), dotsP: v(), steamP: v(), sweatP: v(), huffP: v(), sparkP: v(),
-    yawn: v(), squish: v(),
+    yawn: v(), squish: v(), peekP: v(),
   };
 }
 type Values = ReturnType<typeof createValues>;
@@ -69,7 +69,7 @@ function buildNodes(v: Values, S: number) {
     Animated.multiply(deboLevels.debo, deboLevels.real),
   );
   return {
-    bodyX: scale(v.trem, 1.6 * S),
+    bodyX: Animated.add(scale(v.trem, 1.6 * S), scale(p.bodyX, S)),
     bodyY: Animated.add(
       Animated.add(scale(p.bodyY, S), scale(v.breath, -2.4 * S)),
       scale(v.hop, -8 * S),
@@ -78,15 +78,17 @@ function buildNodes(v: Values, S: number) {
     bodySX: Animated.multiply(bodyScaleX, squishX),
     bodySY: Animated.multiply(bodyScaleY, squishY),
     leafLRot: deg(
-      Animated.add(Animated.add(scale(p.leafL, -1), scale(v.sway, 3)), scale(v.flick, 12)),
+      Animated.add(Animated.add(scale(p.leafL, -1), scale(v.sway, 3)), scale(v.flick, 18)),
     ),
     leafRRot: deg(
-      Animated.add(Animated.add(scale(p.leafR, 1), scale(v.sway, 2.4)), scale(v.flick, -12)),
+      Animated.add(Animated.add(scale(p.leafR, 1), scale(v.sway, 2.4)), scale(v.flick, -18)),
     ),
     eyeX: scale(Animated.add(p.gazeX, v.glX), S),
     eyeY: scale(Animated.add(p.gazeY, v.glY), S),
     eyeScaleY: Animated.multiply(Animated.multiply(p.eyeOpen, v.blink), p.eyeWide),
     eyeOpenOpacity: inv(p.eyeHappy),
+    shutRightOpacity: Animated.multiply(p.eyeShut, inv(v.peekP)),
+    peekOpacity: clamp(v.peekP),
     browLRot: deg(p.browAngle),
     browRRot: deg(scale(p.browAngle, -1)),
     browY: scale(p.browLift, S),
@@ -103,8 +105,8 @@ function buildNodes(v: Values, S: number) {
     steamOpacity: Animated.multiply(p.steam, inv(v.steamP)),
     steamY: scale(v.steamP, -14 * S),
     steamScale: v.steamP.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1.4] }),
-    huffOpacity: Animated.multiply(p.frown, inv(v.huffP)),
-    huffX: scale(v.huffP, 16 * S),
+    huffOpacity: Animated.multiply(p.puff, inv(v.huffP)),
+    huffX: scale(v.huffP, -16 * S),
     sweatY: scale(v.sweatP, 9 * S),
     sweatOpacity: Animated.multiply(p.sweat, inv(v.sweatP)),
     sparkOpacity: Animated.multiply(p.spark, v.sparkP),
@@ -157,7 +159,7 @@ function cycle(value: Animated.Value, steps: [number, number][], easing?: (n: nu
 
 function Art({ size, children }: { size: number; children: React.ReactNode }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 240 240">
+    <Svg width={size * 1.2} height={size * 1.2} viewBox="-24 -24 288 288">
       {children}
     </Svg>
   );
@@ -168,7 +170,7 @@ function Layer({ size, style, children }: { size: number; style?: object; childr
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ position: "absolute", left: 0, top: 0, width: size, height: size }, style]}
+      style={[{ position: "absolute", left: -size * 0.1, top: -size * 0.1, width: size * 1.2, height: size * 1.2 }, style]}
     >
       <Art size={size}>{children}</Art>
     </Animated.View>
@@ -176,6 +178,9 @@ function Layer({ size, style, children }: { size: number; style?: object; childr
 }
 
 const origin = (x: number, y: number, S: number) => `${x * S}px ${y * S}px`;
+/** Layers have 24 units of spare room on every side, so puffed cheeks and puffs never clip. */
+const PAD = 24;
+const lo = (x: number, y: number, S: number) => origin(x + PAD, y + PAD, S);
 
 export interface DeboFaceProps {
   size?: number;
@@ -199,6 +204,14 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
   const S = size / 240;
   const [v] = useState(createValues);
   const n = useMemo(() => buildNodes(v, S), [v, S]);
+
+  // Melting: leaving a pout, she peeks once as the smile comes back.
+  const before = useRef<Mood>(mood);
+  useEffect(() => {
+    if (before.current === "pouty" && mood !== "pouty" && alive)
+      Animated.sequence([t(v.peekP, 1, 120), Animated.delay(350), t(v.peekP, 0, 160)]).start();
+    before.current = mood;
+  }, [mood, alive, v]);
 
   // Pose: ease every channel toward the mood's numbers.
   useEffect(() => {
@@ -316,11 +329,12 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
         go(v.wobble, cycle(v.wobble, [[0.5, 700], [-0.5, 1400], [0, 700]]));
         break;
       case "pouty":
-        // Looks away, then sneaks a sideways glance back. A tiny huff. Leaves droop, then flick.
-        go(v.glX, Animated.loop(Animated.sequence([Animated.delay(900), t(v.glX, 17, 260), Animated.delay(450), t(v.glX, 0, 300)])));
-        go(v.huffP, Animated.loop(Animated.sequence([Animated.delay(600), t(v.huffP, 1, 700, Easing.out(Easing.quad)), t(v.huffP, 0, 1), Animated.delay(900)])));
-        go(v.flick, Animated.loop(Animated.sequence([Animated.delay(1100), t(v.flick, -1, 120), t(v.flick, 1, 160), t(v.flick, 0, 220), Animated.delay(600)])));
-        go(v.wobble, cycle(v.wobble, [[0.5, 1100], [-0.2, 1100]]));
+        // Eyes shut, turned away. Then: a little "hmph" puff and a leaf flick, a quick peek
+        // with one eye to see if you noticed, and shut again. The peek is the tell.
+        go(v.huffP, Animated.loop(Animated.sequence([Animated.delay(700), t(v.huffP, 1, 800, Easing.out(Easing.quad)), t(v.huffP, 0, 1), Animated.delay(2100)])));
+        go(v.flick, Animated.loop(Animated.sequence([Animated.delay(700), t(v.flick, 1, 140, Easing.out(Easing.quad)), t(v.flick, 0, 400), Animated.delay(2400)])));
+        go(v.peekP, Animated.loop(Animated.sequence([Animated.delay(2300), t(v.peekP, 1, 140), Animated.delay(480), t(v.peekP, 0, 120), Animated.delay(560)])));
+        go(v.wobble, cycle(v.wobble, [[0.4, 1100], [-0.1, 1100]]));
         break;
       case "angry":
         go(v.trem, cycle(v.trem, [[1, 170], [-1, 170]], Easing.linear));
@@ -373,12 +387,10 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
           ],
         }}
       >
-        <Layer size={size} style={{ opacity: v.pose.puff, transform: [{ scale: n.puffScale }], transformOrigin: origin(120, 150, S) }}>
-          <Ellipse cx={30} cy={152} rx={26} ry={30} fill={c.body} />
-          <Ellipse cx={210} cy={152} rx={26} ry={30} fill={c.body} />
-          <Ellipse cx={26} cy={166} rx={16} ry={16} fill={c.bodyShade} opacity={0.35} />
-          <Ellipse cx={214} cy={166} rx={16} ry={16} fill={c.bodyShade} opacity={0.5} />
-          <Ellipse cx={22} cy={140} rx={6} ry={4} fill={c.highlight} opacity={0.4} />
+        <Layer size={size} style={{ opacity: v.pose.puff, transform: [{ scale: n.puffScale }], transformOrigin: lo(200, 156, S) }}>
+          <Ellipse cx={206} cy={154} rx={32} ry={34} fill={c.body} />
+          <Ellipse cx={212} cy={170} rx={20} ry={18} fill={c.bodyShade} opacity={0.45} />
+          <Ellipse cx={200} cy={134} rx={9} ry={5} fill={c.highlight} opacity={0.4} transform="rotate(-30 200 134)" />
         </Layer>
         <Layer size={size}>
           <Path d="M120 66C150 52 204 60 221 118C234 174 190 218 120 218C50 218 6 174 19 118C36 60 90 52 120 66Z" fill={c.body} />
@@ -388,13 +400,13 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
         </Layer>
 
         {/* Leaves, left and right, hinged at the stem so they can sway, lift and droop. */}
-        <Layer size={size} style={{ transform: [{ rotate: n.leafLRot }], transformOrigin: origin(120, 66, S) }}>
+        <Layer size={size} style={{ transform: [{ rotate: n.leafLRot }], transformOrigin: lo(120, 66, S) }}>
           <G fill={c.leaf}>
             <Path d="M120 66C108 58 84 56 64 70C86 76 106 76 120 66Z" />
             <Path d="M120 66C102 66 82 78 76 96C98 94 114 84 120 66Z" />
           </G>
         </Layer>
-        <Layer size={size} style={{ transform: [{ rotate: n.leafRRot }], transformOrigin: origin(120, 66, S) }}>
+        <Layer size={size} style={{ transform: [{ rotate: n.leafRRot }], transformOrigin: lo(120, 66, S) }}>
           <G fill={c.leaf}>
             <Path d="M120 66C132 58 156 56 176 70C154 76 134 76 120 66Z" />
             <Path d="M120 66C138 66 158 78 164 96C142 94 126 84 120 66Z" />
@@ -406,10 +418,10 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
         </Layer>
 
         {/* Cheeks grow around their own centre, so bigger blush never leaves the face. */}
-        <Layer size={size} style={{ opacity: v.pose.blush, transform: [{ scale: v.pose.blushScale }], transformOrigin: origin(60, 158, S) }}>
+        <Layer size={size} style={{ opacity: v.pose.blush, transform: [{ scale: v.pose.blushScale }], transformOrigin: lo(60, 158, S) }}>
           <Ellipse cx={60} cy={158} rx={16} ry={10} fill={c.blush} opacity={0.85} />
         </Layer>
-        <Layer size={size} style={{ opacity: v.pose.blush, transform: [{ scale: v.pose.blushScale }], transformOrigin: origin(180, 158, S) }}>
+        <Layer size={size} style={{ opacity: v.pose.blush, transform: [{ scale: v.pose.blushScale }], transformOrigin: lo(180, 158, S) }}>
           <Ellipse cx={180} cy={158} rx={16} ry={10} fill={c.blush} opacity={0.85} />
         </Layer>
 
@@ -418,7 +430,7 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
           size={size}
           style={{
             opacity: n.eyeOpenOpacity,
-            transformOrigin: origin(120, 136, S),
+            transformOrigin: lo(120, 136, S),
             transform: [{ translateX: n.eyeX }, { translateY: n.eyeY }, { scaleX: v.pose.eyeWide }, { scaleY: n.eyeScaleY }],
           }}
         >
@@ -434,11 +446,24 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
           <Path d="M139 142Q152 122 165 142" fill="none" stroke={c.ink} strokeWidth={6} strokeLinecap="round" />
         </Layer>
 
+        {/* Eyes shut as short lines (pouty). The right one opens for a quick peek. */}
+        <Layer size={size} style={{ opacity: v.pose.eyeShut }}>
+          <Path d="M76 137Q88 142 100 137" fill="none" stroke={c.ink} strokeWidth={6} strokeLinecap="round" />
+        </Layer>
+        <Layer size={size} style={{ opacity: n.shutRightOpacity }}>
+          <Path d="M140 137Q152 142 164 137" fill="none" stroke={c.ink} strokeWidth={6} strokeLinecap="round" />
+        </Layer>
+        <Layer size={size} style={{ opacity: n.peekOpacity, transformOrigin: lo(152, 136, S), transform: [{ scaleY: v.peekP }] }}>
+          <Ellipse cx={152} cy={136} rx={13} ry={16} fill={c.ink} />
+          <Circle cx={157} cy={130} r={5} fill={c.highlight} />
+          <Circle cx={148} cy={142} r={2.2} fill={c.highlight} />
+        </Layer>
+
         {/* Brows only show when a mood needs them. */}
-        <Layer size={size} style={{ opacity: v.pose.browOn, transform: [{ translateY: n.browY }, { rotate: n.browLRot }], transformOrigin: origin(88, 112, S) }}>
+        <Layer size={size} style={{ opacity: v.pose.browOn, transform: [{ translateY: n.browY }, { rotate: n.browLRot }], transformOrigin: lo(88, 112, S) }}>
           <Path d="M74 112H102" stroke={c.ink} strokeWidth={5} strokeLinecap="round" />
         </Layer>
-        <Layer size={size} style={{ opacity: v.pose.browOn, transform: [{ translateY: n.browY }, { rotate: n.browRRot }], transformOrigin: origin(152, 112, S) }}>
+        <Layer size={size} style={{ opacity: v.pose.browOn, transform: [{ translateY: n.browY }, { rotate: n.browRRot }], transformOrigin: lo(152, 112, S) }}>
           <Path d="M138 112H166" stroke={c.ink} strokeWidth={5} strokeLinecap="round" />
         </Layer>
 
@@ -455,11 +480,14 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
         <Layer size={size} style={{ opacity: v.pose.wave }}>
           <Path d="M106 165Q113 158 120 165T134 165" fill="none" stroke={c.ink} strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
         </Layer>
+        <Layer size={size} style={{ opacity: v.pose.pout }}>
+          <Path d="M112 165Q116 158 120 165Q124 158 128 165" fill="none" stroke={c.ink} strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
+        </Layer>
         <Layer
           size={size}
           style={{
             opacity: n.openOpacity,
-            transformOrigin: origin(120, 152, S),
+            transformOrigin: lo(120, 152, S),
             transform: [{ scaleX: v.pose.mouthW }, { scaleY: n.openScaleY }],
           }}
         >
@@ -476,17 +504,17 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
         <Layer size={size} style={{ opacity: n.sweatOpacity, transform: [{ translateY: n.sweatY }] }}>
           <Path d="M194 86C187 97 185 104 194 111C203 104 201 97 194 86Z" fill={c.sweat} />
         </Layer>
-        <Layer size={size} style={{ opacity: n.steamOpacity, transform: [{ translateY: n.steamY }, { scale: n.steamScale }], transformOrigin: origin(120, 56, S) }}>
+        <Layer size={size} style={{ opacity: n.steamOpacity, transform: [{ translateY: n.steamY }, { scale: n.steamScale }], transformOrigin: lo(120, 56, S) }}>
           <Circle cx={44} cy={58} r={8} fill={c.steam} />
           <Circle cx={196} cy={58} r={8} fill={c.steam} />
           <Circle cx={30} cy={74} r={5} fill={c.steam} />
           <Circle cx={210} cy={74} r={5} fill={c.steam} />
         </Layer>
         <Layer size={size} style={{ opacity: n.huffOpacity, transform: [{ translateX: n.huffX }] }}>
-          <Circle cx={158} cy={168} r={4} fill={c.steam} />
-          <Circle cx={166} cy={172} r={3} fill={c.steam} />
+          <Circle cx={92} cy={170} r={5} fill={c.steam} />
+          <Circle cx={82} cy={175} r={3.5} fill={c.steam} />
         </Layer>
-        <Layer size={size} style={{ opacity: n.sparkOpacity, transform: [{ scale: n.sparkScale }], transformOrigin: origin(120, 80, S) }}>
+        <Layer size={size} style={{ opacity: n.sparkOpacity, transform: [{ scale: n.sparkScale }], transformOrigin: lo(120, 80, S) }}>
           <Path d="M30 52L33 60L41 63L33 66L30 74L27 66L19 63L27 60Z" fill={c.spark} />
           <Path d="M208 40L210 46L216 48L210 50L208 56L206 50L200 48L206 46Z" fill={c.spark} />
           <Path d="M216 96L218 101L223 103L218 105L216 110L214 105L209 103L214 101Z" fill={c.spark} />

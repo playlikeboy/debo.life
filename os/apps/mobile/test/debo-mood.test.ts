@@ -146,7 +146,9 @@ test("repeated or strong abuse makes her briefly angry, then pouty, then she rec
   const t = nextMood({ type: "settle", at: clock + 3000 }, s);
   assert.equal(t.state.mood, "pouty", "angry melts into a pout");
   assert.ok(t.settleIn);
-  const done = nextMood({ type: "settle", at: clock + 9000 }, t.state).state;
+  const melted = nextMood({ type: "settle", at: clock + 9000 }, t.state);
+  assert.equal(melted.state.mood, "happy", "the pout melts into a smile");
+  const done = nextMood({ type: "settle", at: clock + 12000 }, melted.state).state;
   assert.equal(done.mood, "idle");
 
   // One strong word counts double, so two of them reach angry.
@@ -178,8 +180,10 @@ test("being ignored after she asked a question is a playful pout, once", () => {
   assert.ok(s.asked);
   s = run([{ type: "ignored" }], s);
   assert.equal(s.mood, "pouty");
-  const again = run([{ type: "ignored" }], run([{ type: "settle" }], s));
-  assert.equal(again.mood, "idle", "no second pout for the same question");
+  const melted = run([{ type: "settle" }], s);
+  assert.equal(melted.mood, "happy", "she melts back to happy");
+  const again = run([{ type: "ignored" }], melted);
+  assert.notEqual(again.mood, "pouty", "no second pout for the same question");
   s = run([{ type: "answer", text: "Done.", hasSources: false }]);
   assert.equal(run([{ type: "ignored" }], s).mood, "idle", "no question, no pout");
   s = run([{ type: "answer", text: "Want me to read it out?", hasSources: false }]);

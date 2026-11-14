@@ -100,6 +100,15 @@ export function DeboFaceGallery() {
           </View>
         ))}
       </View>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "flex-end", gap: spacing[4] }}>
+        {(["pouty", "worried"] as const).flatMap((mood) =>
+          [24, 64, 180, 260].map((size) => (
+            <View key={`${mood}-${size}`} testID={`size-${mood}-${size}`}>
+              <DeboFace size={size} mood={mood} />
+            </View>
+          )),
+        )}
+      </View>
       <View style={{ gap: spacing[3] }}>
         <Text style={s.heading}>Shared face: {shared.mood} (reactions: {shared.reactions})</Text>
         <DeboFace size={180} interactive />

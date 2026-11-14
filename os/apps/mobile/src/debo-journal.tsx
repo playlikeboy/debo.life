@@ -13,6 +13,7 @@ import {
   kindName,
   preview,
 } from "./debo-data";
+import { deboMood } from "./debo-mood-store";
 import { RecordingPlayer } from "./debo-player";
 import { Button, Card, colors, Empty, ErrorNotice, Field, s, spacing } from "./ui";
 import { useWorkspace } from "./workspace";
@@ -86,7 +87,10 @@ export function JournalScreen() {
         entry each answer came from.
       </Text>
       <ErrorNotice error={error} />
-      <Composer status={status as DeboStatus} onSaved={() => load(finding)} />
+      <Composer status={status as DeboStatus} onSaved={() => {
+          deboMood.emit({ type: "journal_saved" });
+          return load(finding);
+        }} />
 
       <View style={{ gap: 10 }} accessibilityRole="search">
         <Field
@@ -189,6 +193,7 @@ function EntryCard({
     try {
       await work();
       notify(done);
+      if (done === "Entry deleted." || done === "Recording deleted.") deboMood.emit({ type: "deleted" });
       await onChanged();
     } catch (e) {
       setError(errorText(e));

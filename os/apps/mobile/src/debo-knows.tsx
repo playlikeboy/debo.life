@@ -5,6 +5,7 @@ import { deboApi, errorText } from "./debo-api";
 import { type DeboStatus, type MemoryView } from "./debo-data";
 import { NotSetUp } from "./debo-journal";
 import { SourceChips } from "./debo-source-chips";
+import { deboMood } from "./debo-mood-store";
 import { Button, Card, colors, Empty, ErrorNotice, Field, s } from "./ui";
 import { useWorkspace } from "./workspace";
 
@@ -86,6 +87,7 @@ function MemoryCard({ memory, onChanged }: { memory: MemoryView; onChanged: () =
     try {
       await work();
       notify(done);
+      if (done === "Memory forgotten.") deboMood.emit({ type: "deleted" });
       await onChanged();
     } catch (e) {
       setError(errorText(e));

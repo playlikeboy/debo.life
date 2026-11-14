@@ -289,6 +289,9 @@ function functional(state: MoodState, mood: Mood, at: number): Transition {
   return show(state, mood, at);
 }
 
+/** A pout always melts: she peeks, smiles and goes back to happy. */
+const melt = { mood: "happy" as Mood, hold: holdMs.forgive };
+
 function reactToMessage(state: MoodState, text: string, at: number): Transition {
   const tone = detectTone(text);
   const base: MoodState = { ...state, asked: false };
@@ -300,7 +303,7 @@ function reactToMessage(state: MoodState, text: string, at: number): Transition 
       const strikes = state.strikes + (tone === "abuse" ? 2 : 1);
       if (strikes >= 3)
         return show({ ...calm, strikes }, "angry", at, holdMs.angry, { mood: "pouty", hold: holdMs.pouty });
-      return show({ ...calm, strikes }, "pouty", at, holdMs.pouty);
+      return show({ ...calm, strikes }, "pouty", at, holdMs.pouty, melt);
     }
     case "sorry":
       return show({ ...calm, strikes: 0 }, "happy", at, holdMs.forgive);
@@ -371,16 +374,16 @@ export function nextMood(event: MoodEvent, state: MoodState): Transition {
     case "ignored":
       // A playful pout after an unanswered question. Never after a serious moment.
       return state.asked && !state.serious
-        ? show({ ...state, asked: false }, "pouty", at, holdMs.pouty)
+        ? show({ ...state, asked: false }, "pouty", at, holdMs.pouty, melt)
         : { state };
     case "tap":
-      if (event.count >= 8) return show(state, "pouty", at, holdMs.pouty);
+      if (event.count >= 8) return show(state, "pouty", at, holdMs.pouty, melt);
       if (event.count >= 3) return show(state, "happy", at, holdMs.giggle);
       return { state };
     case "settle": {
       if (state.then) {
         const { mood, hold } = state.then;
-        return show({ ...state, then: undefined }, mood, at, hold);
+        return show({ ...state, then: undefined }, mood, at, hold, mood === "pouty" ? melt : undefined);
       }
       // The small sad look after a delete is over, so the guard for that moment ends with it.
       const next = { ...state, until: 0, serious: state.mood === "worried" ? false : state.serious };
