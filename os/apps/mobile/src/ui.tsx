@@ -447,10 +447,10 @@ export function Mascot({
       <View
         style={{
           position: "absolute",
-          top: size * 0.15,
-          left: size * 0.12,
-          width: size * 0.76,
-          height: size * 0.76,
+          top: size * 0.04,
+          left: size * 0.04,
+          width: size * 0.92,
+          height: size * 0.92,
           borderRadius: radius.full,
           backgroundColor: palette,
         }}
