@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@astryxdesign/core": "0.7.16",
-    "@astryxdesign/theme-butter": "0.7.16",
+    "@astryxdesign/theme-neutral": "0.7.16",
     "@config-plugins/react-native-blob-util": "^12.0.0",
     "@config-plugins/react-native-pdf": "^12.0.0",
     "@types/markdown-it": "14.1.2",

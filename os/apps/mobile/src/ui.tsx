@@ -436,7 +436,7 @@ export function Mascot({
   size?: number;
   variant?: "sky" | "sand" | "lilac";
 }) {
-  // Soft Butter-theme tints behind Debo. The mascot art itself is never recoloured.
+  // Soft Neutral-theme tints behind Debo. The mascot art itself is never recoloured.
   const palette = {
     sky: colors.blue,
     sand: colors.orange,

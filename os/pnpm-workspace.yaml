@@ -21,7 +21,7 @@ minimumReleaseAgeExclude:
   - '@tanstack/ai@0.59.0'
   - '@tanstack/openai-base@0.10.16'
   - '@astryxdesign/core@0.7.16'
-  - '@astryxdesign/theme-butter@0.7.16'
+  - '@astryxdesign/theme-neutral@0.7.16'
 
 overrides:
   'image-size': '2.0.4'

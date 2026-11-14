@@ -260,7 +260,7 @@ importers:
       '@astryxdesign/core':
         specifier: 0.7.16
         version: 0.7.16(@stylexjs/stylex@0.19.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      '@astryxdesign/theme-butter':
+      '@astryxdesign/theme-neutral':
         specifier: 0.7.16
         version: 0.7.16(@astryxdesign/core@0.7.16(@stylexjs/stylex@0.19.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@types/react@19.1.17)(react@19.1.0)
       '@config-plugins/react-native-blob-util':
@@ -493,8 +493,8 @@ packages:
       react: '>=19.0.0'
       react-dom: '>=19.0.0'
 
-  '@astryxdesign/theme-butter@0.7.16':
-    resolution: {integrity: sha512-QLaUEYi8FaKKNIqiN3+J6x3BqOeHNRyfHLgXJsa1W4GPgUdWP2fiP8AKWYXQyWI92uo1DcV5/Byf/PyrC1ogyg==}
+  '@astryxdesign/theme-neutral@0.7.16':
+    resolution: {integrity: sha512-4tjVvrL9VM2jpfTceORnYWnR9fiSj93ssAUo786YmODlOHoZIs1b/aCcmClxr0VUdGVha4y33DpCqoutmwF8DQ==}
     peerDependencies:
       '@astryxdesign/core': 0.7.16
       react: '>=19'
@@ -7967,7 +7967,7 @@ snapshots:
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
 
-  '@astryxdesign/theme-butter@0.7.16(@astryxdesign/core@0.7.16(@stylexjs/stylex@0.19.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@types/react@19.1.17)(react@19.1.0)':
+  '@astryxdesign/theme-neutral@0.7.16(@astryxdesign/core@0.7.16(@stylexjs/stylex@0.19.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@types/react@19.1.17)(react@19.1.0)':
     dependencies:
       '@astryxdesign/core': 0.7.16(@stylexjs/stylex@0.19.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       lucide-react: 1.72.0(@types/react@19.1.17)(react@19.1.0)

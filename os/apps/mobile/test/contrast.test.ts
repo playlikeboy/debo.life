@@ -90,7 +90,7 @@ for (const [fg, bg] of nonTextPairs) {
   });
 }
 
-test("the app palette only uses Astryx Butter light values", () => {
+test("the app palette only uses Astryx Neutral light values", () => {
   const allowed = new Set(Object.values(colorsLight).map((v) => v.toUpperCase()));
   for (const [name, value] of Object.entries(colors)) {
     assert.ok(allowed.has(value.toUpperCase()), `${name} ${value} is not an Astryx token`);
