@@ -28,7 +28,7 @@ import {
   refreshDelay,
 } from "./neon-auth";
 import { clearSessionToken, loadSessionToken, saveSessionToken } from "./session-store";
-import { Button, Card, colors, ErrorNotice, Field, Mascot, s } from "./ui";
+import { Button, Card, colors, ErrorNotice, Field, fontSize, Mascot, s } from "./ui";
 
 interface Account {
   email: string;
@@ -206,7 +206,7 @@ function Frame({ children }: { children: ReactNode }) {
           <Mascot size={64} />
           <Text
             accessibilityRole="header"
-            style={{ fontSize: 28, color: colors.text, letterSpacing: -1, fontWeight: "500" }}
+            style={{ fontSize: fontSize["2xl"], color: colors.text, letterSpacing: -1, fontWeight: "500" }}
           >
             Welcome to Debo.
           </Text>
