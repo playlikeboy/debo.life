@@ -1,6 +1,6 @@
 # Data model
 
-Status: `sources`, `chunks` (with `embedding`, decision 17), `usage`, `activity`, `conversations` and `messages` exist (journal entries only). Users live in Neon Auth's `neon_auth."user"` table. Everything else here is a plan. The schema code is `packages/db/src/schema.ts`. Change it when real code shows a better one, and update this file in the same change.
+Status: `sources`, `chunks` (with `embedding`, decision 17), `usage`, `activity`, `conversations`, `messages` and `media` exist. Sources are journal entries, voice notes or videos (decision 26). Users live in Neon Auth's `neon_auth."user"` table. Everything else here is a plan. The schema code is `packages/db/src/schema.ts`. Change it when real code shows a better one, and update this file in the same change.
 
 Database: Postgres with the `pgvector` extension. ORM: Drizzle.
 
@@ -33,6 +33,9 @@ One row per thing the person gave Debo. The original of every memory.
 | fail_reason | text | Plain words the person can read |
 | connection_id | uuid | Set when it came from a connected app |
 | created_at | timestamptz | |
+
+### media (built)
+The recording behind a `voice` or `video` source. The file is in a private Cloudflare R2 bucket, never in the database; the words are in `sources.text`. Columns: `id`, `user_id`, `source_id` (empty until the upload ends), `kind`, `object_key`, `mime_type`, `size_bytes`, `duration_ms`, `recorded_at`, `device` (jsonb: origin, file name, last-changed time; never location), `upload_state`, `upload_id`, `transcript_status` (`waiting`, `working`, `ready`, `failed`), `transcript_error`, `transcript_attempts`, `transcript_started_at`, `language`, `segments` (jsonb), `content_hash`, `created_at`. See `os/docs/JOURNAL-MEDIA.md`.
 
 ### chunks
 Pieces of a source, for search.

@@ -64,6 +64,9 @@ The container entry (`api/src/index.ts`) passes a fixed list of names into the c
 | `ANTHROPIC_API_KEY` | `ANTHROPIC_API_KEY` | **create** | Anthropic |
 | `NEON_AI_GATEWAY_BASE_URL`, `NEON_AI_GATEWAY_TOKEN` | same names | **create** (optional: search by meaning) | Neon AI Gateway |
 | `MEM0_API_KEY` | `MEM0_API_KEY` | exists | Mem0 |
+| `R2_ACCOUNT_ID` | `CLOUDFLARE_ACCOUNT_ID` | exists | Cloudflare R2 (voice notes and videos) |
+| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | same names | **create** (optional: without them the journal is text only) | Cloudflare R2 token for the bucket `debo-journal-media` |
+| `CF_AI_API_TOKEN` | `CF_AI_API_TOKEN` | **create** (optional: recordings are kept but not written out) | Cloudflare Workers AI |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | same names | exist | LiveKit |
 | `VOICE_AGENT_SECRET` | `VOICE_AGENT_SECRET` | exists (32+ characters) | LiveKit agent |
 | `TOKEN_ENCRYPTION_KEY` | `DEBO_OS_TOKEN_ENCRYPTION_KEY` | **create**: `openssl rand -base64 32` | os only |
@@ -114,9 +117,13 @@ Deploy the browser first: the API config has a service binding to it. The workfl
 
 Uncomment the `routes` in `api/wrangler.jsonc` and `app/wrangler.jsonc`, set `PUBLIC_API_URL=https://api.debo.life` and `ALLOWED_ORIGINS=https://my.debo.life`, rebuild the web app with `EXPO_PUBLIC_API_URL=https://api.debo.life`, add `https://my.debo.life` to Neon Auth's trusted origins, redeploy. Update the Google redirect URI. `debo-web` is not involved.
 
+## Voice notes and videos
+
+The journal can keep voice notes and videos in a private R2 bucket, `debo-journal-media` (plain setting `R2_BUCKET` in `api/wrangler.jsonc`). The app uploads straight to R2 with links the API signs, so no wrangler binding is needed; the API reaches R2 over its S3 address with the R2 token. The API image now includes ffmpeg (to keep only the sound for the speech service). Words are written by Workers AI over its REST API. Nothing is created yet: the bucket, its CORS policy, the two tokens and the GitHub secrets are in the owner steps in [`os/docs/JOURNAL-MEDIA.md`](../../docs/JOURNAL-MEDIA.md). The migration `0005_journal_media` adds one table and is applied by `deploy.yml`.
+
 ## What is lost without a disk
 
-The API container's disk is wiped on every sleep or rollout. Uploaded and imported files under `files/` are lost (their database rows stay and then point at nothing). The computer feature is off here. Tasks, threads, settings and the journal live in Postgres and are safe. Persistent file storage is the main gap; the fix is to move `files.ts` to R2 or Neon Object Storage (not built).
+The API container's disk is wiped on every sleep or rollout. Uploaded and imported files under `files/` are lost (their database rows stay and then point at nothing). The computer feature is off here. Tasks, threads, settings and the journal live in Postgres and are safe. Persistent file storage is the main gap; the fix is to move `files.ts` to R2 or Neon Object Storage (not built). Journal recordings are not affected: they are in R2 and only a short-lived temporary copy touches the disk while the words are written.
 
 Browser container: saved Chromium profiles (logins that "Take control" set up), session metadata and downloaded PDFs are lost after each sleep (15 minutes idle). Open sessions also end. Options, not built: Cloudflare container snapshots (beta), a FUSE mount of R2 at `/data`, or syncing the profile folder to R2 on SIGTERM.
 
