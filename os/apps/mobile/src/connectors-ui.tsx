@@ -236,14 +236,12 @@ function AppRow({
 }) {
   const state = connection?.state;
   return (
-    <Card
-      style={{ backgroundColor: colors.subtle, gap: spacing[3], padding: spacing[4] }}
-    >
+    <Card style={{ gap: spacing[3], padding: spacing[4] }}>
       <View style={[s.row, { gap: spacing[3], alignItems: "flex-start" }]}>
         <View
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={[s.iconBox, { backgroundColor: colors.card }]}
+          style={[s.iconBox, { backgroundColor: colors.subtle }]}
         >
           <Text style={[s.heading, { color: colors.blueDark }]}>{item.name.slice(0, 1)}</Text>
         </View>
