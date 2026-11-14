@@ -26,12 +26,20 @@ import { GoogleAuth } from "./google-auth.ts";
 import { rateLimit } from "./rate-limit.ts";
 import { DatabaseAgentRunner, threadOwner } from "./thread-runner.ts";
 import { assertThreadId, ThreadStore } from "./threads.ts";
+import { EngineVoiceBrain, type VoiceBrain } from "./voice/brain.ts";
+import { voiceAgentRoutes, voiceTokenRoutes } from "./voice/routes.ts";
 import { WorkspaceService } from "./workspace.ts";
 
 export async function createApp(
   db: Store,
   config: Config,
-  options: { docker?: DockerRunner } = {},
+  options: {
+    docker?: DockerRunner;
+    /** Answers voice questions. Swap this one line to change Debo's voice brain. */
+    voiceBrain?: VoiceBrain;
+    /** Where voice settings are read from. Tests pass their own. */
+    voiceEnv?: () => Record<string, string | undefined>;
+  } = {},
 ) {
   await resolveComputerDeployment(config);
   const auth = await createAuth(db, config),
@@ -131,6 +139,9 @@ export async function createApp(
       "<h1>Google is connected</h1><p>Return to Debo and refresh your workspace.</p>",
     );
   });
+  // The voice agent has no owner session; it proves itself with VOICE_AGENT_SECRET.
+  const voiceBrain = options.voiceBrain ?? new EngineVoiceBrain(config, agent);
+  app.route("/api/voice", voiceAgentRoutes(voiceBrain, options.voiceEnv));
   app.use("/api/*", async (c, next) => {
     // A signed URL grants only the requests its page makes: reads, and the console's input.
     const method = c.req.method === "HEAD" ? "GET" : c.req.method;
@@ -165,6 +176,7 @@ export async function createApp(
     );
     return c.json(snapshot);
   });
+  app.route("/api/voice", voiceTokenRoutes(options.voiceEnv));
   app.route("/api/agent", agentRoutes(agent));
   app.route("/api/computer", computerRoutes(computer, files));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
