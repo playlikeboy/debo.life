@@ -59,13 +59,13 @@ async function add(
   const routes = r.store.routes();
   let parts: { number: number; etag: string }[] | undefined;
   if (started.upload.mode === "single") {
-    const res = await routes.request(path(started.upload.url), { method: "PUT", body: bytes });
+    const res = await routes.request(path(started.upload.url), { method: "PUT", body: Buffer.from(bytes) });
     assert.equal(res.status, 200);
   } else {
     parts = [];
     for (const part of started.upload.parts) {
       const from = (part.number - 1) * started.upload.partBytes;
-      const res = await routes.request(path(part.url), { method: "PUT", body: bytes.slice(from, from + started.upload.partBytes) });
+      const res = await routes.request(path(part.url), { method: "PUT", body: Buffer.from(bytes.slice(from, from + started.upload.partBytes)) });
       parts.push({ number: part.number, etag: res.headers.get("etag") ?? "" });
     }
   }
@@ -117,7 +117,7 @@ test("a big file goes up in parts and is joined; a missing part is refused", asy
   const parts = [];
   for (const part of started.upload.parts) {
     const from = (part.number - 1) * 600;
-    const res = await r.store.routes().request(path(part.url), { method: "PUT", body: bytes.slice(from, from + 600) });
+    const res = await r.store.routes().request(path(part.url), { method: "PUT", body: Buffer.from(bytes.slice(from, from + 600)) });
     parts.push({ number: part.number, etag: res.headers.get("etag") ?? "" });
   }
   const entry = await r.debo.completeUpload(ALICE, started.mediaId, { parts });

@@ -65,11 +65,13 @@ export function createDebo(
       throw new Error("DEBO_DEV_MEMORY is for sample workspaces only. Remove it from a live workspace.");
     console.warn("[Debo] DEV ONLY: the journal is in memory and is forgotten when the server stops.");
     // Recordings work too: an in-memory bucket (served under /api/dev-r2) and a fake speech engine.
+    // DEBO_DEV_FAIL_FIRST=1: the first transcript fails, so the "Try again" screen can be seen.
+    let failedOnce = !["1", "true"].includes(env.DEBO_DEV_FAIL_FIRST?.trim().toLowerCase() ?? "");
     const store = memoryStore((config.publicUrl ?? "http://localhost:8787").replace(/\/$/, ""));
     const service = new DeboService(devMemoryBackend(), ["local-user"], {
       store,
       audio: fakeAudioTools({ durationSeconds: 12 }),
-      transcriber: fakeTranscriber(),
+      transcriber: fakeTranscriber({ fail: () => (failedOnce ? false : ((failedOnce = true), "retryable")) }),
       // Small sizes, so a few-megabyte test file goes up in parts like a big one would.
       singleMaxBytes: 2 * 1024 * 1024,
       partBytes: 1024 * 1024,

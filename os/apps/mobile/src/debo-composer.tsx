@@ -181,7 +181,7 @@ export function Composer({ status, onSaved }: { status: DeboStatus; onSaved: () 
         style={{
           gap: spacing[3],
           padding: spacing[5],
-          borderWidth: focused ? 2 : 1,
+          borderWidth: 2,
           borderColor: focused ? colors.blueDark : colors.line,
         }}
       >
@@ -204,7 +204,7 @@ export function Composer({ status, onSaved }: { status: DeboStatus; onSaved: () 
           multiline
           scrollEnabled={false}
           maxLength={20000}
-          placeholder="What happened today? Who did you see? The first line becomes the title."
+          placeholder="What happened today? Who did you see?"
           placeholderTextColor={colors.muted}
           style={[
             s.text,
@@ -222,7 +222,7 @@ export function Composer({ status, onSaved }: { status: DeboStatus; onSaved: () 
 
         <View style={[s.between, { gap: spacing[3], flexWrap: "wrap" }]}>
           <Text style={s.small} accessibilityLiveRegion="polite">
-            {draftState === "saving" ? "Saving…" : draftState === "saved" ? "Saved on this device" : "Nothing saved yet"}
+            {draftState === "saving" ? "Saving…" : draftState === "saved" ? "Saved on this device" : "Nothing to save yet"}
           </Text>
           <Text style={s.small}>{wordCountLabel(text)}</Text>
         </View>
@@ -302,6 +302,8 @@ export function Composer({ status, onSaved }: { status: DeboStatus; onSaved: () 
 
       <ErrorNotice error={error} />
 
+      {!panel && (
+        <>
       <View style={[s.between, { gap: spacing[3], flexWrap: "wrap" }]}>
         <Pressable
           accessibilityRole="button"
@@ -319,6 +321,8 @@ export function Composer({ status, onSaved }: { status: DeboStatus; onSaved: () 
       </View>
       {dayOpen && <DayField value={day} onChange={setDay} />}
       {Platform.OS === "web" && <Text style={s.small}>Tip: press Ctrl or ⌘ with Enter to save.</Text>}
+        </>
+      )}
     </View>
   );
 }

@@ -111,7 +111,7 @@ export function readReply(raw: unknown): TranscriptPiece {
 
 /** A stand-in for tests and sample mode. It says the same thing every time and never calls anyone. */
 export function fakeTranscriber(
-  options: { text?: string; fail?: "retryable" | "permanent" | (() => boolean); language?: string } = {},
+  options: { text?: string; fail?: "retryable" | "permanent" | (() => false | "retryable" | "permanent"); language?: string } = {},
 ): Transcriber & { calls: number } {
   const fake = {
     name: "Sample engine (no real transcript)",

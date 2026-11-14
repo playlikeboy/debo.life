@@ -68,9 +68,8 @@ export async function startRecording(kind: "voice" | "video", onTick?: (ms: numb
       if (recorder.state !== "inactive") recorder.stop();
       const blob = await done;
       if (!settled) finish();
-      const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
       return {
-        name: `${kind === "video" ? "Video" : "Voice note"} ${stamp}`,
+        name: kind === "video" ? "Your video" : "Your voice note",
         mimeType: blob.type,
         sizeBytes: blob.size,
         durationMs,
