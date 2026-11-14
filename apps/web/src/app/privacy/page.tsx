@@ -159,13 +159,63 @@ export default function PrivacyPage() {
         <List
           items={[
             <>Chats, tasks and settings you make in the new app are stored in the same Neon database, kept apart from the older app&rsquo;s chats.</>,
-            <>The new app runs on Cloudflare, like this website.</>,
+            <>
+              The new app runs on Cloudflare, like this website. Your unsaved draft stays on your device (in the browser, or
+              in a small file in the phone app) until you save it.
+            </>,
             <>
               &ldquo;Delete my data&rdquo; in the new app deletes your journal entries, your memories and everything you made
               in the new app. It does not yet delete your account itself or your chats from this website. To delete
               everything, use &ldquo;Delete my account&rdquo; on your home page here.
             </>,
-            <>&ldquo;Download my data&rdquo; in the new app gives you one file with your entries, memories and what you made there.</>,
+            <>
+              &ldquo;Download my data&rdquo; in the new app gives you one file with your entries, memories and what you made
+              there. For each voice note or video it lists the details and the words, and a link that downloads the
+              recording itself. That link works for 24 hours, so keep the file private.
+            </>,
+          ]}
+        />
+        <h3 className="mt-6 font-semibold">Voice notes, videos and speaking into the text</h3>
+        <p>Once it is switched on, the new app lets you record a voice note or video, add a recording you already have, or speak into the text box. If you do not see these buttons, it is not on yet and none of the below applies.</p>
+        <List
+          items={[
+            <>
+              The recording is stored in Cloudflare R2, in a private bucket with no public address. Only Debo&rsquo;s
+              server can reach it. Your phone or browser sends it straight to that bucket. When you play it, Debo gives
+              you a link that stops working after an hour, and only you can get one.
+            </>,
+            <>
+              The words are written by Cloudflare Workers AI (a speech model called Whisper), so Cloudflare hears your
+              audio. Only the sound is sent, not the picture. Cloudflare says it does not use content processed by
+              Workers AI to train AI models, and does not keep it after the request is done. No other company hears your
+              recordings.
+            </>,
+            <>
+              The words are saved as an entry, so they are searched, used to answer your questions and sent to Mem0 and
+              Anthropic exactly like a written entry, as described above. Answers that use them say &ldquo;Voice
+              note&rdquo; or &ldquo;Video&rdquo; and the date.
+            </>,
+            <>
+              While the words are written, a temporary copy of the sound sits on Debo&rsquo;s server. It is deleted when
+              that work ends. The recording itself is kept until you delete it.
+            </>,
+            <>
+              When you press &ldquo;Speak&rdquo;, short clips of your voice go to Debo&rsquo;s server and on to the same
+              Cloudflare service. The clips are not saved. The microphone is on only while the screen says
+              &ldquo;Listening&rdquo; or &ldquo;Recording&rdquo;.
+            </>,
+            <>
+              Debo keeps, with each recording: its type, size, length, when you recorded it, the file name if you added a
+              file, the words with their timing, the language, and a fingerprint of the file so the same file is not
+              written out twice. It never keeps where you were.
+            </>,
+            <>
+              To delete a recording, delete its entry: the file is removed from storage first, then the entry and what Debo
+              learned from it. &ldquo;Delete my data&rdquo; removes every recording you have. A recording you started to
+              add but never finished is removed within a day. We have not checked whether Cloudflare keeps any backup
+              copy of a deleted file.
+            </>,
+            <>A recording can be up to 200 MB and 60 minutes. You can add up to 4 hours and 40 recordings a day.</>,
           ]}
         />
       </Section>
