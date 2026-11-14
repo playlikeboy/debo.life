@@ -16,7 +16,7 @@ The native and web agent core runs locally. This inventory describes the current
 | Generated results | Plans/reports/comparisons, finance CSV metrics, and scripts in the private Linux workspace | Managed tool installation/versioning and image/audio generation |
 | Debo journal / What Debo knows | Journal (write, find, edit, delete), questions answered only from the person's entries with source chips that open the entry, memories from hosted Mem0 each linked to its entry with fix and forget, activity record. Agent tools `search_my_journal`, `ask_my_life` (read) and `add_journal_entry` (prepares a review; saved only after approval). Uses the shared `@debo/brain`, `@debo/db`, `@debo/memory` packages; routes under `/api/debo` | Live acceptance against a real Debo database, native draft persistence across app restarts |
 | Notifications | Durable in-app inbox, source-linked change alerts, restart reconciliation | APNs/FCM/device push delivery |
-| Connectors | Searchable capability/status catalogue, Google connection, browser worker | Plaid, health, Instagram, WhatsApp and partner APIs |
+| Connectors | Searchable capability/status catalogue, Google connection, browser worker, apps connected through Composio (reads run, changes wait for your yes; see [CONNECTORS.md](CONNECTORS.md)) | Plaid, health, Instagram, WhatsApp and partner APIs |
 | OpenBot | Disabled adapter with pinned protocol/identity tests | Live session bridge, routines and computer backend wiring |
 
 The Linux computer is disabled until configured on the server and has no network access. It is a single-owner container with a persistent `/workspace`, separate from the browser worker; see [computer setup and limits](COMPUTER.md). It is not a graphical desktop or a full OS VM.

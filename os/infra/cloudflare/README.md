@@ -69,6 +69,7 @@ The container entry (`api/src/index.ts`) passes a fixed list of names into the c
 | `TOKEN_ENCRYPTION_KEY` | `DEBO_OS_TOKEN_ENCRYPTION_KEY` | **create**: `openssl rand -base64 32` | os only |
 | `SESSION_SIGNING_KEY` | `DEBO_OS_SESSION_SIGNING_KEY` | **create**: `openssl rand -base64 32` | os only |
 | `WORKER_TOKEN` (api and browser) | `DEBO_OS_WORKER_TOKEN` | **create**: `openssl rand -hex 32` | os only |
+| `COMPOSIO_API_KEY` | `COMPOSIO_API_KEY` | optional (turns on "Connect your apps"; see [CONNECTORS.md](../../docs/CONNECTORS.md)) | Composio |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | not wired in CI | optional | Google |
 
 `CPK_INTELLIGENCE_API_KEY` is gone. `OPENFUSE_ACCESS_KEY` and `OPENAI_API_KEY` are no longer needed. Secrets never go in the image or in `wrangler.jsonc`. Worker secrets are copied into the container's environment at start.

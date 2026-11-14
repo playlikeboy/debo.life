@@ -37,6 +37,8 @@ const PASSED = [
   "NEON_AI_GATEWAY_BASE_URL",
   "NEON_AI_GATEWAY_TOKEN",
   "MEM0_API_KEY",
+  // Connecting apps (Composio). Optional: without it the Apps screen says it is not set up.
+  "COMPOSIO_API_KEY",
   // Voice
   "LIVEKIT_URL",
   "LIVEKIT_API_KEY",

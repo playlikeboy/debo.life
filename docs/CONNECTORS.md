@@ -1,6 +1,6 @@
 # Connectors
 
-Status: plan, phase 4.
+Status: plan, phase 4. A first version of connected apps through Composio is built in `os/`; see [`os/docs/CONNECTORS.md`](../os/docs/CONNECTORS.md). It follows the rules below.
 
 A connector lets Debo read from another app the person uses, such as their calendar or notes.
 

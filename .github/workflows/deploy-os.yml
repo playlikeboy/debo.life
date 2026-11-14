@@ -108,6 +108,7 @@ jobs:
           NEON_AI_GATEWAY_BASE_URL: ${{ secrets.NEON_AI_GATEWAY_BASE_URL }}
           NEON_AI_GATEWAY_TOKEN: ${{ secrets.NEON_AI_GATEWAY_TOKEN }}
           MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
           LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
           LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
           LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
@@ -118,7 +119,7 @@ jobs:
         run: |
           # Empty values are dropped, so an optional secret that is not set just turns its feature off.
           jq -n 'env | {DATABASE_URL, NEON_AUTH_BASE_URL, NEON_AUTH_JWKS_URL, ANTHROPIC_API_KEY,
-                  NEON_AI_GATEWAY_BASE_URL, NEON_AI_GATEWAY_TOKEN, MEM0_API_KEY,
+                  NEON_AI_GATEWAY_BASE_URL, NEON_AI_GATEWAY_TOKEN, MEM0_API_KEY, COMPOSIO_API_KEY,
                   LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, VOICE_AGENT_SECRET,
                   TOKEN_ENCRYPTION_KEY, SESSION_SIGNING_KEY, WORKER_TOKEN}
                  | with_entries(select(.value != null and .value != ""))' \

@@ -170,6 +170,46 @@ export default function PrivacyPage() {
         />
       </Section>
 
+      <Section id="connected-apps" title="Connecting your apps (new app, optional)">
+        <p>
+          In the new app you can connect other apps, such as Gmail, Slack or Notion, so Debo can look things up in them
+          and, when you say yes, make changes. This is off until you connect an app, and you choose each one.
+        </p>
+        <List
+          items={[
+            <>
+              Composio (Sampark Inc, doing business as Composio) holds your sign-in to each app you connect and carries
+              each request between Debo and that app. You sign in on the app&rsquo;s own page. Debo never sees your
+              password.
+            </>,
+            <>
+              What Debo sends Composio: your Debo account id, so it knows whose connection to use; which app you chose;
+              and each request, such as the words to search for, or the text of a message you approved. What comes back
+              is shown to you, and the parts needed are sent to the AI that writes Debo&rsquo;s answer (Anthropic).
+            </>,
+            <>
+              Debo only looks things up on its own. Anything that sends, posts, creates, changes or deletes waits for
+              your yes on screen. Voice can never give that yes.
+            </>,
+            <>
+              Debo&rsquo;s own logs keep which app and tool were used and whether it worked, never your messages or
+              results.
+            </>,
+            <>
+              Composio&rsquo;s privacy policy says it keeps the inputs and results of requests in its logs and deletes
+              them automatically one year after the request, and that it does not use them to train AI. We checked its
+              policy on 14 November 2026.
+            </>,
+            <>
+              To disconnect an app, use &ldquo;Disconnect&rdquo; on the Apps screen. That deletes the connection at
+              Composio. &ldquo;Delete my data&rdquo; in the new app disconnects every app you connected. The new app
+              does not hold your app passwords or tokens, so &ldquo;Download my data&rdquo; lists which apps you
+              connected and when, and nothing more.
+            </>,
+          ]}
+        />
+      </Section>
+
       <Section id="cookies" title="Cookies and your browser">
         <p>Debo only uses the sign-in cookies it needs to keep you signed in. No ads, no tracking, no analytics.</p>
         <p>
