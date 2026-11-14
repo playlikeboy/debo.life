@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The debo.life landing page: Next.js on Cloudflare Workers through OpenNext.
+  // No routes on purpose. It runs on its free workers.dev address until the
+  // owner moves debo.life to it. To switch the domain later, add:
+  //   "routes": [{ "pattern": "debo.life", "custom_domain": true }]
+  "name": "debo-site",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference binding the OpenNext adapter uses; name must match the worker.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "debo-site"
+    }
+  ]
+}
