@@ -14,11 +14,18 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
+// Whole files that may hold raw colours. Key is the file name; value is the reason.
+const exemptFiles: Record<string, string> = {
+  "astryx-tokens.ts": "generated from the Astryx theme",
+  "debo-face-colors.ts":
+    "the paint of Debo the tomato, copied from docs/assets/debo.svg. She is a character, not UI, so the app theme must never recolour her",
+};
+
 const files = [
   ...sourceFiles(path.join(root, "src")),
   path.join(root, "App.tsx"),
   path.join(root, "index.js"),
-].filter((file) => path.basename(file) !== "astryx-tokens.ts");
+].filter((file) => !Object.keys(exemptFiles).includes(path.basename(file)));
 
 // Short, explicit allowlist. Key is "relative/path:matched text"; value is the reason.
 // Keep it empty if you can. Colours belong in astryx-tokens.ts (generated from Astryx).

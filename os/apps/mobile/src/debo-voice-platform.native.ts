@@ -5,6 +5,20 @@
 // on top. Steps to make that build are in docs/VOICE.md.
 import type { RemoteTrack } from "livekit-client";
 
+/** Reads how loud a track is right now, 0..1. */
+export interface LevelMeter {
+  read(): number;
+  stop(): void;
+}
+
+/**
+ * Phones have no AnalyserNode. The engine falls back to the level LiveKit reports for
+ * each speaker (audioLevel) and the isSpeaking flag, which is coarser but real.
+ */
+export function createLevelMeter(_track: MediaStreamTrack): LevelMeter | undefined {
+  return undefined;
+}
+
 export interface VoiceAudio {
   /** Debo's voice plays through the phone's audio session; nothing to attach. */
   attach(track: RemoteTrack): void;

@@ -8,6 +8,7 @@ import {
   isNoMemoryAnswer,
   type Mood,
   type MoodEvent,
+  type MoodInput,
   type MoodState,
   nextMood,
   type Reactions,
@@ -15,7 +16,7 @@ import {
 } from "../src/debo-mood.ts";
 
 let clock = 1000;
-type Ev = Omit<MoodEvent, "at">;
+type Ev = MoodInput;
 /** Runs events in order, 10 seconds apart, and returns the final state. */
 function run(events: Ev[], from: MoodState = startState, gap = 10_000): MoodState {
   let state = from;

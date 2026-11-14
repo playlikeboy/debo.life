@@ -10,13 +10,22 @@
 // the app does not pay for it.
 import type { Room, TextStreamReader } from "livekit-client";
 import type { FuseApi } from "./api";
-import { prepareVoiceAudio, type VoiceAudio } from "./debo-voice-platform";
+import { smoothLevel } from "./audio-level";
+import { createLevelMeter, type LevelMeter, prepareVoiceAudio, type VoiceAudio } from "./debo-voice-platform";
 
 export interface VoiceChip {
   id: string;
   label: string;
 }
 export type AgentState = "listening" | "thinking" | "speaking" | "initializing" | "";
+
+/** How loud each side is right now, 0..1, already smoothed. */
+export interface VoiceLevels {
+  you: number;
+  debo: number;
+  /** True when `debo` is a real audio reading (web). False when it only follows who is speaking. */
+  real: boolean;
+}
 
 export interface VoiceHandlers {
   /** A caption changed. `final` is true when the sentence is complete. */
@@ -25,6 +34,10 @@ export interface VoiceHandlers {
   onAgentState(state: AgentState): void;
   /** The connection closed, for any reason. */
   onEnded(): void;
+  /** Audio levels for Debo's face and the halo, about 15 times a second. Optional. */
+  onLevels?(levels: VoiceLevels): void;
+  /** The network dropped and LiveKit is trying again, or it is back. Optional. */
+  onConnection?(state: "connected" | "reconnecting"): void;
 }
 
 export interface VoiceConnection {
@@ -48,22 +61,64 @@ export async function startVoice(api: FuseApi, handlers: VoiceHandlers): Promise
 
   const audio: VoiceAudio = await prepareVoiceAudio();
   let room: Room | undefined;
+  let poll: ReturnType<typeof setInterval> | undefined;
   try {
     const { Room: LiveKitRoom, RoomEvent, Track } = await import("livekit-client");
     const connected = new LiveKitRoom({ adaptiveStream: true, dynacast: true });
     room = connected;
     let ended = false;
+    const meters: { you?: LevelMeter; debo?: LevelMeter } = {};
+    let you = 0;
+    let debo = 0;
+    let last = Date.now();
+    // Levels come from an audio analyser on the web, and from LiveKit's own speaker
+    // levels on phones. Either way they only drive animation.
+    poll = setInterval(() => {
+      const now = Date.now();
+      const dt = now - last;
+      last = now;
+      const local = connected.localParticipant;
+      const agent = [...connected.remoteParticipants.values()].find((p) => p.isAgent);
+      const rawYou = meters.you
+        ? meters.you.read()
+        : local.isSpeaking
+          ? 0.25 + local.audioLevel * 0.75
+          : 0;
+      const rawDebo = meters.debo
+        ? meters.debo.read()
+        : agent?.isSpeaking
+          ? 0.3 + agent.audioLevel * 0.7
+          : 0;
+      you = smoothLevel(you, rawYou, dt);
+      debo = smoothLevel(debo, rawDebo, dt);
+      handlers.onLevels?.({ you, debo, real: !!meters.debo });
+    }, 66);
     const finish = () => {
       if (ended) return;
       ended = true;
+      clearInterval(poll);
+      meters.you?.stop();
+      meters.debo?.stop();
+      handlers.onLevels?.({ you: 0, debo: 0, real: false });
       handlers.onAgentState("");
       handlers.onEnded();
       void audio.release();
     };
 
     connected.on(RoomEvent.TrackSubscribed, (track) => {
-      if (track.kind === Track.Kind.Audio) audio.attach(track);
+      if (track.kind === Track.Kind.Audio) {
+        audio.attach(track);
+        meters.debo?.stop();
+        meters.debo = createLevelMeter(track.mediaStreamTrack);
+      }
     });
+    connected.on(RoomEvent.LocalTrackPublished, (publication) => {
+      if (publication.source !== Track.Source.Microphone || !publication.track) return;
+      meters.you?.stop();
+      meters.you = createLevelMeter(publication.track.mediaStreamTrack);
+    });
+    connected.on(RoomEvent.Reconnecting, () => handlers.onConnection?.("reconnecting"));
+    connected.on(RoomEvent.Reconnected, () => handlers.onConnection?.("connected"));
     connected.on(RoomEvent.ParticipantAttributesChanged, (_changed, participant) => {
       const state = participant.attributes["lk.agent.state"];
       if (state) handlers.onAgentState(state as AgentState);
@@ -128,6 +183,7 @@ export async function startVoice(api: FuseApi, handlers: VoiceHandlers): Promise
       },
     };
   } catch (error) {
+    clearInterval(poll);
     await room?.disconnect().catch(() => {});
     await audio.release();
     throw error;

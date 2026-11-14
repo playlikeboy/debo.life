@@ -237,6 +237,9 @@ export type MoodEvent = { at: number } & (
   | { type: "settle" }
 );
 
+/** An event without its timestamp. The store adds the time. */
+export type MoodInput = MoodEvent extends infer E ? (E extends { at: number } ? Omit<E, "at"> : never) : never;
+
 export interface Transition {
   state: MoodState;
   /** When set, call `settle` after this many ms. */

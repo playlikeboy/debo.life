@@ -1,5 +1,5 @@
 import { ArrowUpRight, Check, ChevronRight, type LucideIcon, X } from "lucide-react-native";
-import type { ReactNode } from "react";
+import { Component, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -26,6 +26,8 @@ import {
   spacing,
   textStyle,
 } from "./astryx-tokens";
+import { DeboFace } from "./debo-face";
+import type { Mood } from "./debo-mood";
 import { colors } from "./palette";
 
 export { colors };
@@ -429,12 +431,41 @@ export function LinkRow({
   );
 }
 /** Debo, the mascot, shared by every assistant surface. */
+/** The picture is the fallback if the drawn face cannot start. */
+class MascotFallback extends Component<{ size: number; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <Image
+        source={require("../assets/debo.png")}
+        resizeMode="contain"
+        style={{ width: this.props.size, height: this.props.size }}
+        accessible={false}
+      />
+    );
+  }
+}
+
+/**
+ * Debo, the little red tomato, drawn in code so her face can move (see debo-face.tsx).
+ * She follows the shared mood, so the header, chat and voice popup always agree.
+ */
 export function Mascot({
   size = 42,
   variant = "sky",
+  mood,
+  interactive,
 }: {
   size?: number;
   variant?: "sky" | "sand" | "lilac";
+  /** Show this mood instead of the shared one. */
+  mood?: Mood;
+  /** Tapping her gives a small reaction. */
+  interactive?: boolean;
 }) {
   // Soft Neutral-theme tints behind Debo. The mascot art itself is never recoloured.
   const palette = {
@@ -455,12 +486,9 @@ export function Mascot({
           backgroundColor: palette,
         }}
       />
-      <Image
-        source={require("../assets/debo.png")}
-        resizeMode="contain"
-        style={{ width: size, height: size }}
-        accessible={false}
-      />
+      <MascotFallback size={size}>
+        <DeboFace size={size} mood={mood} interactive={interactive} />
+      </MascotFallback>
     </View>
   );
 }

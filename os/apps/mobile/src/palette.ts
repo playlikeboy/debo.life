@@ -33,6 +33,8 @@ export const colors = {
   pink: c.backgroundPink,
   danger: c.onErrorMuted, // text for errors and risky actions (dark enough on the soft red)
   dangerBg: c.backgroundRed,
+  stop: c.error, // solid red for the one button that ends something (End conversation)
+  onStop: c.onError, // text and icons on the solid red
   ink: c.accent, // dark surfaces (toast, previews): the neutral theme accent is near-black
   onInk: c.onDark, // text on dark surfaces
   scrim: c.overlay, // dim layer behind a sheet

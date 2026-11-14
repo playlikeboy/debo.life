@@ -7,7 +7,7 @@ import {
   useRenderTool,
   useRenderToolCall,
 } from "@copilotkit/react-native/headless";
-import { ArrowDown, ArrowUp, FileText, RotateCcw, Square, X } from "lucide-react-native";
+import { ArrowDown, ArrowUp, FileText, Mic, RotateCcw, Square, X } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   Keyboard,
@@ -39,6 +39,8 @@ import { DesktopToolCard } from "./desktop-tool-card";
 import { confirmedJevSelection, displayJevUserMessage, latestJevPanelId } from "./jev-actions";
 import { JevInteractionContext, JevToolCard } from "./jev-tool-card";
 import { MailToolCard } from "./mail-tool-card";
+import { useChatMood } from "./debo-mood-events";
+import { deboMood } from "./debo-mood-store";
 import { DeboToolCard } from "./debo-source-chips";
 import { SearchToolCard } from "./search-tool-card";
 import { FileThreadCard, TaskThreadCard } from "./thread-artifacts";
@@ -409,6 +411,7 @@ export function ChatScreen({
   }, [agent, isReady, loaded, syncing, queue, runQueued]);
   const enqueue = useCallback(
     (text: string) => {
+      deboMood.emit({ type: "user_message", text }); // her face reacts to the tone; the message is unchanged
       queue.enqueue({ id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text });
       followLatest.current = true;
       setAwayFromLatest(false);
@@ -500,6 +503,7 @@ export function ChatScreen({
     .filter((call) => call.function.name === "use_desktop")
     .at(-1)?.id;
   const replying = busy || agent.isRunning;
+  useChatMood({ active, running: replying, messages, error });
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
@@ -984,6 +988,21 @@ export function ChatScreen({
                   : undefined
               }
             />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Talk to Debo"
+              onPress={() => navigate("talk")}
+              style={({ pressed }) => ({
+                width: 44,
+                height: 44,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: radius.page,
+                backgroundColor: pressed ? colors.sky : "transparent",
+              })}
+            >
+              <Mic size={22} strokeWidth={1.8} color={colors.text} />
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={replying ? "Stop reply" : "Send message"}

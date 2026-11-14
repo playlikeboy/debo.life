@@ -13,7 +13,7 @@ import {
   Shapes,
   X,
 } from "lucide-react-native";
-import { createElement, useCallback, useEffect, useMemo, useState } from "react";
+import { createElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   AppState,
@@ -37,7 +37,11 @@ import {
 import { AgentWorkspaceProvider, useAgentWorkspace } from "./src/agent-workspace";
 import { API_URL, createSession, FuseApi } from "./src/api";
 import { ChatScreen, WorkspaceTools } from "./src/chat";
-import { TalkScreen } from "./src/debo-talk";
+import { DeboFaceGallery } from "./src/debo-face-gallery";
+import { useTaskMood } from "./src/debo-mood-events";
+import { deboMood } from "./src/debo-mood-store";
+import { ReactionsSetting } from "./src/debo-reactions-setting";
+import { TalkPopup } from "./src/debo-talk";
 import { ComputerEntry } from "./src/computer";
 import { ComputerDraftProvider } from "./src/computer-drafts";
 import { JournalScreen } from "./src/debo-journal";
@@ -139,6 +143,8 @@ export default function App() {
   return <AccessKeyApp />;
 }
 function AccessKeyApp() {
+  // A developer gallery of Debo's face, on a local sample install only: /?face=gallery
+  const gallery = Platform.OS === "web" && globalThis.location?.search.includes("face=gallery");
   const [token, setToken] = useState("");
   const [accessKey, setAccessKey] = useState("");
   const [busy, setBusy] = useState(true);
@@ -156,8 +162,14 @@ function AccessKeyApp() {
     }
   }, []);
   useEffect(() => {
-    void connect();
-  }, [connect]);
+    if (!gallery) void connect();
+  }, [connect, gallery]);
+  if (gallery)
+    return (
+      <SafeAreaProvider>
+        <DeboFaceGallery />
+      </SafeAreaProvider>
+    );
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
@@ -359,10 +371,18 @@ function WorkspaceShell({
   error: string;
   prompt?: { id: number; text: string };
 }) {
-  const { workspace, section: routed, navigate, open } = useWorkspace();
-  /** "none" while the address matches no screen. */
-  const section: Section | "none" = notFound ? "none" : routed;
+  const { workspace, section: current, navigate, open } = useWorkspace();
   const { data } = useAgentWorkspace();
+  useTaskMood(data?.tasks);
+  // Talk is a popup over the last screen, so the screen underneath is the last one that was not Talk.
+  const lastScreen = useRef<Section>("chat");
+  if (current !== "talk") lastScreen.current = current;
+  /** The screen underneath; "none" while the address matches no screen. */
+  const section: Section | "none" = notFound
+    ? "none"
+    : current === "talk"
+      ? lastScreen.current
+      : current;
   const {
     selection,
     visited,
@@ -396,8 +416,6 @@ function WorkspaceShell({
   const Screen =
     section === "none"
       ? NotFound
-      : section === "talk"
-      ? TalkScreen
       : section === "mail"
       ? MailScreen
       : section === "calendar"
@@ -441,7 +459,10 @@ function WorkspaceShell({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Open ${agentName} activity and approvals`}
-                onPress={() => navigate("activity")}
+                onPress={() => {
+                  deboMood.tap();
+                  navigate("activity");
+                }}
                 style={({ pressed }) => ({
                   alignItems: "center",
                   maxWidth: "70%",
@@ -518,6 +539,7 @@ function WorkspaceShell({
                 <ErrorNotice error={error} />
                 <Screen />
                 {section === "apps" && <AccountCard />}
+                {section === "apps" && <ReactionsSetting />}
               </ScrollView>
             )}
             <View
@@ -581,7 +603,10 @@ function WorkspaceShell({
               }}
             >
               {nav.map((item) => {
-                const active = section === item.id || (item.id === "apps" && utility);
+                const active =
+                  current === "talk"
+                    ? item.id === "talk"
+                    : section === item.id || (item.id === "apps" && utility);
                 const tabStyle = {
                   flex: 1,
                   height: 47,
@@ -658,6 +683,7 @@ function WorkspaceShell({
           </View>
         )}
         {threadsOpen && <ThreadsSheet onClose={() => setThreadsOpen(false)} />}
+        {current === "talk" && <TalkPopup onClose={() => navigate(lastScreen.current)} />}
         {detail && (
           <Details
             key={
