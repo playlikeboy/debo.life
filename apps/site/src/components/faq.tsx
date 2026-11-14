@@ -1,12 +1,12 @@
 import { VStack } from "@astryxdesign/core/Layout";
 import { Collapsible, CollapsibleGroup } from "@astryxdesign/core/Collapsible";
-import { Text } from "@astryxdesign/core/Text";
-import { Panel } from "./panel";
+import { Heading, Text } from "@astryxdesign/core/Text";
+import { Band } from "./band";
 
-const QUESTIONS = [
+export const QUESTIONS = [
   {
     q: "Is Debo finished?",
-    a: "No. Debo is an early version. Accounts, the journal, asking about your life, memories, and talking out loud work today. Doing tasks for you is still being built.",
+    a: "No. Debo is an early version. Accounts, the journal, asking about your life, memories, and talking out loud work today. Connecting your apps and voice and video journals are still being built.",
   },
   {
     q: "Is it free?",
@@ -26,7 +26,7 @@ const QUESTIONS = [
   },
   {
     q: "How do I get my data out, or delete it?",
-    a: "Download everything as a zip from your home page. You can also delete any entry or chat, or your whole account. Deleting your account removes your entries, chats, memories and files right away.",
+    a: "You can download your data from the app, and delete any entry or memory. The privacy page explains exactly what each delete button removes.",
   },
   {
     q: "Will Debo do things without asking?",
@@ -36,26 +36,31 @@ const QUESTIONS = [
 
 export function Faq() {
   return (
-    <Panel id="faq" title="Questions people ask">
-      <VStack>
+    <Band id="faq" variant="muted">
+      <VStack gap={6} width="100%" maxWidth={760}>
+        <Heading level={2} type="display-2" weight="bold" id="faq-title" textWrap="balance">
+          Questions people ask
+        </Heading>
         <CollapsibleGroup type="single" hasDividers>
           {QUESTIONS.map((item, index) => (
             <Collapsible
               key={item.q}
               value={`q${index}`}
               trigger={
-                <Text as="span" weight="semibold">
-                  {item.q}
-                </Text>
+                <VStack paddingBlock={2}>
+                  <Text as="span" type="large">
+                    {item.q}
+                  </Text>
+                </VStack>
               }
             >
-              <Text as="p" color="secondary">
+              <Text as="p" type="large" weight="normal" color="secondary" textWrap="pretty">
                 {item.a}
               </Text>
             </Collapsible>
           ))}
         </CollapsibleGroup>
       </VStack>
-    </Panel>
+    </Band>
   );
 }
