@@ -9,7 +9,6 @@
 #   DEBO_OS_TOKEN_ENCRYPTION_KEY                  - 32 random bytes, base64
 #   DEBO_OS_SESSION_SIGNING_KEY                   - 32 random bytes, base64
 #   DEBO_OS_WORKER_TOKEN                          - 32+ characters, shared API <-> browser
-#   CPK_INTELLIGENCE_API_KEY, CPK_TELEMETRY_ID    - CopilotKit Intelligence project
 #   OPENAI_API_KEY                                - model provider key (MODEL defaults to openai/gpt-5)
 name: Deploy OS (preview)
 
@@ -40,13 +39,12 @@ jobs:
           DEBO_OS_TOKEN_ENCRYPTION_KEY: ${{ secrets.DEBO_OS_TOKEN_ENCRYPTION_KEY }}
           DEBO_OS_SESSION_SIGNING_KEY: ${{ secrets.DEBO_OS_SESSION_SIGNING_KEY }}
           DEBO_OS_WORKER_TOKEN: ${{ secrets.DEBO_OS_WORKER_TOKEN }}
-          CPK_INTELLIGENCE_API_KEY: ${{ secrets.CPK_INTELLIGENCE_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           missing=""
           for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID DEBO_OS_DATABASE_URL DEBO_OS_ACCESS_KEY \
             DEBO_OS_TOKEN_ENCRYPTION_KEY DEBO_OS_SESSION_SIGNING_KEY DEBO_OS_WORKER_TOKEN \
-            CPK_INTELLIGENCE_API_KEY OPENAI_API_KEY; do
+            OPENAI_API_KEY; do
             [ -n "${!name}" ] || missing="$missing $name"
           done
           if [ -n "$missing" ]; then echo "::error::Missing GitHub secrets:$missing"; exit 1; fi
@@ -99,12 +97,10 @@ jobs:
           TOKEN_ENCRYPTION_KEY: ${{ secrets.DEBO_OS_TOKEN_ENCRYPTION_KEY }}
           SESSION_SIGNING_KEY: ${{ secrets.DEBO_OS_SESSION_SIGNING_KEY }}
           WORKER_TOKEN: ${{ secrets.DEBO_OS_WORKER_TOKEN }}
-          CPK_INTELLIGENCE_API_KEY: ${{ secrets.CPK_INTELLIGENCE_API_KEY }}
-          CPK_TELEMETRY_ID: ${{ secrets.CPK_TELEMETRY_ID }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           jq -n 'env | {DATABASE_URL, OPENFUSE_ACCESS_KEY, TOKEN_ENCRYPTION_KEY, SESSION_SIGNING_KEY,
-                  WORKER_TOKEN, CPK_INTELLIGENCE_API_KEY, CPK_TELEMETRY_ID, OPENAI_API_KEY}
+                  WORKER_TOKEN, OPENAI_API_KEY}
                  | with_entries(select(.value != null and .value != ""))' \
             > "$RUNNER_TEMP/api-secrets.json"
           npx wrangler deploy -c api/wrangler.jsonc \

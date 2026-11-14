@@ -49,7 +49,7 @@ Deleting rows is not the whole job. These live elsewhere and need their own step
 2. **Google access.** The stored Google tokens are deleted with the rows, but the app stays listed in the person's Google account until they remove it there. Revoke the token at Google before the wipe if you want it gone at once.
 3. **The Linux computer or E2B desktop** for that owner: its Docker volume or VM and the files in it. Stop it first, then remove the volume or VM by hand.
 4. **Browser worker sessions** for that owner. They close on their own when idle.
-5. **Rich Threads (CopilotKit Intelligence).** Chat threads live in that service, keyed by the user id. Delete them there.
+5. **Chat threads.** They are rows in the same table, so the wipe above removes them. Nothing is stored with CopilotKit Intelligence.
 6. **Backups and logs.** Neon's point-in-time history keeps old rows until it ages out. Logs carry ids only.
 7. **Anything Debo's own app stores** for the same person in `public` tables. Those are a separate wipe.
 
