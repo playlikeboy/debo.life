@@ -40,6 +40,7 @@ import { ComputerEntry } from "./src/computer";
 import { ComputerDraftProvider } from "./src/computer-drafts";
 import { Details } from "./src/details";
 import { BrowserScreen, CalendarScreen, FilesScreen, MailScreen } from "./src/screens";
+import { AccountCard, NeonGate, useAuthInfo } from "./src/neon-gate";
 import { ThreadsProvider, ThreadsSheet, useFuseThread } from "./src/threads";
 import { Button, Card, colors, ErrorNotice, Field, IconButton, Mascot, s } from "./src/ui";
 import { type Detail, useWorkspace, WorkspaceContext } from "./src/workspace";
@@ -70,7 +71,39 @@ const titles: Partial<Record<Section, { title: string; subtitle: string }>> = {
   browser: { title: "Browser", subtitle: "Your connected browsing sessions." },
   files: { title: "Files", subtitle: "Documents, forms and filled copies." },
 };
+/**
+ * Asks the API how people sign in. Neon Auth (one account per person) shows email
+ * sign-in. A local or demo install keeps the shared access key screen.
+ */
 export default function App() {
+  const info = useAuthInfo();
+  if (!info)
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, backgroundColor: colors.canvas, justifyContent: "center" }}>
+          <ActivityIndicator color={colors.blueDark} accessibilityLabel="Opening Debo" />
+        </View>
+      </SafeAreaProvider>
+    );
+  if (info.mode === "neon" && info.neonAuthUrl)
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <NeonGate baseUrl={info.neonAuthUrl}>
+          {(token, sessionKey) => (
+            <CopilotKitProvider
+              runtimeUrl={`${API_URL}/api/copilotkit`}
+              headers={{ Authorization: `Bearer ${token}` }}
+            >
+              <WorkspaceApp token={token} sessionKey={sessionKey} />
+            </CopilotKitProvider>
+          )}
+        </NeonGate>
+      </SafeAreaProvider>
+    );
+  return <AccessKeyApp />;
+}
+function AccessKeyApp() {
   const [token, setToken] = useState("");
   const [accessKey, setAccessKey] = useState("");
   const [busy, setBusy] = useState(true);
@@ -145,7 +178,7 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
-function WorkspaceApp({ token }: { token: string }) {
+function WorkspaceApp({ token, sessionKey }: { token: string; sessionKey?: string }) {
   const api = useMemo(() => new FuseApi(token), [token]);
   const [workspace, setWorkspace] = useState<Workspace>();
   const [section, setSection] = useState<Section>("chat");
@@ -216,7 +249,7 @@ function WorkspaceApp({ token }: { token: string }) {
       value={{ workspace, api, section, navigate, refresh, open, close, notify: setToast, ask }}
     >
       <AgentWorkspaceProvider>
-        <ComputerDraftProvider key={token}>
+        <ComputerDraftProvider key={sessionKey ?? token}>
           <ThreadsProvider>
             <WorkspaceShell
               detail={detail}
@@ -387,6 +420,7 @@ function WorkspaceShell({
                 <Text style={[s.title, { fontSize: 25, marginBottom: 22 }]}>{title?.title}</Text>
                 <ErrorNotice error={error} />
                 <Screen />
+                {section === "apps" && <AccountCard />}
               </ScrollView>
             )}
             <View
