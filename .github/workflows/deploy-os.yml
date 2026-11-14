@@ -1,5 +1,5 @@
-# Deploy Debo OS (os/) to Cloudflare Workers + Containers on workers.dev preview URLs.
-# Runs on a push to the debo-os branch, or by hand. Separate from deploy.yml: it never touches the debo-web Worker or debo.life.
+# Deploy the new Debo app (os/) to Cloudflare Workers + Containers at app.debo.life and api.debo.life.
+# Runs on a push to main that touches it, or by hand. Separate from deploy.yml: it never touches the debo-web Worker, which still serves debo.life.
 # Deploys three Workers: debo-os-browser (private), debo-os-api, debo-os-app.
 # Secrets used (names only; set in GitHub repo settings > Secrets). See
 # os/infra/cloudflare/README.md for how to create each one.
@@ -15,13 +15,11 @@
 #     DEBO_OS_WORKER_TOKEN                          - 32+ characters, shared API <-> browser
 #   Optional:
 #     NEON_AI_GATEWAY_BASE_URL, NEON_AI_GATEWAY_TOKEN - search by meaning (keyword search works without)
-name: Deploy OS (preview)
+name: Deploy OS
 
 on:
-  # GitHub only offers the manual button for workflows that are on main. Until
-  # this file is there, a push to the debo-os branch deploys the preview.
   push:
-    branches: [debo-os]
+    branches: [main]
     paths: ["os/**", "packages/**", ".github/workflows/deploy-os.yml", ".dockerignore"]
   workflow_dispatch:
 
@@ -71,15 +69,12 @@ jobs:
       # wrangler builds the container images with Docker (BuildKit).
       - uses: docker/setup-buildx-action@v3
 
-      - name: Find the workers.dev subdomain
+      # The new app lives on its own addresses. debo.life itself stays on the debo-web Worker.
+      - name: Set the addresses
         id: urls
         run: |
-          sub=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" \
-            | jq -r '.result.subdomain')
-          if [ -z "$sub" ] || [ "$sub" = "null" ]; then echo "::error::No workers.dev subdomain on this account"; exit 1; fi
-          echo "api=https://debo-os-api.$sub.workers.dev" >> "$GITHUB_OUTPUT"
-          echo "app=https://debo-os-app.$sub.workers.dev" >> "$GITHUB_OUTPUT"
+          echo "api=https://api.debo.life" >> "$GITHUB_OUTPUT"
+          echo "app=https://app.debo.life" >> "$GITHUB_OUTPUT"
 
       - name: Install
         run: |

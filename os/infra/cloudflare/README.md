@@ -1,5 +1,8 @@
 # Debo OS on Cloudflare
 
+> **Where it runs now (14 November 2026).** The new app is served at `https://app.debo.life` and its API at `https://api.debo.life`. The deploy workflow runs on a push to `main` that touches `os/`, `packages/` or the workflow. `https://app.debo.life` is in Neon Auth's trusted domains. `debo.life` itself is still the older web app (`debo-web`). Where the text below says a `workers.dev` address, read these two addresses.
+
+
 Three Workers. Nothing here touches `debo-web` or `debo.life`. Nothing is deployed yet.
 
 ```

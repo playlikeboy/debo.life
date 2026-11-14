@@ -8,8 +8,7 @@
   "compatibility_date": "2026-11-01",
   "workers_dev": true,
   "preview_urls": false,
-  // Later switch to app.debo.life:
-  // "routes": [{ "pattern": "app.debo.life", "custom_domain": true }],
+  "routes": [{ "pattern": "app.debo.life", "custom_domain": true }],
   "assets": {
     "directory": "../../../apps/mobile/dist/web",
     "not_found_handling": "single-page-application"

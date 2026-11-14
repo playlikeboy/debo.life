@@ -12,9 +12,9 @@
   "workers_dev": true,
   "preview_urls": false,
 
-  // Later switch to api.debo.life: uncomment, redeploy, and set the plain vars
-  // PUBLIC_API_URL / ALLOWED_ORIGINS below to the final URLs.
-  // "routes": [{ "pattern": "api.debo.life", "custom_domain": true }],
+  // The API's public address. The deploy workflow passes PUBLIC_API_URL and
+  // ALLOWED_ORIGINS (https://app.debo.life) to match.
+  "routes": [{ "pattern": "api.debo.life", "custom_domain": true }],
 
   "containers": [
     {
