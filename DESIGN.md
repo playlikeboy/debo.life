@@ -21,6 +21,8 @@ The new landing page and the app take their colours from Astryx's default Neutra
 - Debo never looks sad, angry or shocked at the person. When something fails, Debo stays calm.
 - Do not give Debo a human face, body or gender.
 
+In the app (`os/apps/mobile`) Debo's face is drawn in code (`debo-face.tsx`) and has twelve moods: idle, listening, thinking, speaking, happy, proud, shy, curious, sleepy, worried, pouty and angry. Moods are animation only: they never change, delay or refuse an answer. `debo-mood.ts` picks the mood from what is happening and from the tone of what the person wrote, using one readable table of English, Hindi and Hinglish cue words, with no network call. Pouty is a light, playful sulk that melts away on the next kind or neutral message. Angry is rare and brief and never insulting. In serious moments (a sad or scared message, an error the person must act on, deleting, the privacy text) she stays calm. Settings has "Debo's reactions": All, Calm (no pouty or angry) or Off. The device's reduce motion setting keeps her still. This is the exception to "Debo never looks angry" above, and it is playful, not aimed at the person.
+
 ## Colour
 
 | Token | Hex | Use |

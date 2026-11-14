@@ -39,7 +39,7 @@ import { DesktopToolCard } from "./desktop-tool-card";
 import { confirmedJevSelection, displayJevUserMessage, latestJevPanelId } from "./jev-actions";
 import { JevInteractionContext, JevToolCard } from "./jev-tool-card";
 import { MailToolCard } from "./mail-tool-card";
-import { useChatMood } from "./debo-mood-events";
+import { useChatMood } from "./debo-mood-hooks";
 import { deboMood } from "./debo-mood-store";
 import { DeboToolCard } from "./debo-source-chips";
 import { SearchToolCard } from "./search-tool-card";

@@ -76,8 +76,8 @@ export const poses: Record<Mood, Pose> = {
     leafL: 10, leafR: 10, bodyY: 2, blush: 0.55,
   }),
   pouty: p({
-    puff: 1, smile: 0, frown: 1, gazeX: -9, gazeY: 1, tilt: 5, browOn: 1, browAngle: 7, browLift: 1,
-    blush: 1, blushScale: 1.3, leafL: 20, leafR: 20, sx: 1.03, sy: 0.98, eyeOpen: 0.92,
+    puff: 1, smile: 0, frown: 1, gazeX: -10, gazeY: 1, tilt: 5, browOn: 1, browAngle: 4, browLift: 0,
+    blush: 1, blushScale: 1.3, leafL: 20, leafR: 20, sx: 1.03, sy: 0.98, eyeOpen: 0.7,
   }),
   angry: p({
     browOn: 1, browAngle: 24, browLift: 3, smile: 0, frown: 1, eyeOpen: 0.82, sx: 1.04, sy: 0.98,

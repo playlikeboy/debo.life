@@ -7,7 +7,7 @@
 //
 // The connection itself lives in debo-voice-engine.ts. Closing the popup ends the
 // conversation and turns the microphone off, always.
-import { ChevronDown, Keyboard, MessageCircle, Mic, MicOff, Phone, Square } from "lucide-react-native";
+import { ChevronDown, Keyboard, MessageCircle, Mic, MicOff, PhoneOff, Square } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -93,7 +93,14 @@ function spokenStatus(input: {
               : "Microphone off. Debo can't hear you, but you can type.";
 }
 
-export function TalkPopup({ onClose }: { onClose: () => void }) {
+export function TalkPopup({
+  onClose,
+  engine = startVoice,
+}: {
+  onClose: () => void;
+  /** The voice connection to use. Only the developer gallery passes a different one. */
+  engine?: typeof startVoice;
+}) {
   const { api, navigate, notify } = useWorkspace();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -107,6 +114,8 @@ export function TalkPopup({ onClose }: { onClose: () => void }) {
   const [typed, setTyped] = useState("");
   const [typing, setTyping] = useState(false);
   const [transcript, setTranscript] = useState(false);
+  // The transcript panel stays mounted only while it is open or sliding away.
+  const [transcriptMounted, setTranscriptMounted] = useState(false);
   const [youActive, setYouActive] = useState(false);
   const connection = useRef<VoiceConnection | undefined>(undefined);
   const closing = useRef(false);
@@ -140,12 +149,15 @@ export function TalkPopup({ onClose }: { onClose: () => void }) {
     }).start();
   }, [typing, keyboardIn, native, reduceMotion]);
   useEffect(() => {
+    if (transcript) setTranscriptMounted(true);
     Animated.timing(transcriptIn, {
       toValue: transcript ? 1 : 0,
       duration: reduceMotion ? duration.fast : duration.medium,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: native,
-    }).start();
+    }).start(() => {
+      if (!transcript) setTranscriptMounted(false);
+    });
   }, [transcript, transcriptIn, native, reduceMotion]);
   // A slow swell while she listens. It stops with reduced motion.
   useEffect(() => {
@@ -287,7 +299,7 @@ export function TalkPopup({ onClose }: { onClose: () => void }) {
     setProblem("");
     setStatus("connecting");
     try {
-      const next = await startVoice(api, {
+      const next = await engine(api, {
         onLine: (id, who, text) => upsert(id, who, text),
         onSources: attachSources,
         onAgentState: setAgentState,
@@ -345,12 +357,12 @@ export function TalkPopup({ onClose }: { onClose: () => void }) {
   const words = stateWords({ status, micOn, agentState, reconnecting });
   const spoken = spokenStatus({ status, micOn, agentState, reconnecting });
   const shown = lines.filter((line) => line.text);
-  const recent = shown.slice(-2);
+  const recent = shown.slice(typing ? -1 : -2);
   const latestSources = [...lines].reverse().find((line) => line.sources.length > 0)?.sources ?? [];
 
   // Sizes work from 320px up. On desktop the column stays centred.
   const column = Math.min(width, 560);
-  const orb = Math.max(150, Math.min(250, column - 96, height * 0.34));
+  const orb = Math.max(110, Math.min(250, column - 120, height * 0.3) * (typing ? 0.62 : 1));
   const face = orb * 0.82;
 
   const haloScale = Animated.add(
@@ -445,13 +457,15 @@ export function TalkPopup({ onClose }: { onClose: () => void }) {
                     width: orb * 1.08,
                     height: orb * 1.08,
                     borderRadius: radius.full,
-                    borderWidth: 3,
+                    borderWidth: 2,
                     borderColor: colors.blueDark,
-                    opacity: listening && youActive ? 0.8 : 0,
+                    opacity: listening && youActive ? 0.45 : 0,
                     transform: [{ scale: reduceMotion ? 1.12 : ringScale }],
                   }}
                 />
-                <DeboFace size={face} interactive={live} />
+                <View style={{ marginTop: -face * 0.06 }}>
+                  <DeboFace size={face} interactive={live} />
+                </View>
               </Pressable>
 
               <View
@@ -589,13 +603,14 @@ export function TalkPopup({ onClose }: { onClose: () => void }) {
                   caption="End"
                   danger
                   onPress={requestClose}
-                  icon={Phone}
+                  icon={PhoneOff}
                 />
               </View>
             )}
           </View>
 
           {/* The full transcript slides over everything. */}
+          {transcriptMounted && (
           <Animated.View
             pointerEvents={transcript ? "auto" : "none"}
             accessibilityElementsHidden={!transcript}
@@ -658,6 +673,7 @@ export function TalkPopup({ onClose }: { onClose: () => void }) {
               </ScrollView>
             </View>
           </Animated.View>
+          )}
         </Animated.View>
       </Animated.View>
     </Modal>
@@ -726,8 +742,6 @@ function RoundButton({
           size={26}
           strokeWidth={1.8}
           color={tint}
-          // The hang-up phone points down so it reads as "end".
-          style={danger ? { transform: [{ rotate: "135deg" }] } : undefined}
         />
       </Pressable>
       <Text style={[s.small, { color: colors.text, textAlign: "center" }]}>{caption}</Text>

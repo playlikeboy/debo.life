@@ -312,3 +312,21 @@ test("audio level helpers", () => {
   for (let i = 0; i < 40; i++) v = smoothLevel(v, 0, 50);
   assert.ok(v < 0.01);
 });
+
+test("task changes become mood events", async () => {
+  const { taskMoodEvents, latestAnswer } = await import("../src/debo-mood-events.ts");
+  const first = taskMoodEvents(undefined, [{ id: "a", status: "running" }]);
+  assert.deepEqual(first.events, [], "the first look only learns the start");
+  const done = taskMoodEvents(first.next, [{ id: "a", status: "succeeded" }]);
+  assert.deepEqual(done.events, [{ type: "task_done" }]);
+  const wait = taskMoodEvents(done.next, [{ id: "a", status: "waiting_approval" }]);
+  assert.deepEqual(wait.events, [{ type: "approval_waiting" }]);
+  const clear = taskMoodEvents(wait.next, [{ id: "a", status: "running" }]);
+  assert.deepEqual(clear.events, [{ type: "approval_cleared" }]);
+  const answer = latestAnswer([
+    { role: "user", content: "hi" },
+    { role: "assistant", content: "", toolCalls: [{ function: { name: "ask_my_life" } }] },
+    { role: "assistant", content: "You wrote about Goa." },
+  ]);
+  assert.deepEqual(answer, { text: "You wrote about Goa.", hasSources: true });
+});

@@ -38,7 +38,7 @@ import { AgentWorkspaceProvider, useAgentWorkspace } from "./src/agent-workspace
 import { API_URL, createSession, FuseApi } from "./src/api";
 import { ChatScreen, WorkspaceTools } from "./src/chat";
 import { DeboFaceGallery } from "./src/debo-face-gallery";
-import { useTaskMood } from "./src/debo-mood-events";
+import { useTaskMood } from "./src/debo-mood-hooks";
 import { deboMood } from "./src/debo-mood-store";
 import { ReactionsSetting } from "./src/debo-reactions-setting";
 import { TalkPopup } from "./src/debo-talk";

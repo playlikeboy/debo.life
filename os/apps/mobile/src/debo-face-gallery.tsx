@@ -5,11 +5,77 @@ import { ScrollView, Text, TextInput, View } from "react-native";
 import { DeboFace } from "./debo-face";
 import { allMoods, detectTone } from "./debo-mood";
 import { deboMood, useDeboMood } from "./debo-mood-store";
+import { TalkPopup } from "./debo-talk";
+import type { VoiceConnection, VoiceHandlers } from "./debo-voice-engine";
 import { Button, colors, s, spacing } from "./ui";
+import { WorkspaceContext, type WorkspaceContextValue } from "./workspace";
+
+// The popup needs a workspace and a voice connection. In the gallery both are stand-ins:
+// no server, no microphone. The stand-in plays a short scripted conversation, with
+// audio levels, so the halo and mouth can be watched without LiveKit.
+const standIn = {
+  workspace: {},
+  api: {},
+  section: "talk",
+  navigate: () => {},
+  refresh: async () => {},
+  open: () => {},
+  close: () => {},
+  notify: () => {},
+  ask: () => {},
+} as unknown as WorkspaceContextValue;
+
+async function demoVoice(_api: unknown, handlers: VoiceHandlers): Promise<VoiceConnection> {
+  await new Promise((done) => setTimeout(done, 700));
+  const timers: ReturnType<typeof setTimeout>[] = [];
+  let level: ReturnType<typeof setInterval> | undefined;
+  let mode: "you" | "debo" | "none" = "none";
+  const at = (ms: number, run: () => void) => timers.push(setTimeout(run, ms));
+  handlers.onAgentState("listening");
+  mode = "you";
+  at(3500, () => {
+    mode = "none";
+    handlers.onAgentState("thinking");
+    handlers.onLine("a", "you", "What did I write about the trip?", true);
+  });
+  at(5200, () => {
+    mode = "debo";
+    handlers.onAgentState("speaking");
+    handlers.onLine("b", "debo", "You wrote about the", false);
+  });
+  at(6200, () => handlers.onLine("b", "debo", "You wrote about the sunrise in Goa on 11 November.", true));
+  at(6300, () => handlers.onSources([{ id: "e1", label: "Journal, 11 November" }]));
+  at(10500, () => {
+    mode = "you";
+    handlers.onAgentState("listening");
+  });
+  let t = 0;
+  level = setInterval(() => {
+    t += 0.066;
+    const wave = Math.abs(Math.sin(t * 7) * Math.sin(t * 2.3));
+    handlers.onLevels?.({ you: mode === "you" ? wave : 0, debo: mode === "debo" ? wave : 0, real: true });
+  }, 66);
+  return {
+    microphoneBlocked: false,
+    async setMicrophone() {},
+    async stopDebo() {
+      mode = "none";
+      handlers.onAgentState("listening");
+    },
+    async sendText() {},
+    async end() {
+      clearInterval(level);
+      for (const timer of timers) clearTimeout(timer);
+      handlers.onLevels?.({ you: 0, debo: 0, real: false });
+      handlers.onEnded();
+    },
+  };
+}
 
 export function DeboFaceGallery() {
   const shared = useDeboMood();
   const [text, setText] = useState("");
+  const [popup, setPopup] = useState(false);
   const buttons: [string, () => void][] = [
     ["Waiting", () => deboMood.emit({ type: "waiting" })],
     ["Streaming", () => deboMood.emit({ type: "streaming" })],
@@ -60,6 +126,9 @@ export function DeboFaceGallery() {
               {label}
             </Button>
           ))}
+          <Button small onPress={() => setPopup(true)}>
+            Open voice popup (demo)
+          </Button>
           {(["all", "calm", "off"] as const).map((value) => (
             <Button key={value} small onPress={() => deboMood.setReactions(value)}>
               {`Reactions: ${value}`}
@@ -67,6 +136,11 @@ export function DeboFaceGallery() {
           ))}
         </View>
       </View>
+      {popup && (
+        <WorkspaceContext.Provider value={standIn}>
+          <TalkPopup engine={demoVoice} onClose={() => setPopup(false)} />
+        </WorkspaceContext.Provider>
+      )}
     </ScrollView>
   );
 }

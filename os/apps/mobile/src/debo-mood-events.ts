@@ -1,14 +1,11 @@
-// Small helpers that turn app activity into mood events (see debo-mood.ts).
-// Screens call these; they never change what a screen does.
-import { useEffect, useRef } from "react";
+// Pure helpers that turn app activity into mood events (see debo-mood.ts).
 import type { TaskStatus } from "../../../packages/domain/src/agent";
 import type { MoodInput } from "./debo-mood";
-import { deboMood } from "./debo-mood-store";
 
 /** Tools whose answers come with source chips. */
 const sourceTools = ["ask_my_life", "search_my_journal", "search_web", "web_search", "search_mail", "search_files"];
 
-interface ChatMessageLike {
+export interface ChatMessageLike {
   role: string;
   content?: unknown;
   toolCalls?: { function: { name: string } }[];
@@ -46,59 +43,4 @@ export function taskMoodEvents(
   if (waiting(next) && !waiting(before)) events.push({ type: "approval_waiting" });
   if (!waiting(next) && waiting(before)) events.push({ type: "approval_cleared" });
   return { events, next };
-}
-
-export function useTaskMood(tasks: { id: string; status: TaskStatus }[] | undefined) {
-  const seen = useRef<Map<string, TaskStatus> | undefined>(undefined);
-  useEffect(() => {
-    if (!tasks) return;
-    const { events, next } = taskMoodEvents(seen.current, tasks);
-    seen.current = next;
-    for (const event of events) deboMood.emit(event);
-  }, [tasks]);
-}
-
-/**
- * Follows a chat turn: waiting for the answer, streaming it, then the answer itself
- * (happy with sources, curious when she has nothing yet). Pass `active` so only the
- * chat the person is looking at moves the face.
- */
-export function useChatMood({
-  active,
-  running,
-  messages,
-  error,
-}: {
-  active: boolean;
-  running: boolean;
-  messages: ChatMessageLike[];
-  error: string;
-}) {
-  const was = useRef(false);
-  const streamed = useRef(false);
-  const lastError = useRef("");
-  const length = messages.length;
-  const tail = messages[length - 1];
-  const tailText = typeof tail?.content === "string" ? tail.content : "";
-  useEffect(() => {
-    if (!active) return;
-    if (running && !was.current) {
-      streamed.current = false;
-      deboMood.emit({ type: "waiting" });
-    }
-    if (running && tail?.role === "assistant" && tailText && !streamed.current) {
-      streamed.current = true;
-      deboMood.emit({ type: "streaming" });
-    }
-    if (!running && was.current) {
-      const answer = latestAnswer(messages);
-      if (answer) deboMood.emit({ type: "answer", ...answer });
-      else deboMood.emit({ type: "voice", state: "idle" });
-    }
-    was.current = running;
-  }, [active, running, tail?.role, tailText, messages]);
-  useEffect(() => {
-    if (active && error && error !== lastError.current) deboMood.emit({ type: "error", actionable: false });
-    lastError.current = error;
-  }, [active, error]);
 }

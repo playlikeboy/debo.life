@@ -374,10 +374,11 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
         }}
       >
         <Layer size={size} style={{ opacity: v.pose.puff, transform: [{ scale: n.puffScale }], transformOrigin: origin(120, 150, S) }}>
-          <Ellipse cx={26} cy={150} rx={22} ry={24} fill={c.body} />
-          <Ellipse cx={214} cy={150} rx={22} ry={24} fill={c.body} />
-          <Ellipse cx={22} cy={160} rx={14} ry={14} fill={c.bodyShade} opacity={0.35} />
-          <Ellipse cx={218} cy={160} rx={14} ry={14} fill={c.bodyShade} opacity={0.5} />
+          <Ellipse cx={30} cy={152} rx={26} ry={30} fill={c.body} />
+          <Ellipse cx={210} cy={152} rx={26} ry={30} fill={c.body} />
+          <Ellipse cx={26} cy={166} rx={16} ry={16} fill={c.bodyShade} opacity={0.35} />
+          <Ellipse cx={214} cy={166} rx={16} ry={16} fill={c.bodyShade} opacity={0.5} />
+          <Ellipse cx={22} cy={140} rx={6} ry={4} fill={c.highlight} opacity={0.4} />
         </Layer>
         <Layer size={size}>
           <Path d="M120 66C150 52 204 60 221 118C234 174 190 218 120 218C50 218 6 174 19 118C36 60 90 52 120 66Z" fill={c.body} />
@@ -404,8 +405,11 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
           <Path d="M120 70C119 56 122 46 130 38" fill="none" stroke={c.leafDark} strokeWidth={9} strokeLinecap="round" />
         </Layer>
 
-        <Layer size={size} style={{ opacity: v.pose.blush, transform: [{ scale: v.pose.blushScale }], transformOrigin: origin(120, 158, S) }}>
+        {/* Cheeks grow around their own centre, so bigger blush never leaves the face. */}
+        <Layer size={size} style={{ opacity: v.pose.blush, transform: [{ scale: v.pose.blushScale }], transformOrigin: origin(60, 158, S) }}>
           <Ellipse cx={60} cy={158} rx={16} ry={10} fill={c.blush} opacity={0.85} />
+        </Layer>
+        <Layer size={size} style={{ opacity: v.pose.blush, transform: [{ scale: v.pose.blushScale }], transformOrigin: origin(180, 158, S) }}>
           <Ellipse cx={180} cy={158} rx={16} ry={10} fill={c.blush} opacity={0.85} />
         </Layer>
 
@@ -446,7 +450,7 @@ export function DeboFace({ size = 120, mood: forced, interactive, label, still }
           <Path d="M110 163H130" fill="none" stroke={c.ink} strokeWidth={5} strokeLinecap="round" />
         </Layer>
         <Layer size={size} style={{ opacity: v.pose.frown }}>
-          <Path d="M108 168Q120 157 132 168" fill="none" stroke={c.ink} strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M110 167Q120 160 130 167" fill="none" stroke={c.ink} strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
         </Layer>
         <Layer size={size} style={{ opacity: v.pose.wave }}>
           <Path d="M106 165Q113 158 120 165T134 165" fill="none" stroke={c.ink} strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
