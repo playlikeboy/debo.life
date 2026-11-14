@@ -1,0 +1,31 @@
+{
+  // debo-os-browser: private Playwright + Chromium container. Not reachable from the
+  // internet: workers.dev is off, there are no routes, and only the debo-os-api Worker
+  // holds a service binding to it. The browser also requires WORKER_TOKEN on every call.
+  //   npx wrangler deploy -c browser/wrangler.jsonc
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "debo-os-browser",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+
+  "containers": [
+    {
+      "class_name": "DeboBrowser",
+      "image": "../../../apps/worker/Dockerfile",
+      "image_build_context": "../../../apps/worker",
+      // Chromium needs memory; upstream caps it at 2 GiB. standard-1 = 1/2 vCPU, 4 GiB.
+      "instance_type": "standard-1",
+      "max_instances": 1
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "BROWSER", "class_name": "DeboBrowser" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DeboBrowser"] }],
+  "observability": { "enabled": true },
+  "vars": { "BROWSER_SLEEP_AFTER": "15m" }
+  // Secret: WORKER_TOKEN (same value as on debo-os-api).
+}

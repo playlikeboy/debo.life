@@ -1,0 +1,136 @@
+# Deploy Debo OS (os/) to Cloudflare Workers + Containers on workers.dev preview URLs.
+# Manual only. Separate from deploy.yml: it never touches the debo-web Worker or debo.life.
+# Deploys three Workers: debo-os-browser (private), debo-os-api, debo-os-app.
+# Secrets used (names only; set in GitHub repo settings > Secrets). See
+# os/infra/cloudflare/README.md for how to create each one.
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID   - already exist (needs Workers + Containers edit)
+#   DEBO_OS_DATABASE_URL                          - Postgres URL for the API (use its own Neon database)
+#   DEBO_OS_ACCESS_KEY                            - sign-in key, 24+ characters
+#   DEBO_OS_TOKEN_ENCRYPTION_KEY                  - 32 random bytes, base64
+#   DEBO_OS_SESSION_SIGNING_KEY                   - 32 random bytes, base64
+#   DEBO_OS_WORKER_TOKEN                          - 32+ characters, shared API <-> browser
+#   CPK_INTELLIGENCE_API_KEY, CPK_TELEMETRY_ID    - CopilotKit Intelligence project
+#   OPENAI_API_KEY                                - model provider key (MODEL defaults to openai/gpt-5)
+name: Deploy OS (preview)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-os
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check required secrets are set
+        env:
+          DEBO_OS_DATABASE_URL: ${{ secrets.DEBO_OS_DATABASE_URL }}
+          DEBO_OS_ACCESS_KEY: ${{ secrets.DEBO_OS_ACCESS_KEY }}
+          DEBO_OS_TOKEN_ENCRYPTION_KEY: ${{ secrets.DEBO_OS_TOKEN_ENCRYPTION_KEY }}
+          DEBO_OS_SESSION_SIGNING_KEY: ${{ secrets.DEBO_OS_SESSION_SIGNING_KEY }}
+          DEBO_OS_WORKER_TOKEN: ${{ secrets.DEBO_OS_WORKER_TOKEN }}
+          CPK_INTELLIGENCE_API_KEY: ${{ secrets.CPK_INTELLIGENCE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          missing=""
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID DEBO_OS_DATABASE_URL DEBO_OS_ACCESS_KEY \
+            DEBO_OS_TOKEN_ENCRYPTION_KEY DEBO_OS_SESSION_SIGNING_KEY DEBO_OS_WORKER_TOKEN \
+            CPK_INTELLIGENCE_API_KEY OPENAI_API_KEY; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then echo "::error::Missing GitHub secrets:$missing"; exit 1; fi
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: os/package.json
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # wrangler builds the container images with Docker (BuildKit).
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Find the workers.dev subdomain
+        id: urls
+        run: |
+          sub=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" \
+            | jq -r '.result.subdomain')
+          if [ -z "$sub" ] || [ "$sub" = "null" ]; then echo "::error::No workers.dev subdomain on this account"; exit 1; fi
+          echo "api=https://debo-os-api.$sub.workers.dev" >> "$GITHUB_OUTPUT"
+          echo "app=https://debo-os-app.$sub.workers.dev" >> "$GITHUB_OUTPUT"
+
+      - name: Install
+        run: |
+          pnpm --dir os install --frozen-lockfile
+          npm --prefix os/infra/cloudflare ci
+
+      - name: Build the web app (API URL is baked in)
+        working-directory: os
+        env:
+          EXPO_PUBLIC_API_URL: ${{ steps.urls.outputs.api }}
+        run: pnpm build:web
+
+      - name: Deploy the browser (private)
+        working-directory: os/infra/cloudflare
+        env:
+          WORKER_TOKEN: ${{ secrets.DEBO_OS_WORKER_TOKEN }}
+        run: |
+          jq -n '{WORKER_TOKEN: env.WORKER_TOKEN}' > "$RUNNER_TEMP/browser-secrets.json"
+          npx wrangler deploy -c browser/wrangler.jsonc --secrets-file "$RUNNER_TEMP/browser-secrets.json"
+
+      - name: Deploy the API
+        working-directory: os/infra/cloudflare
+        env:
+          DATABASE_URL: ${{ secrets.DEBO_OS_DATABASE_URL }}
+          OPENFUSE_ACCESS_KEY: ${{ secrets.DEBO_OS_ACCESS_KEY }}
+          TOKEN_ENCRYPTION_KEY: ${{ secrets.DEBO_OS_TOKEN_ENCRYPTION_KEY }}
+          SESSION_SIGNING_KEY: ${{ secrets.DEBO_OS_SESSION_SIGNING_KEY }}
+          WORKER_TOKEN: ${{ secrets.DEBO_OS_WORKER_TOKEN }}
+          CPK_INTELLIGENCE_API_KEY: ${{ secrets.CPK_INTELLIGENCE_API_KEY }}
+          CPK_TELEMETRY_ID: ${{ secrets.CPK_TELEMETRY_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          jq -n 'env | {DATABASE_URL, OPENFUSE_ACCESS_KEY, TOKEN_ENCRYPTION_KEY, SESSION_SIGNING_KEY,
+                  WORKER_TOKEN, CPK_INTELLIGENCE_API_KEY, CPK_TELEMETRY_ID, OPENAI_API_KEY}
+                 | with_entries(select(.value != null and .value != ""))' \
+            > "$RUNNER_TEMP/api-secrets.json"
+          npx wrangler deploy -c api/wrangler.jsonc \
+            --secrets-file "$RUNNER_TEMP/api-secrets.json" \
+            --var "PUBLIC_API_URL:${{ steps.urls.outputs.api }}" \
+            --var "ALLOWED_ORIGINS:${{ steps.urls.outputs.app }}"
+
+      - name: Deploy the app
+        working-directory: os/infra/cloudflare
+        run: npx wrangler deploy -c app/wrangler.jsonc
+
+      - name: Smoke test
+        run: |
+          api="${{ steps.urls.outputs.api }}"
+          app="${{ steps.urls.outputs.app }}"
+          # A new container can take several minutes to provision after the first deploy.
+          ok=""
+          for i in $(seq 1 40); do
+            body=$(curl -s --max-time 30 "$api/api/health" || true)
+            if echo "$body" | jq -e '.ok == true' >/dev/null 2>&1; then ok=1; break; fi
+            echo "attempt $i: not ready yet"; sleep 15
+          done
+          [ -n "$ok" ] || { echo "::error::$api/api/health never returned ok"; exit 1; }
+          echo "API health: $body"
+          echo "$body" | jq -e '.browserConfigured == true' >/dev/null || { echo "::error::browser not configured"; exit 1; }
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$app/")" = "200"
+          # Single-page-app fallback: a deep link must serve the app shell.
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$app/some/deep/link")" = "200"
+          echo "Preview is up: app $app, api $api"

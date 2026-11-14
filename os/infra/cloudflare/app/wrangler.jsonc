@@ -1,0 +1,17 @@
+{
+  // debo-os-app: the Expo web export as static assets, with single-page-app fallback.
+  // Build first (EXPO_PUBLIC_API_URL is baked in at build time):
+  //   EXPO_PUBLIC_API_URL=https://debo-os-api.<account>.workers.dev pnpm build:web   (in os/)
+  //   npx wrangler deploy -c app/wrangler.jsonc
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "debo-os-app",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  // Later switch to app.debo.life:
+  // "routes": [{ "pattern": "app.debo.life", "custom_domain": true }],
+  "assets": {
+    "directory": "../../../apps/mobile/dist/web",
+    "not_found_handling": "single-page-application"
+  }
+}
