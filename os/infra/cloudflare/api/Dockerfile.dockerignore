@@ -1,8 +1,0 @@
-**/node_modules
-**/dist
-**/.expo
-.env
-.env.*
-infra/cloudflare/node_modules
-.openfuse
-.openmuse

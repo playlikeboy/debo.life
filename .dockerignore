@@ -1,0 +1,17 @@
+# Docker builds that use the repo root as context (os/infra/cloudflare/api/Dockerfile).
+# Send only what the API image needs: os/ (minus build output) and packages/.
+*
+!os
+!packages
+**/node_modules
+**/dist
+**/.expo
+**/.dry
+**/.env
+**/.env.*
+os/apps/mobile/assets
+os/assets
+os/docs
+os/tests
+os/.openfuse
+os/.openmuse
