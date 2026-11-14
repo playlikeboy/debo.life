@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 // The only stylesheets in this app: the three Astryx imports. No custom CSS.
 import "@astryxdesign/core/reset.css";
 import "@astryxdesign/core/astryx.css";
-import "@astryxdesign/theme-butter/theme.css";
+import "@astryxdesign/theme-neutral/theme.css";
 import { Providers } from "./providers";
 
 const TITLE = "Debo: a friendly assistant that remembers your life";
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Debo, a round yellow character, and the words: a friendly assistant that remembers your life",
+        alt: "Debo, a small red tomato, and the words: a friendly assistant that remembers your life",
       },
     ],
   },
@@ -43,8 +43,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fdfbe4" },
-    { media: "(prefers-color-scheme: dark)", color: "#261a13" },
+    { media: "(prefers-color-scheme: light)", color: "#f1f1f1" },
+    { media: "(prefers-color-scheme: dark)", color: "#1b1b1b" },
   ],
 };
 

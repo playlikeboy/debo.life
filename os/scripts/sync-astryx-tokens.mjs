@@ -7,7 +7,7 @@
 //   node os/scripts/sync-astryx-tokens.mjs --check  exit 1 if the file is stale
 //
 // Sources:
-//   - theme-neutral "built" theme: every butter token (colors, type, radii...).
+//   - theme-neutral "built" theme: every neutral token (colors, type, radii...).
 //   - core dist/astryx.css: defaults the theme does not override (spacing,
 //     easing, font weights, border width, focus ring).
 // Astryx is MIT licensed (Meta Platforms, Inc.). See THIRD_PARTY_NOTICES.md.

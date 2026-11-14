@@ -34,7 +34,7 @@ SOFTWARE.
 
 ## Astryx (Meta)
 
-The Debo app in `os/apps/mobile` uses design tokens (colours, spacing, radii, type scale, shadows, motion) from Astryx and its Butter theme, `@astryxdesign/core` and `@astryxdesign/theme-butter` 0.7.16, generated into `os/apps/mobile/src/astryx-tokens.ts` by `os/scripts/sync-astryx-tokens.mjs`. Source: https://github.com/meta/astryx. Used under the MIT licence below. Astryx's React components are not used in the app; the landing page uses them.
+The Debo app in `os/apps/mobile` uses design tokens (colours, spacing, radii, type scale, shadows, motion) from Astryx and its default Neutral theme, `@astryxdesign/core` and `@astryxdesign/theme-neutral` 0.7.16, generated into `os/apps/mobile/src/astryx-tokens.ts` by `os/scripts/sync-astryx-tokens.mjs`. Source: https://github.com/meta/astryx. Used under the MIT licence below. Astryx's React components are not used in the app; the landing page uses them.
 
 ```
 MIT License

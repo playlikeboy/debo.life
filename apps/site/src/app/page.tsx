@@ -10,7 +10,7 @@ import { Voice } from "../components/voice";
 
 export default function Home() {
   return (
-    // The muted Section paints the page's soft butter-coloured ground.
+    // The muted Section paints the page's soft light-grey ground.
     <Section variant="muted" padding={0} minHeight="100vh">
       <Layout
         height="auto"
