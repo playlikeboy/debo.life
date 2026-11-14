@@ -32,11 +32,12 @@ import { AgentService } from "./engine/service.ts";
 import { AppError } from "./errors.ts";
 import { Files } from "./files.ts";
 import { GoogleAuth } from "./google-auth.ts";
+import { PersonaStore, personaRoutes } from "./persona.ts";
 import { rateLimit } from "./rate-limit.ts";
 import { DatabaseAgentRunner, threadOwner } from "./thread-runner.ts";
 import { assertThreadId, ThreadStore } from "./threads.ts";
-import { EngineVoiceBrain, type VoiceBrain } from "./voice/brain.ts";
-import { JournalVoiceBrain } from "./voice/journal-brain.ts";
+import type { VoiceBrain } from "./voice/brain.ts";
+import { EngineVoiceBrain } from "./voice/engine-brain.ts";
 import { voiceAgentRoutes, voiceTokenRoutes } from "./voice/routes.ts";
 import { WorkspaceService } from "./workspace.ts";
 
@@ -83,7 +84,8 @@ export async function createApp(
   agent.debo = debo;
   agent.connectors = connectors;
   const threads = new ThreadStore(db);
-  const runtime = makeRuntime(config, agent, auth, new DatabaseAgentRunner(threads));
+  const runner = new DatabaseAgentRunner(threads);
+  const runtime = makeRuntime(config, agent, auth, runner);
   const app = new Hono<{ Variables: { owner: string } }>();
   const origins = new Set([...config.allowedOrigins, new URL(config.publicUrl).origin]);
   app.use("*", async (c, next) => {
@@ -177,11 +179,9 @@ export async function createApp(
     }),
   );
   // The voice agent has no owner session; it proves itself with VOICE_AGENT_SECRET.
-  // Voice answers from the person's journal when Debo's brain is set up, so
-  // spoken answers carry the same sources as chat. Otherwise the chat engine answers.
-  const voiceBrain =
-    options.voiceBrain ??
-    (debo.status().ask ? new JournalVoiceBrain(debo) : new EngineVoiceBrain(config, agent));
+  // Voice runs through the same agent, tools and saved conversations as chat, so
+  // she can do everything chat can. Journal answers still carry source chips.
+  const voiceBrain = options.voiceBrain ?? new EngineVoiceBrain(config, agent, runner, threads);
   app.route("/api/voice", voiceAgentRoutes(voiceBrain, options.voiceEnv));
   // Sample mode only: the in-memory stand-in for the recordings bucket. Its links carry their own one-time token.
   if (debo.devStore) app.route("/api/dev-r2", debo.devStore);
@@ -220,6 +220,7 @@ export async function createApp(
     return c.json(snapshot);
   });
   app.route("/api/voice", voiceTokenRoutes(options.voiceEnv));
+  app.route("/api/persona", personaRoutes(new PersonaStore(db)));
   app.route("/api/account", accountRoutes(db, files, debo, connectors));
   app.route("/api/connectors", connectorRoutes(connectors));
   app.route("/api/agent", agentRoutes(agent));
