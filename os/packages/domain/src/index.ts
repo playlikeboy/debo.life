@@ -139,6 +139,22 @@ export const proposalSchema = z.discriminatedUnion("kind", [
     kind: z.literal("journal.add"),
     data: z.object({ text: z.string().trim().min(1).max(20000) }),
   }),
+  // One change in an app the person connected through Debo's connectors (Slack, Notion...).
+  // The server fills `headline` and `lines` from the exact arguments, so the review shows
+  // what will happen, and the arguments are part of the proposal hash.
+  z.object({
+    kind: z.literal("connector.call"),
+    data: z.object({
+      toolkit: z.string().min(1).max(64),
+      toolkitName: z.string().min(1).max(100),
+      tool: z.string().min(1).max(200),
+      risk: z.enum(["write", "destructive"]),
+      accountId: z.string().min(1).max(200),
+      arguments: z.record(z.string(), z.unknown()),
+      headline: z.string().min(1).max(300),
+      lines: z.array(z.object({ label: z.string().max(100), value: z.string().max(4100) })).max(40),
+    }),
+  }),
   z.object({ kind: z.literal("calendar.create"), data: eventDraftSchema }),
   z.object({
     kind: z.literal("calendar.update"),

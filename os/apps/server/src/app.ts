@@ -18,6 +18,12 @@ import { createAuth } from "./auth.ts";
 import { BrowserService } from "./browser.ts";
 import { ComputerService, type DockerRunner, resolveComputerDeployment } from "./computer.ts";
 import { computerRoutes } from "./computer-routes.ts";
+import {
+  type ConnectorService,
+  connectorCallbackRoute,
+  connectorRoutes,
+  createConnectors,
+} from "./connectors/index.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { createDebo, type DeboService, deboRoutes } from "./debo/index.ts";
@@ -46,6 +52,8 @@ export async function createApp(
     voiceEnv?: () => Record<string, string | undefined>;
     /** The personal journal. Tests pass a fake one. */
     debo?: DeboService;
+    /** Connected apps (Composio). Tests pass one built on a fake backend. */
+    connectors?: ConnectorService;
   } = {},
 ) {
   await resolveComputerDeployment(config);
@@ -54,11 +62,17 @@ export async function createApp(
     google = new GoogleAuth(db, config),
     workspace = new WorkspaceService(db, config, files, google);
   const debo = options.debo ?? createDebo(config);
+  const made = options.connectors
+    ? { service: options.connectors, backend: null }
+    : createConnectors(config, { googleConnected: (owner) => workspace.connected(owner) });
+  const connectors = made.service;
   const actions = new ActionService(db, {
     execute: (owner, input, connectionId, targetVersion) =>
       input.kind === "journal.add"
         ? debo.executeProposal(owner, input.data.text)
-        : workspace.execute(owner, input, connectionId, targetVersion),
+        : input.kind === "connector.call"
+          ? connectors.executeApproved(owner, input.data)
+          : workspace.execute(owner, input, connectionId, targetVersion),
     prepare: (owner, input, connectionId) => workspace.prepare(owner, input, connectionId),
     connected: (owner) => workspace.connected(owner),
     connection: (owner) => workspace.connection(owner),
@@ -67,6 +81,7 @@ export async function createApp(
   const computer = new ComputerService(db, config, options.docker);
   const agent = new AgentService(db, config, workspace, files, actions, browser, computer);
   agent.debo = debo;
+  agent.connectors = connectors;
   const threads = new ThreadStore(db);
   const runtime = makeRuntime(config, agent, auth, new DatabaseAgentRunner(threads));
   const app = new Hono<{ Variables: { owner: string } }>();
@@ -152,6 +167,14 @@ export async function createApp(
       "<h1>Google is connected</h1><p>Return to Debo and refresh your workspace.</p>",
     );
   });
+  // Where the connector provider sends people after they sign in to an app. Public, fixed words.
+  app.route(
+    "/api/connectors/callback",
+    connectorCallbackRoute({
+      appUrl: [...origins].find((origin) => origin.startsWith("https://")) ?? [...origins][0],
+      sampleComplete: made.backend?.complete?.bind(made.backend),
+    }),
+  );
   // The voice agent has no owner session; it proves itself with VOICE_AGENT_SECRET.
   // Voice answers from the person's journal when Debo's brain is set up, so
   // spoken answers carry the same sources as chat. Otherwise the chat engine answers.
@@ -194,7 +217,8 @@ export async function createApp(
     return c.json(snapshot);
   });
   app.route("/api/voice", voiceTokenRoutes(options.voiceEnv));
-  app.route("/api/account", accountRoutes(db, files, debo));
+  app.route("/api/account", accountRoutes(db, files, debo, connectors));
+  app.route("/api/connectors", connectorRoutes(connectors));
   app.route("/api/agent", agentRoutes(agent));
   app.route("/api/debo", deboRoutes(debo));
   app.route("/api/computer", computerRoutes(computer, files));
@@ -395,5 +419,5 @@ export async function createApp(
   app.get("/", (c) =>
     c.json({ name: "Debo", app: "http://localhost:8081", health: "/api/health" }),
   );
-  return { app, auth, files, actions, workspace, agent, computer, debo };
+  return { app, auth, files, actions, workspace, agent, computer, debo, connectors };
 }
