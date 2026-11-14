@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The investor pitch site: Next.js on Cloudflare Workers through OpenNext.
+  // Served at pitch.debo.life. Not indexed by search engines.
+  "name": "debo-pitch",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "routes": [{ "pattern": "pitch.debo.life", "custom_domain": true }],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference binding the OpenNext adapter uses; name must match the worker.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "debo-pitch"
+    }
+  ]
+}
