@@ -40,7 +40,7 @@ export function ComputerEntry() {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Agent computer — ${status}`}
+      accessibilityLabel={`Debo's computer — ${status}`}
       onPress={() => open({ type: "computer" })}
       style={[
         s.row,
@@ -187,8 +187,8 @@ export function ComputerSheet() {
   }
   return (
     <Sheet
-      title="Agent computer"
-      subtitle="Your agent works here. Step in whenever you need."
+      title="Debo's computer"
+      subtitle="Debo works here. Step in whenever you like."
       onClose={close}
     >
       <View style={{ gap: 20 }}>
@@ -204,8 +204,8 @@ export function ComputerSheet() {
               <Text style={s.heading}>{available ? "Browser connected" : "Browser offline"}</Text>
               <Text style={s.muted}>
                 {available
-                  ? "Your agent’s browser and documents, in one place."
-                  : "Start the browser worker to connect this computer."}
+                  ? "Debo's browser and documents, in one place."
+                  : "This computer is not turned on here yet. Whoever runs this Debo can turn it on."}
               </Text>
             </View>
           </View>
@@ -255,7 +255,7 @@ export function ComputerSheet() {
               ))}
             {!workspace.browsers.length && (
               <Text style={s.muted}>
-                Open a page here or ask your agent to research something. Its browsing sessions will
+                Open a page here or ask Debo to research something. Its browsing sessions will
                 appear here.
               </Text>
             )}

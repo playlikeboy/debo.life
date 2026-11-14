@@ -306,7 +306,7 @@ export function LinuxWorkspace({
               <Empty
                 icon={Terminal}
                 title="Ready for your first command"
-                detail="Run scripts, work with files, or ask your agent to create something here."
+                detail="Run scripts, work with files, or ask Debo to create something here."
               />
             ) : (
               [...snapshot.commands]
@@ -346,7 +346,7 @@ function ComputerDesktop({ running }: { running: boolean }) {
     <View style={{ gap: 12 }}>
       <DesktopStream running />
       <Text style={s.small}>
-        You and your agent share this desktop. Stopping the computer closes its apps; files in
+        You and Debo share this desktop. Stopping the computer closes its apps; files in
         /workspace are kept. Opening the desktop keeps the computer awake for 30 minutes; keep this
         tab open or come back to the app to extend it. The link controls the desktop, so do not
         share it.
@@ -746,7 +746,7 @@ function ComputerFiles({ running, active }: { running: boolean; active: boolean 
               <Empty
                 icon={Folder}
                 title="No files yet"
-                detail="Add a file here, or ask your agent to make one in its workspace."
+                detail="Add a file here, or ask Debo to make one in its workspace."
               />
             )}
         </>
