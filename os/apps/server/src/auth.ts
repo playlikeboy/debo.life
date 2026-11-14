@@ -76,9 +76,13 @@ export class Auth {
 }
 export async function createAuth(db: Store, config: Config) {
   await mkdir(config.dataDir, { recursive: true, mode: 0o700 });
-  const key = await readOrCreate(join(config.dataDir, "session-signing-key"), () =>
-    randomBytes(32).toString("base64"),
-  );
+  // Hosts without a persistent disk (Cloudflare Containers) set SESSION_SIGNING_KEY,
+  // otherwise every restart would mint a new key and sign everyone out.
+  const key =
+    process.env.SESSION_SIGNING_KEY?.trim() ||
+    (await readOrCreate(join(config.dataDir, "session-signing-key"), () =>
+      randomBytes(32).toString("base64"),
+    ));
   return new Auth(db, config, key);
 }
 /** Reads a private file, or creates it without replacing another process's value. */
