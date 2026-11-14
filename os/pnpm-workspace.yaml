@@ -1,11 +1,17 @@
 packages:
   - apps/mobile
   - apps/worker
+  # Debo's personal brain, shared with the web app in ../apps/web.
+  - ../packages/brain
+  - ../packages/db
+  - ../packages/llm
+  - ../packages/memory
 allowBuilds:
   esbuild: true
   '@biomejs/biome': true
   '@scarf/scarf': false
   '@google/genai': false
+  better-sqlite3: false
   protobufjs: false
   '@astryxdesign/core': false
 minimumReleaseAgeExclude:
