@@ -1,4 +1,4 @@
-import { BookOpen, FileText, Search } from "lucide-react-native";
+import { BookOpen, FileText, Mic, Search, Video } from "lucide-react-native";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { entryFocus, readDeboTool, type SourceChip } from "./debo-data";
 import { Button, Card, colors, ErrorNotice, fontSize, radius, s } from "./ui";
@@ -38,7 +38,13 @@ export function SourceChips({ sources }: { sources: SourceChip[] }) {
               maxWidth: "100%",
             })}
           >
-            <BookOpen size={14} color={colors.blueText} />
+            {source.label.startsWith("Voice note") ? (
+              <Mic size={14} color={colors.blueText} />
+            ) : source.label.startsWith("Video") ? (
+              <Video size={14} color={colors.blueText} />
+            ) : (
+              <BookOpen size={14} color={colors.blueText} />
+            )}
             <Text style={[s.text, { fontSize: fontSize.supporting, color: colors.blueText, flexShrink: 1 }]}>
               {source.label}
             </Text>

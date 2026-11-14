@@ -1,17 +1,20 @@
-import { BookOpen, Check, Pencil, Search, Trash2 } from "lucide-react-native";
+import { BookOpen, Mic, Pencil, RotateCw, Search, Trash2, Video } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { deboApi, errorText } from "./debo-api";
+import { Composer } from "./debo-composer";
 import {
   type DeboStatus,
   type EntryView,
   entryDay,
   entryFocus,
-  loadDraft,
+  formatDuration,
+  formatSize,
+  kindName,
   preview,
-  saveDraft,
 } from "./debo-data";
-import { Button, Card, colors, Empty, ErrorNotice, Field, s } from "./ui";
+import { RecordingPlayer } from "./debo-player";
+import { Button, Card, colors, Empty, ErrorNotice, Field, s, spacing } from "./ui";
 import { useWorkspace } from "./workspace";
 
 /** Shown when there is no Debo database, a plain "not set up" instead of a failure. */
@@ -30,14 +33,12 @@ export function NotSetUp({ status, what }: { status?: DeboStatus; what: string }
 
 /** Write, read, find, edit and delete journal entries. */
 export function JournalScreen() {
-  const { api, notify } = useWorkspace();
+  const { api } = useWorkspace();
   const debo = useMemo(() => deboApi(api), [api]);
   const [status, setStatus] = useState<DeboStatus>();
   const [entries, setEntries] = useState<EntryView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [draft, setDraft] = useState(() => loadDraft());
-  const [saving, setSaving] = useState(false);
   const [find, setFind] = useState("");
   const [finding, setFinding] = useState("");
   const [focus, setFocus] = useState(entryFocus.get());
@@ -45,14 +46,14 @@ export function JournalScreen() {
   useEffect(() => entryFocus.subscribe(setFocus), []);
 
   const load = useCallback(
-    async (query?: string) => {
-      setError("");
+    async (query?: string, quiet = false) => {
+      if (!quiet) setError("");
       try {
         const next = await debo.status();
         setStatus(next);
         if (next.configured) setEntries(await debo.entries(query));
       } catch (e) {
-        setError(errorText(e));
+        if (!quiet) setError(errorText(e));
       } finally {
         setLoading(false);
       }
@@ -63,25 +64,13 @@ export function JournalScreen() {
     void load(finding);
   }, [load, finding]);
 
-  function changeDraft(text: string) {
-    setDraft(text);
-    saveDraft(text);
-  }
-  async function save() {
-    setSaving(true);
-    setError("");
-    try {
-      await debo.addEntry(draft);
-      changeDraft("");
-      notify("Entry saved.");
-      await load(finding);
-    } catch (e) {
-      // The draft stays, so nothing the person wrote is lost.
-      setError(errorText(e));
-    } finally {
-      setSaving(false);
-    }
-  }
+  // While a recording is being written out, look again every few seconds.
+  const writingOut = entries.some((e) => e.media?.transcript.status === "waiting" || e.media?.transcript.status === "working");
+  useEffect(() => {
+    if (!writingOut) return;
+    const timer = setInterval(() => void load(finding, true), 4000);
+    return () => clearInterval(timer);
+  }, [writingOut, load, finding]);
 
   if (loading)
     return <ActivityIndicator accessibilityLabel="Loading your journal" color={colors.blueDark} />;
@@ -93,26 +82,11 @@ export function JournalScreen() {
   return (
     <View style={{ gap: 22 }}>
       <Text style={s.muted}>
-        Write about your day, the people in it and your plans. Only you can read your entries. Debo
-        uses them to answer your questions, and shows which entry each answer came from.
+        Write, speak or record. Only you can read your entries. Debo uses them to answer your questions, and shows which
+        entry each answer came from.
       </Text>
       <ErrorNotice error={error} />
-      <Card style={{ gap: 4 }}>
-        <Field
-          label="Write an entry"
-          value={draft}
-          onChangeText={changeDraft}
-          multiline
-          maxLength={20000}
-          placeholder="What happened today? Who did you see?"
-        />
-        <Text style={[s.small, { marginBottom: 12 }]}>
-          {draft ? "Your draft is kept on this device until you save it." : "Nothing is saved until you press the button."}
-        </Text>
-        <Button primary icon={Check} busy={saving} disabled={!draft.trim()} onPress={() => void save()}>
-          Save entry
-        </Button>
-      </Card>
+      <Composer status={status as DeboStatus} onSaved={() => load(finding)} />
 
       <View style={{ gap: 10 }} accessibilityRole="search">
         <Field
@@ -161,7 +135,7 @@ export function JournalScreen() {
         <Empty
           icon={BookOpen}
           title="Nothing here yet"
-          detail="Start small: write one line about today, like who you saw or what you ate. Then you can ask Debo about it."
+          detail="Start small: write one line about today, like who you saw or what you ate, or record a short voice note. Then you can ask Debo about it."
         />
       ) : (
         <View accessibilityRole="list" style={{ gap: 14 }}>
@@ -205,6 +179,9 @@ function EntryCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const day = entryDay(entry.happenedAt);
+  const media = entry.media;
+  const status = media?.transcript.status;
+  const recording = entry.kind !== "journal";
 
   async function run(work: () => Promise<void>, done: string) {
     setBusy(true);
@@ -228,10 +205,60 @@ function EntryCard({
         ...(highlighted ? { borderWidth: 2, borderColor: colors.blueDark } : {}),
       }}
     >
-      <Text style={[s.small, { fontWeight: "600", color: colors.text }]}>{day}</Text>
+      <View style={[s.row, { gap: spacing[2], flexWrap: "wrap" }]}>
+        {recording && (entry.kind === "video" ? <Video size={16} color={colors.blueDark} /> : <Mic size={16} color={colors.blueDark} />)}
+        <Text style={[s.small, { fontWeight: "600", color: colors.text }]}>
+          {recording ? `${kindName(entry.kind)}, ${day}` : day}
+        </Text>
+        {media && (
+          <Text style={s.small}>
+            {media.durationMs ? `${formatDuration(media.durationMs)} · ` : ""}
+            {formatSize(media.sizeBytes)}
+          </Text>
+        )}
+      </View>
+
+      {media && (
+        <RecordingPlayer
+          kind={media.kind}
+          label={`${kindName(entry.kind)} from ${day}`}
+          load={() => debo.playbackUrl(entry.id)}
+        />
+      )}
+
+      {media && (status === "waiting" || status === "working") && (
+        <View style={[s.row, { gap: spacing[2] }]} accessibilityLiveRegion="polite">
+          <ActivityIndicator size="small" color={colors.blueDark} />
+          <Text style={s.muted}>Writing out what was said. This can take a minute. You can leave this page.</Text>
+        </View>
+      )}
+      {media && status === "failed" && (
+        <View accessibilityRole="alert" style={{ gap: spacing[2] }}>
+          <Text style={s.text}>{media.transcript.message ?? "I couldn't write out this recording yet."}</Text>
+          <Button
+            small
+            icon={RotateCw}
+            busy={busy}
+            style={{ alignSelf: "flex-start" }}
+            onPress={() => void run(() => debo.retryTranscript(entry.id), "Trying again.")}
+          >
+            Try again
+          </Button>
+        </View>
+      )}
+      {media && status === "ready" && !entry.text.trim() && !editing && (
+        <Text style={s.muted}>I didn't hear any words in this recording.</Text>
+      )}
+
       {editing ? (
         <>
-          <Field label="Change this entry" value={text} onChangeText={setText} multiline maxLength={20000} />
+          <Field
+            label={recording ? "Fix the words" : "Change this entry"}
+            value={text}
+            onChangeText={setText}
+            multiline
+            maxLength={20000}
+          />
           <View style={[s.row, { gap: 10, flexWrap: "wrap" }]}>
             <Button
               primary
@@ -258,36 +285,40 @@ function EntryCard({
           </View>
         </>
       ) : (
-        <Text
-          selectable
-          numberOfLines={open ? undefined : 3}
-          accessibilityLabel={`Entry from ${day}. ${open ? entry.text : preview(entry.text)}`}
-          style={s.text}
-        >
-          {open ? entry.text : preview(entry.text, 220)}
-        </Text>
+        !!entry.text.trim() && (
+          <Text
+            selectable
+            numberOfLines={open ? undefined : 3}
+            accessibilityLabel={`${recording ? `${kindName(entry.kind)} words` : "Entry"} from ${day}. ${open ? entry.text : preview(entry.text)}`}
+            style={s.text}
+          >
+            {open ? entry.text : preview(entry.text, 220)}
+          </Text>
+        )
       )}
       <ErrorNotice error={error} />
       {!editing && !confirming && (
         <View style={[s.row, { gap: 10, flexWrap: "wrap" }]}>
           {entry.text.length > 220 && (
             <Button small onPress={() => setOpen(!open)}>
-              {open ? "Show less" : "Read all"}
+              {open ? "Show less" : recording ? "Read all the words" : "Read all"}
             </Button>
           )}
-          <Button
-            small
-            icon={Pencil}
-            onPress={() => {
-              setText(entry.text);
-              setOpen(true);
-              setEditing(true);
-            }}
-          >
-            Change entry
-          </Button>
+          {(!recording || status === "ready") && (
+            <Button
+              small
+              icon={Pencil}
+              onPress={() => {
+                setText(entry.text);
+                setOpen(true);
+                setEditing(true);
+              }}
+            >
+              {recording ? "Fix the words" : "Change entry"}
+            </Button>
+          )}
           <Button small danger icon={Trash2} onPress={() => setConfirming(true)}>
-            Delete entry
+            {recording ? "Delete recording" : "Delete entry"}
           </Button>
           {onClose && (
             <Button small onPress={onClose}>
@@ -299,17 +330,18 @@ function EntryCard({
       {confirming && (
         <View accessibilityRole="alert" style={{ gap: 10 }}>
           <Text style={s.text}>
-            Delete this entry for good? Debo will also forget what it learned from it. This can&apos;t
-            be undone.
+            {recording
+              ? "Delete this recording and its words for good? The file is removed from storage and Debo forgets what it learned from it. This can't be undone."
+              : "Delete this entry for good? Debo will also forget what it learned from it. This can't be undone."}
           </Text>
           <View style={[s.row, { gap: 10, flexWrap: "wrap" }]}>
             <Button
               danger
               busy={busy}
               icon={Trash2}
-              onPress={() => void run(() => debo.deleteEntry(entry.id), "Entry deleted.")}
+              onPress={() => void run(() => debo.deleteEntry(entry.id), recording ? "Recording deleted." : "Entry deleted.")}
             >
-              Yes, delete this entry
+              {recording ? "Yes, delete this recording" : "Yes, delete this entry"}
             </Button>
             <Button disabled={busy} onPress={() => setConfirming(false)}>
               Keep it

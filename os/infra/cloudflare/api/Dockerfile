@@ -25,7 +25,11 @@ FROM node:22.22.0-bookworm-slim
 WORKDIR /app
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=8787 DATA_DIR=/app/data
 COPY --from=build --chown=node:node /repo/os/dist/server.mjs ./server.mjs
-RUN mkdir -p /app/data && chown node:node /app/data
+# ffmpeg turns a voice note or video into the small sound file the speech service takes
+# (the picture is dropped). It only ever reads a temporary copy, deleted when the work ends.
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
+  && rm -rf /var/lib/apt/lists/* \
+  && mkdir -p /app/data && chown node:node /app/data
 USER node
 EXPOSE 8787
 CMD ["node", "server.mjs"]

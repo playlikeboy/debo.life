@@ -54,6 +54,9 @@
     "TASK_WORKER_ENABLED": "true",
     "TRUST_PROXY": "true",
     "API_SLEEP_AFTER": "10m",
+    // The private R2 bucket for voice notes and videos. It must be created first: see os/docs/JOURNAL-MEDIA.md.
+    // The API reaches it over R2's S3 address with the R2 secrets, so no wrangler binding is needed.
+    "R2_BUCKET": "debo-journal-media",
     // Overridden at deploy time with --var (the workflow does this).
     "PUBLIC_API_URL": "https://debo-os-api.workers.dev",
     "ALLOWED_ORIGINS": "https://debo-os-app.workers.dev"

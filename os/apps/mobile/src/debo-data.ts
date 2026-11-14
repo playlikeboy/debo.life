@@ -6,11 +6,30 @@ import { z } from "zod";
 export const sourceChip = z.object({ id: z.string(), label: z.string() });
 export type SourceChip = z.infer<typeof sourceChip>;
 
+/** The recording behind a voice note or video, as the server describes it. */
+export const mediaView = z.object({
+  id: z.string(),
+  kind: z.enum(["voice", "video"]),
+  mimeType: z.string(),
+  sizeBytes: z.number(),
+  durationMs: z.number().nullable(),
+  recordedAt: z.string().nullable(),
+  transcript: z.object({
+    status: z.enum(["waiting", "working", "ready", "failed"]),
+    language: z.string().nullable(),
+    message: z.string().optional(),
+  }),
+});
+export type MediaView = z.infer<typeof mediaView>;
+
 export const entryView = z.object({
   id: z.string(),
+  // Older servers do not send these two: such an entry is a written one.
+  kind: z.enum(["journal", "voice", "video"]).default("journal"),
   title: z.string(),
   text: z.string(),
   happenedAt: z.string(),
+  media: mediaView.nullish().transform((m) => m ?? null),
 });
 export type EntryView = z.infer<typeof entryView>;
 
@@ -38,6 +57,18 @@ export const deboStatus = z.object({
   journal: z.boolean(),
   ask: z.boolean(),
   memories: z.boolean(),
+  /** Voice notes and videos can be added. */
+  recordings: z.boolean().default(false),
+  /** Speaking into the text works. */
+  speaking: z.boolean().default(false),
+  limits: z
+    .object({
+      maxBytes: z.number(),
+      maxMinutes: z.number(),
+      maxMinutesPerDay: z.number(),
+      maxRecordingsPerDay: z.number(),
+    })
+    .default({ maxBytes: 200 * 1024 * 1024, maxMinutes: 60, maxMinutesPerDay: 240, maxRecordingsPerDay: 40 }),
 });
 export type DeboStatus = z.infer<typeof deboStatus>;
 
@@ -216,3 +247,62 @@ export const entryFocus = {
     };
   },
 };
+
+// ---- Words for the composer and the recordings ----
+
+/** "1:05" or "1:02:03". */
+export function formatDuration(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = String(total % 60).padStart(2, "0");
+  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
+}
+
+/** "3.2 MB". */
+export function formatSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0)} MB`;
+}
+
+/** Whole words, for the quiet count under the text. Works for Hindi and other scripts too. */
+export function countWords(text: string): number {
+  return text.trim() ? text.trim().split(/\s+/).length : 0;
+}
+
+/** "1 word" or "12 words". */
+export function wordCountLabel(text: string): string {
+  const n = countWords(text);
+  return n === 1 ? "1 word" : `${n} words`;
+}
+
+/** Today as yyyy-mm-dd on this device, for the date box. */
+export function todayInput(now = new Date()): string {
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
+/** What to send for the date box: nothing when it is today (the server uses the time it saved), else noon UTC that day. */
+export function happenedAtFor(input: string, now = new Date()): string | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input) || input === todayInput(now)) return undefined;
+  const date = new Date(`${input}T12:00:00.000Z`);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+/** A plain reason a picked file cannot be used, or undefined when it is fine. */
+export function fileProblem(
+  file: { mimeType: string; sizeBytes: number },
+  limits: { maxBytes: number },
+): string | undefined {
+  const type = file.mimeType.split(";")[0]?.trim().toLowerCase() ?? "";
+  if (!type.startsWith("audio/") && !type.startsWith("video/"))
+    return "That is not a voice or video file. Pick a file such as .m4a, .mp3, .wav, .webm or .mp4.";
+  if (file.sizeBytes <= 0) return "That file is empty.";
+  if (file.sizeBytes > limits.maxBytes) return `That file is too big. Keep it under ${Math.round(limits.maxBytes / (1024 * 1024))} MB.`;
+  return undefined;
+}
+
+/** The date a day button shows for a recording, e.g. "Voice note" or "Video". */
+export function kindName(kind: "journal" | "voice" | "video"): string {
+  return kind === "voice" ? "Voice note" : kind === "video" ? "Video" : "Entry";
+}

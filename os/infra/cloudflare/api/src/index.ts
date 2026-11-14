@@ -39,6 +39,12 @@ const PASSED = [
   "MEM0_API_KEY",
   // Connecting apps (Composio). Optional: without it the Apps screen says it is not set up.
   "COMPOSIO_API_KEY",
+  // Voice notes and videos: the private bucket (R2_BUCKET is a plain setting) and the speech service
+  "R2_ACCOUNT_ID",
+  "R2_ACCESS_KEY_ID",
+  "R2_SECRET_ACCESS_KEY",
+  "R2_BUCKET",
+  "CF_AI_API_TOKEN",
   // Voice
   "LIVEKIT_URL",
   "LIVEKIT_API_KEY",
