@@ -78,16 +78,22 @@ export class DeboApi extends Container<Env> {
     this.envVars = vars;
   }
 
-  // Plain-HTTP interception: the request never leaves Cloudflare and never touches the
-  // public internet. Only this container's outbound traffic can reach the binding.
-  static outboundByHost = {
-    [BROWSER_HOST]: (request: Request, env: Env) => env.BROWSER.fetch(request),
-  };
-
   override onError(error: unknown) {
     console.error("debo-os-api container error", String(error));
   }
 }
+
+// Plain-HTTP interception: the request never leaves Cloudflare and never touches the
+// public internet. Only this container's outbound traffic can reach the binding.
+//
+// This must be an assignment after the class, not a `static` field inside it. The
+// library registers handlers in a setter on its base class, and a static class field
+// defines a new property without calling that setter. The handler was then never
+// registered, the call fell through to the open internet, and the browser showed as
+// offline (HTTP 530 for browser.internal).
+DeboApi.outboundByHost = {
+  [BROWSER_HOST]: (request: Request, env: Env) => env.BROWSER.fetch(request),
+};
 
 const api = (env: Env) => getContainer(env.API, "main");
 
