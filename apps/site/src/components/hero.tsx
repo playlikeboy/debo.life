@@ -40,7 +40,7 @@ export function Hero() {
             <Phone
               src="/shots/chat-light.webp"
               width={780}
-              height={767}
+              height={1688}
               alt="The Debo app. A person asks what they planted on the balcony. Debo answers: basil and mint, with a source chip that reads Journal, 11 November."
               isPriority
             />

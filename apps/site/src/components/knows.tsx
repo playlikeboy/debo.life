@@ -44,7 +44,7 @@ export function Knows() {
           <Phone
             src="/shots/knows-light.webp"
             width={780}
-            height={1067}
+            height={1688}
             alt="The What Debo knows page. A memory reads: You plan to water them every second morning while the weather stays warm. It shows the source chip Journal, 11 November and the buttons Fix this memory and Forget this memory."
           />
         </VStack>

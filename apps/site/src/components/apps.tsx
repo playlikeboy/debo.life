@@ -13,8 +13,8 @@ export function Apps() {
           <Phone
             src="/shots/apps-light.webp"
             width={780}
-            height={1067}
-            alt="The Apps screen in Debo, with Gmail and Google Calendar listed as not connected yet."
+            height={1688}
+            alt="The Apps screen in Debo. A search box sits above a list with Debo's computer under Connected, and Gmail and Google Calendar under Not connected yet, each with a Connect button."
           />
         </VStack>
         <VStack gap={4} hAlign="start">

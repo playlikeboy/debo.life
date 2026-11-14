@@ -23,8 +23,8 @@ export function WriteOrSay() {
           <Phone
             src="/shots/journal-light.webp"
             width={780}
-            height={933}
-            alt="The Debo journal. Entries from 11 November sit in a list, each with the buttons Change entry and Delete entry."
+            height={1688}
+            alt="The Debo journal. A large writing box asks: What happened today? Who did you see? Below it are the day, a Save entry button and a box to find an entry."
           />
           <VStack gap={1} hAlign="center">
             <HStack gap={2} vAlign="center">
@@ -40,8 +40,8 @@ export function WriteOrSay() {
           <Phone
             src="/shots/talk-light.webp"
             width={780}
-            height={833}
-            alt="The Talk to Debo screen. A status line reads: Microphone off, Debo is not listening. A button says Start talking."
+            height={1688}
+            alt="The Talk to Debo screen. The red tomato sits above the words Tap to start and Microphone off. Two buttons: Start talking and Not now."
           />
           <VStack gap={1} hAlign="center">
             <HStack gap={2} vAlign="center">
