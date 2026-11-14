@@ -13,7 +13,14 @@
     "plugins": [
       "expo-document-picker",
       "@config-plugins/react-native-blob-util",
-      "@config-plugins/react-native-pdf"
+      "@config-plugins/react-native-pdf",
+      "@livekit/react-native-expo-plugin",
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "microphonePermission": "Debo uses the microphone only while you are talking to it. It never keeps the recording."
+        }
+      ]
     ]
   }
 }

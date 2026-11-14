@@ -7,6 +7,7 @@ import {
   type LucideIcon,
   Menu,
   MessageCircle,
+  Mic,
   PanelsTopLeft,
   Shapes,
   SquareCheck,
@@ -34,6 +35,7 @@ import {
 import { AgentWorkspaceProvider, useAgentWorkspace } from "./src/agent-workspace";
 import { API_URL, createSession, FuseApi } from "./src/api";
 import { ChatScreen, WorkspaceTools } from "./src/chat";
+import { TalkScreen } from "./src/debo-talk";
 import { ComputerEntry } from "./src/computer";
 import { ComputerDraftProvider } from "./src/computer-drafts";
 import { Details } from "./src/details";
@@ -44,12 +46,14 @@ import { type Detail, useWorkspace, WorkspaceContext } from "./src/workspace";
 
 const nav: { id: Section; label: string; icon: LucideIcon }[] = [
   { id: "chat", label: "Chat", icon: MessageCircle },
+  { id: "talk", label: "Talk", icon: Mic },
   { id: "activity", label: "Activity", icon: PanelsTopLeft },
   { id: "ideas", label: "Ideas", icon: Lightbulb },
   { id: "goals", label: "Goals", icon: SquareCheck },
   { id: "apps", label: "Apps", icon: Shapes },
 ];
 const titles: Partial<Record<Section, { title: string; subtitle: string }>> = {
+  talk: { title: "Talk to Debo", subtitle: "Say it out loud. Debo answers and shows where it came from." },
   activity: { title: "Activity", subtitle: "Plans, progress, decisions and results." },
   ideas: { title: "Ideas", subtitle: "Useful next steps, grounded in your world." },
   goals: {
@@ -273,7 +277,9 @@ function WorkspaceShell({
       : "Here when you need me";
   const title = titles[section] || titles.apps;
   const Screen =
-    section === "mail"
+    section === "talk"
+      ? TalkScreen
+      : section === "mail"
       ? MailScreen
       : section === "calendar"
         ? CalendarScreen
