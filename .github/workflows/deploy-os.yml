@@ -1,4 +1,4 @@
-# Deploy the new Debo app (os/) to Cloudflare Workers + Containers at app.debo.life and api.debo.life.
+# Deploy the new Debo app (os/) to Cloudflare Workers + Containers at my.debo.life and api.debo.life.
 # Runs on a push to main that touches it, or by hand. Separate from deploy.yml: it never touches the debo-web Worker, which still serves debo.life.
 # Deploys three Workers: debo-os-browser (private), debo-os-api, debo-os-app.
 # Secrets used (names only; set in GitHub repo settings > Secrets). See
@@ -74,7 +74,7 @@ jobs:
         id: urls
         run: |
           echo "api=https://api.debo.life" >> "$GITHUB_OUTPUT"
-          echo "app=https://app.debo.life" >> "$GITHUB_OUTPUT"
+          echo "app=https://my.debo.life" >> "$GITHUB_OUTPUT"
 
       - name: Install
         run: |

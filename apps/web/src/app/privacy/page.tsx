@@ -153,7 +153,7 @@ export default function PrivacyPage() {
 
       <Section id="new-app" title="The new Debo app (early version)">
         <p>
-          A new version of Debo is being tried at app.debo.life. You sign in with the same account, and it reads and
+          A new version of Debo is being tried at my.debo.life. You sign in with the same account, and it reads and
           writes the same journal entries and memories described on this page, with the same companies involved.
         </p>
         <List

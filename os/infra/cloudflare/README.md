@@ -1,12 +1,12 @@
 # Debo OS on Cloudflare
 
-> **Where it runs now (14 November 2026).** The new app is served at `https://app.debo.life` and its API at `https://api.debo.life`. The deploy workflow runs on a push to `main` that touches `os/`, `packages/` or the workflow. `https://app.debo.life` is in Neon Auth's trusted domains. `debo.life` itself is still the older web app (`debo-web`). Where the text below says a `workers.dev` address, read these two addresses.
+> **Where it runs now (14 November 2026).** The new app is served at `https://my.debo.life` and its API at `https://api.debo.life`. The deploy workflow runs on a push to `main` that touches `os/`, `packages/` or the workflow. `https://my.debo.life` is in Neon Auth's trusted domains. `debo.life` itself is still the older web app (`debo-web`). Where the text below says a `workers.dev` address, read these two addresses.
 
 
 Three Workers. Nothing here touches `debo-web` or `debo.life`. Nothing is deployed yet.
 
 ```
-browser ──> debo-os-app (static assets, SPA fallback)          app.debo.life later
+browser ──> debo-os-app (static assets, SPA fallback)          my.debo.life later
 browser ──> debo-os-api (Worker) ──> DeboApi container (Hono + task worker) ──> Debo's Neon database
                  ^ cron every 5 min wakes it         │ http://browser.internal (intercepted)
                                                      v
@@ -19,7 +19,7 @@ browser ──> debo-os-api (Worker) ──> DeboApi container (Hono + task work
 | `debo-os-browser` | `browser/wrangler.jsonc`, `../../apps/worker/Dockerfile` | Playwright + Chromium | `standard-1` (1/2 vCPU, 4 GiB) |
 | `debo-os-app` | `app/wrangler.jsonc` | Expo web export from `apps/mobile/dist/web` | assets only |
 
-Preview URLs: `https://debo-os-api.<account>.workers.dev`, `https://debo-os-app.<account>.workers.dev`. There are no custom-domain routes yet; the commented ones for `api.debo.life` and `app.debo.life` are in the configs.
+Preview URLs: `https://debo-os-api.<account>.workers.dev`, `https://debo-os-app.<account>.workers.dev`. There are no custom-domain routes yet; the commented ones for `api.debo.life` and `my.debo.life` are in the configs.
 
 ## How the API image is built
 
@@ -111,7 +111,7 @@ Deploy the browser first: the API config has a service binding to it. The workfl
 
 ## Switching to debo.life later
 
-Uncomment the `routes` in `api/wrangler.jsonc` and `app/wrangler.jsonc`, set `PUBLIC_API_URL=https://api.debo.life` and `ALLOWED_ORIGINS=https://app.debo.life`, rebuild the web app with `EXPO_PUBLIC_API_URL=https://api.debo.life`, add `https://app.debo.life` to Neon Auth's trusted origins, redeploy. Update the Google redirect URI. `debo-web` is not involved.
+Uncomment the `routes` in `api/wrangler.jsonc` and `app/wrangler.jsonc`, set `PUBLIC_API_URL=https://api.debo.life` and `ALLOWED_ORIGINS=https://my.debo.life`, rebuild the web app with `EXPO_PUBLIC_API_URL=https://api.debo.life`, add `https://my.debo.life` to Neon Auth's trusted origins, redeploy. Update the Google redirect URI. `debo-web` is not involved.
 
 ## What is lost without a disk
 

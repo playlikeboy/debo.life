@@ -13,7 +13,7 @@
   "preview_urls": false,
 
   // The API's public address. The deploy workflow passes PUBLIC_API_URL and
-  // ALLOWED_ORIGINS (https://app.debo.life) to match.
+  // ALLOWED_ORIGINS (https://my.debo.life) to match.
   "routes": [{ "pattern": "api.debo.life", "custom_domain": true }],
 
   "containers": [
