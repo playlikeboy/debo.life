@@ -3,16 +3,21 @@
 import { and, asc, cosineDistance, desc, eq, ilike, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import { z } from "zod";
 import { withDb } from "./client";
-import { chunks, sources } from "./schema";
+import { chunks, type SourceKind, sources } from "./schema";
 
 export const NewEntry = z.object({
+  /** When it happened, if the person changed the date. Not in the future by more than a day. */
+  happenedAt: z.coerce
+    .date()
+    .refine((d) => d.getTime() < Date.now() + 86_400_000, "Pick a day that is not in the future.")
+    .optional(),
   text: z.string().trim().min(1, "Write something first.").max(20_000, "That entry is too long. Keep it under 20,000 characters."),
 });
 
 export type Entry = { id: string; title: string; text: string; happenedAt: Date };
 
 /** Short name for source chips: the first line, cut to 60 characters. */
-function titleFrom(text: string) {
+export function titleFrom(text: string) {
   const firstLine = text.split("\n").find((line) => line.trim())?.trim() ?? "Journal entry";
   return firstLine.length > 60 ? `${firstLine.slice(0, 57)}…` : firstLine;
 }
@@ -33,12 +38,12 @@ export function splitIntoChunks(text: string, size = 1200): string[] {
 }
 
 export async function createEntry(connectionString: string, userId: string, input: unknown): Promise<Entry> {
-  const { text } = NewEntry.parse(input);
+  const { text, happenedAt } = NewEntry.parse(input);
   return withDb(connectionString, (db) =>
     db.transaction(async (tx) => {
       const [row] = await tx
         .insert(sources)
-        .values({ userId, kind: "journal", title: titleFrom(text), text })
+        .values({ userId, kind: "journal", title: titleFrom(text), text, ...(happenedAt ? { happenedAt } : {}) })
         .returning({ id: sources.id, title: sources.title, text: sources.text, happenedAt: sources.happenedAt });
       if (!row) throw new Error("The entry was not saved.");
       const pieces = splitIntoChunks(text);
@@ -111,7 +116,14 @@ export async function deleteEntry(connectionString: string, userId: string, sour
   });
 }
 
-export type FoundPiece = { chunkId: string; sourceId: string; title: string; happenedAt: Date; text: string };
+export type FoundPiece = {
+  chunkId: string;
+  sourceId: string;
+  kind: SourceKind;
+  title: string;
+  happenedAt: Date;
+  text: string;
+};
 
 export type SearchOptions = {
   /** The question's embedding. Without it, search is keyword-only. */
@@ -136,6 +148,7 @@ export const DEFAULT_MAX_DISTANCE = 0.6;
 const pieceColumns = {
   chunkId: chunks.id,
   sourceId: chunks.sourceId,
+  kind: sources.kind,
   title: sources.title,
   happenedAt: sources.happenedAt,
   text: chunks.text,
@@ -278,7 +291,7 @@ export async function getSources(connectionString: string, userId: string, ids: 
   if (ids.length === 0) return [];
   return withDb(connectionString, (db) =>
     db
-      .select({ id: sources.id, title: sources.title, happenedAt: sources.happenedAt })
+      .select({ id: sources.id, kind: sources.kind, title: sources.title, happenedAt: sources.happenedAt })
       .from(sources)
       .where(and(eq(sources.userId, userId), inArray(sources.id, ids))),
   );

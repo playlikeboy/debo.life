@@ -4,7 +4,20 @@
 // foreign key to Neon Auth's user table with ON DELETE CASCADE, so deleting
 // an account deletes every row the person owns.
 import { sql } from "drizzle-orm";
-import { customType, index, integer, pgSchema, pgTable, text, timestamp, uuid, vector } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  customType,
+  index,
+  integer,
+  jsonb,
+  pgSchema,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  vector,
+} from "drizzle-orm/pg-core";
 
 /** Size of the vectors from the embedding model (see @debo/llm EMBEDDING_DIMENSIONS). */
 export const EMBEDDING_DIMENSIONS = 1024;
@@ -20,7 +33,10 @@ const tsvector = customType<{ data: string }>({
   },
 });
 
-/** One thing the person gave Debo. Today only journal entries. */
+/** What a source is. A voice or video entry keeps its transcript as the text. */
+export type SourceKind = "journal" | "voice" | "video";
+
+/** One thing the person gave Debo: a journal entry, a voice note or a video. */
 export const sources = pgTable(
   "sources",
   {
@@ -28,7 +44,8 @@ export const sources = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => authUsers.id, { onDelete: "cascade" }),
-    kind: text("kind").$type<"journal">().notNull(),
+    // Plain text column: adding a kind needs no migration.
+    kind: text("kind").$type<SourceKind>().notNull(),
     title: text("title").notNull(),
     text: text("text").notNull(),
     happenedAt: timestamp("happened_at", { withTimezone: true }).notNull().defaultNow(),
@@ -157,5 +174,59 @@ export const messages = pgTable(
   (t) => [
     index("messages_user_idx").on(t.userId),
     index("messages_conversation_created_idx").on(t.conversationId, t.createdAt),
+  ],
+);
+
+/** Where a recording is in the process of being written out. */
+export type TranscriptStatus = "waiting" | "working" | "ready" | "failed";
+
+/** One piece of a transcript, with times in seconds. */
+export type TranscriptSegment = { start: number; end: number; text: string };
+
+/**
+ * The recording behind a voice or video entry. The file itself lives in a
+ * private Cloudflare R2 bucket, never in this database: this row holds where
+ * it is (object_key) and what we know about it. The words are in sources.text
+ * (and in chunks, for search), so answers, memories, export and delete work
+ * the same as for a written entry. Deleting the source deletes this row; the
+ * server deletes the R2 object in the same request.
+ */
+export const media = pgTable(
+  "media",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    // Empty while the upload is still going; set once the entry exists.
+    sourceId: uuid("source_id").references(() => sources.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<"voice" | "video">().notNull(),
+    // "<user id>/<random id>.<ext>" in the bucket.
+    objectKey: text("object_key").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(),
+    durationMs: integer("duration_ms"),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }),
+    // Only what is safe to keep: { source: "recorded" | "picked", fileName?, lastModified? }. Never location.
+    device: jsonb("device").$type<Record<string, string | number>>(),
+    uploadState: text("upload_state").$type<"uploading" | "stored">().notNull().default("uploading"),
+    // Set only while a multipart upload is open.
+    uploadId: text("upload_id"),
+    transcriptStatus: text("transcript_status").$type<TranscriptStatus>().notNull().default("waiting"),
+    // A short plain code ("too-long", "engine"), never text from the recording.
+    transcriptError: text("transcript_error"),
+    transcriptAttempts: integer("transcript_attempts").notNull().default(0),
+    transcriptStartedAt: timestamp("transcript_started_at", { withTimezone: true }),
+    language: text("language"),
+    segments: jsonb("segments").$type<TranscriptSegment[]>(),
+    // SHA-256 of the file, set while it is transcribed. Lets Debo reuse a transcript for the same file.
+    contentHash: text("content_hash"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("media_user_created_idx").on(t.userId, t.createdAt),
+    uniqueIndex("media_source_idx").on(t.sourceId),
+    index("media_user_hash_idx").on(t.userId, t.contentHash),
+    index("media_transcript_idx").on(t.uploadState, t.transcriptStatus),
   ],
 );

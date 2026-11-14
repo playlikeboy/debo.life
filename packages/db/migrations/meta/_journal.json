@@ -36,6 +36,13 @@
       "when": 1794596424790,
       "tag": "0004_user_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794648941303,
+      "tag": "0005_journal_media",
+      "breakpoints": true
     }
   ]
 }

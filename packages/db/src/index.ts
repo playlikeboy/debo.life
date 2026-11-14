@@ -21,7 +21,31 @@ export {
   type FoundPiece,
   type SearchOptions,
 } from "./journal";
-export { EMBEDDING_DIMENSIONS } from "./schema";
+export { EMBEDDING_DIMENSIONS, type SourceKind } from "./schema";
+export {
+  claimTranscript,
+  deleteMediaRecord,
+  exportMedia,
+  failTranscript,
+  findTranscriptByHash,
+  finishUpload,
+  getMedia,
+  getMediaForSource,
+  listJournalItems,
+  listMediaKeys,
+  pendingTranscripts,
+  recordedMsToday,
+  requeueTranscript,
+  saveTranscript,
+  staleUploads,
+  startMedia,
+  type JournalItem,
+  type MediaRecord,
+  type NewMedia,
+  type Transcript,
+  type TranscriptSegment,
+  type TranscriptStatus,
+} from "./media";
 export { exportRecords, type ExportEntry, type ExportRecords } from "./export";
 export {
   chatTitleFrom,
