@@ -151,7 +151,8 @@ export function Button({
         s.button,
         primary ? s.primary : s.secondary,
         small && {
-          minHeight: sizeElement.md,
+          minHeight: spacing[11],
+          minWidth: spacing[11],
           paddingVertical: spacing[1.5],
           paddingHorizontal: spacing[3],
         },

@@ -2,7 +2,7 @@ import { ArrowRight, Bell, X } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useAgentWorkspace } from "./agent-workspace";
-import { Button, Card, colors, ErrorNotice, resultSummary, s } from "./ui";
+import { Button, Card, colors, ErrorNotice, resultSummary, s, spacing } from "./ui";
 import { useWorkspace } from "./workspace";
 
 export function BackgroundUpdates() {
@@ -37,8 +37,12 @@ export function BackgroundUpdates() {
           accessibilityLabel="Dismiss background update"
           disabled={busy}
           onPress={() => void dismiss()}
-          hitSlop={10}
-          style={{ padding: 6 }}
+          style={{
+            width: spacing[11],
+            height: spacing[11],
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
           <X size={16} color={colors.muted} />
         </Pressable>

@@ -1,7 +1,7 @@
 // "Talk to Debo": a voice conversation, with captions, source chips and a
 // text box so voice is never the only way. The connection lives in
 // debo-voice-engine.ts; this file is only the screen.
-import { Mic, MicOff } from "lucide-react-native";
+import { MessageCircle, Mic, MicOff } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Text, View } from "react-native";
 import {
@@ -30,7 +30,7 @@ const agentWords: Record<string, string> = {
 };
 
 export function TalkScreen() {
-  const { api } = useWorkspace();
+  const { api, navigate } = useWorkspace();
   const [status, setStatus] = useState<Status>("idle");
   const [problem, setProblem] = useState("");
   const [micOn, setMicOn] = useState(false);
@@ -163,7 +163,7 @@ export function TalkScreen() {
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
           {!live && status !== "connecting" && (
             <Button primary icon={Mic} onPress={start}>
-              {status === "idle" ? "Start talking" : "Start again"}
+              {status === "idle" ? "Start talking" : status === "error" ? "Try again" : "Start again"}
             </Button>
           )}
           {status === "connecting" && (
@@ -193,6 +193,14 @@ export function TalkScreen() {
           </Text>
         )}
         <ErrorNotice error={problem} />
+        {status === "error" && (
+          <>
+            <Text style={s.muted}>You can still type to Debo in Chat.</Text>
+            <Button icon={MessageCircle} onPress={() => navigate("chat")}>
+              Go to Chat
+            </Button>
+          </>
+        )}
       </Card>
 
       {lines.some((line) => line.text || line.sources.length > 0) && (

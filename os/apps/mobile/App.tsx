@@ -2,15 +2,15 @@ import { CopilotKitProvider } from "@copilotkit/react-native/headless";
 import { StatusBar } from "expo-status-bar";
 import {
   Bell,
+  BookOpen,
+  Brain,
   Check,
-  Lightbulb,
   type LucideIcon,
   Menu,
   MessageCircle,
   Mic,
   PanelsTopLeft,
   Shapes,
-  SquareCheck,
   X,
 } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -62,14 +62,14 @@ import { type Detail, useWorkspace, WorkspaceContext } from "./src/workspace";
 const nav: { id: Section; label: string; icon: LucideIcon }[] = [
   { id: "chat", label: "Chat", icon: MessageCircle },
   { id: "talk", label: "Talk", icon: Mic },
-  { id: "activity", label: "Activity", icon: PanelsTopLeft },
-  { id: "ideas", label: "Ideas", icon: Lightbulb },
-  { id: "goals", label: "Goals", icon: SquareCheck },
+  { id: "journal", label: "Journal", icon: BookOpen },
+  { id: "knows", label: "What Debo knows", icon: Brain },
+  { id: "activity", label: "Tasks", icon: PanelsTopLeft },
   { id: "apps", label: "Apps", icon: Shapes },
 ];
 const titles: Partial<Record<Section, { title: string; subtitle: string }>> = {
   talk: { title: "Talk to Debo", subtitle: "Say it out loud. Debo answers and shows where it came from." },
-  activity: { title: "Activity", subtitle: "Plans, progress, decisions and results." },
+  activity: { title: "Tasks", subtitle: "Plans, progress, decisions and results." },
   ideas: { title: "Ideas", subtitle: "Useful next steps, grounded in your world." },
   goals: {
     title: "Goals",
@@ -352,7 +352,7 @@ function WorkspaceShell({
                 : section === "goals"
                   ? GoalsScreen
                   : AppsScreen;
-  const utility = ["mail", "calendar", "browser", "files", "journal", "knows"].includes(section);
+  const utility = ["mail", "calendar", "browser", "files", "ideas", "goals"].includes(section);
   return (
     <>
       <WorkspaceTools />
@@ -360,7 +360,7 @@ function WorkspaceShell({
         <View style={{ flex: 1, width: "100%", maxWidth: 760, alignSelf: "center" }}>
           <View
             style={{
-              height: desktop ? 146 : 122,
+              height: desktop ? 160 : 136,
               paddingTop: desktop ? 14 : 2,
               marginHorizontal: 20,
             }}

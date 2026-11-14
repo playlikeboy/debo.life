@@ -133,7 +133,7 @@ export function ThreadsSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet
       title="Debo"
-      subtitle={workspace.mode === "sample" ? "Your workspace" : workspace.profile.name}
+      subtitle={workspace.mode === "sample" ? "Your conversations" : workspace.profile.name}
       onClose={onClose}
     >
       <View style={{ gap: 14 }}>
@@ -278,7 +278,7 @@ export function ThreadsSheet({ onClose }: { onClose: () => void }) {
               </Button>
             )}
             <Text style={s.small}>
-              Side chats keep their own conversation context. Your agent’s saved memory is shared.
+              Each side chat keeps its own thread of talk. What Debo knows about you is shared by all of them.
             </Text>
           </>
         ) : (
@@ -286,22 +286,22 @@ export function ThreadsSheet({ onClose }: { onClose: () => void }) {
             <LinkRow
               icon={MessageCircle}
               title="Main chat"
-              detail="Saved in this workspace"
+              detail="Saved in your Debo account"
               onPress={() => {
                 navigate("chat");
                 onClose();
               }}
             />
             <Text style={s.muted}>
-              Your conversation is saved in this workspace. You can manage connections in Apps.
+              Your conversation is saved in your Debo account. You can manage connections in Apps.
             </Text>
           </>
         )}
         <View style={s.divider} />
         <LinkRow
           icon={Plus}
-          title="Delegate task"
-          detail="A plan, document, or spending summary"
+          title="Ask Debo to do a task"
+          detail="A plan, a document or a spending summary"
           onPress={() => {
             onClose();
             open({ type: "delegate" });
@@ -309,8 +309,8 @@ export function ThreadsSheet({ onClose }: { onClose: () => void }) {
         />
         <LinkRow
           icon={Monitor}
-          title="Agent computer"
-          detail="Browser, sessions and documents"
+          title="Debo's computer"
+          detail="A browser and files Debo can use"
           onPress={() => {
             onClose();
             open({ type: "computer" });
@@ -320,7 +320,7 @@ export function ThreadsSheet({ onClose }: { onClose: () => void }) {
         <LinkRow icon={FileText} title="Files" onPress={() => go("files")} />
         <LinkRow icon={Settings2} title="Apps & settings" onPress={() => go("apps")} />
         <Button small icon={RefreshCw} onPress={() => void mutate(refresh)}>
-          Refresh workspace
+          Refresh
         </Button>
       </View>
     </Sheet>

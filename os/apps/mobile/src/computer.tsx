@@ -25,6 +25,7 @@ import {
   LinkRow,
   radius,
   s,
+  spacing,
   Sheet,
 } from "./ui";
 import { useWorkspace } from "./workspace";
@@ -46,8 +47,8 @@ export function ComputerEntry() {
         {
           alignSelf: "center",
           gap: 6,
+          minHeight: spacing[11],
           paddingHorizontal: 12,
-          paddingVertical: 7,
           borderRadius: radius.page,
           backgroundColor: colors.subtle,
         },

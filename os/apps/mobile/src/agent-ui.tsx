@@ -1,8 +1,6 @@
 import {
   ArrowRight,
   Bell,
-  BookOpen,
-  Brain,
   CalendarDays,
   ChevronRight,
   CircleDollarSign,
@@ -17,6 +15,7 @@ import {
   Plus,
   RefreshCw,
   Square,
+  SquareCheck,
   Target,
   Users,
   X,
@@ -1777,16 +1776,16 @@ export function AppsScreen() {
   }
   const shortcuts = [
     {
-      section: "journal" as const,
-      title: "Your journal",
-      detail: "Write, find and fix your entries",
-      icon: BookOpen,
+      section: "ideas" as const,
+      title: "Ideas",
+      detail: "Useful next steps",
+      icon: Lightbulb,
     },
     {
-      section: "knows" as const,
-      title: "What Debo knows",
-      detail: "Memories, each with the entry it came from",
-      icon: Brain,
+      section: "goals" as const,
+      title: "Goals",
+      detail: "Plans and things to keep an eye on",
+      icon: SquareCheck,
     },
     {
       section: "mail" as const,
@@ -1802,7 +1801,7 @@ export function AppsScreen() {
     },
     {
       section: "browser" as const,
-      title: "Agent computer",
+      title: "Debo's computer",
       detail: "Persistent browser sessions",
       icon: Globe2,
     },
@@ -1823,7 +1822,7 @@ export function AppsScreen() {
         placeholder="Search connectors"
       />
       <ConnectionsScreen query={query} />
-      <Text style={s.heading}>On your computer</Text>
+      <Text style={s.heading}>More from Debo</Text>
       <Card style={{ paddingVertical: 3, backgroundColor: colors.subtle }}>
         {shortcuts
           .filter((item) =>
@@ -1842,12 +1841,12 @@ export function AppsScreen() {
           ))}
       </Card>
       <Button onPress={() => setSettings(!settings)}>
-        {settings ? "Close agent settings" : "Personality & memory"}
+        {settings ? "Close settings" : "Name, voice and notes"}
       </Button>
       {settings && (
         <>
           <Card style={{ gap: 10 }}>
-            <SectionHeading title="Your agent" />
+            <SectionHeading title="About Debo" />
             <View style={[s.row, { gap: 16, justifyContent: "center", marginBottom: 12 }]}>
               {(["sky", "sand", "lilac"] as const).map((item) => (
                 <Pressable
@@ -1880,7 +1879,7 @@ export function AppsScreen() {
               onPress={() => setShowChatUpdates(!showChatUpdates)}
             />
             <Text style={s.small}>
-              Activity and notifications always keep the full record, including requests for
+              Tasks and notifications always keep the full record, including requests for
               approval.
             </Text>
             <Button
@@ -1894,8 +1893,8 @@ export function AppsScreen() {
             </Button>
           </Card>
           <Card style={{ gap: 12 }}>
-            <SectionHeading title="Memory" />
-            <Text style={s.muted}>Context you can inspect, correct or forget.</Text>
+            <SectionHeading title="Notes" />
+            <Text style={s.muted}>Little things Debo keeps for chat. You can fix or forget any of them.</Text>
             {data?.memories.map((item) => (
               <MemoryRow key={item.id} memory={item} />
             ))}

@@ -546,23 +546,20 @@ export function ChatScreen({
                 maxWidth: 350,
               }}
             >
-              A little help. A lot more room for life.
+              Hi, I&apos;m Debo.
             </Text>
             <Text style={[s.muted, { maxWidth: 320, textAlign: "center", lineHeight: 23 }]}>
-              Tell me what’s on your mind. I can make a plan, work with your apps, and use my
-              computer to help.
+              I keep your journal and remember what is in it. Ask me about your days, and I will
+              show you which entry each answer came from.
             </Text>
             <View style={{ width: "100%", maxWidth: 360, marginTop: 14, gap: 8 }}>
               {[
+                { text: "Write in my journal", action: () => navigate("journal") },
                 {
-                  text: "Find cool things on Hacker News",
-                  action: () => enqueue("Check out Hacker News for cool stuff"),
+                  text: "What did I do last week?",
+                  action: () => enqueue("What did I do last week?"),
                 },
-                {
-                  text: "Summarize copilotkit.ai",
-                  action: () => enqueue("Summarize copilotkit.ai"),
-                },
-                { text: "Keep an eye on a website", action: () => navigate("goals") },
+                { text: "See what Debo knows", action: () => navigate("knows") },
               ].map((item) => (
                 <Button key={item.text} onPress={item.action}>
                   {item.text}

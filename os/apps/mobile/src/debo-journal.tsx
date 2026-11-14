@@ -22,7 +22,7 @@ export function NotSetUp({ status, what }: { status?: DeboStatus; what: string }
       title={`${what} is not set up yet`}
       detail={
         status?.message ??
-        "This server has no Debo journal yet. Your entries are safe wherever they are. Ask whoever runs this server to add the journal database."
+        "Your journal is not set up yet. Whoever runs this Debo needs to turn it on. Until then, nothing can be saved here."
       }
     />
   );

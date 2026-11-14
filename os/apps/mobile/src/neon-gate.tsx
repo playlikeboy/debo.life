@@ -210,7 +210,13 @@ function Frame({ children }: { children: ReactNode }) {
           >
             Welcome to Debo.
           </Text>
+          <Text style={[s.muted, { textAlign: "center", marginTop: -8 }]}>
+            A friendly place to keep your days and ask about them.
+          </Text>
           {children}
+          <Text style={[s.small, { textAlign: "center", maxWidth: 340 }]}>
+            What you give Debo is yours. You can download it or delete it all at any time.
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -457,7 +463,7 @@ export function AccountCard() {
       {confirming ? (
         <View style={{ marginTop: 14 }}>
           <Text style={[s.text, { marginBottom: 10 }]}>
-            This deletes everything Debo stored for you, including files. It can't be undone. Your
+            This deletes everything Debo stored for you, including your journal entries and files. It can't be undone. Your
             sign-in stays, so you can start fresh.
           </Text>
           <Button danger busy={busy} onPress={() => void wipe()}>

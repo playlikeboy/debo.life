@@ -1268,19 +1268,11 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
     },
     {
       id: "browser",
-      name: "Agent computer",
+      name: "Debo's computer",
       icon: Globe2,
       color: colors.blueDark,
       connected: w.connections.some((c) => c.id === "browser" && c.status === "connected"),
       group: "browser",
-    },
-    {
-      id: "openbot",
-      name: "OpenBot",
-      icon: Sparkles,
-      color: colors.muted,
-      connected: false,
-      group: "openbot",
     },
   ].filter((row) => `${row.name} ${row.group}`.toLowerCase().includes(query.toLowerCase()));
   return (
@@ -1295,7 +1287,7 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
                 ? w.mode === "sample"
                   ? "Your connections"
                   : "Connected"
-                : "Available integrations"}
+                : "Not connected yet"}
             </Text>
             <View
               style={{
@@ -1336,7 +1328,7 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
                   </View>
                   <Text style={[s.text, { flex: 1 }]}>{row.name}</Text>
                   {row.connected && row.group === "google" && w.mode === "sample" && (
-                    <Text style={s.small}>Local data</Text>
+                    <Text style={s.small}>Example data</Text>
                   )}
                   {row.connected ? (
                     <ChevronRight size={18} color={colors.muted} />
@@ -1359,15 +1351,15 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
       {!rows.length && <Text style={s.muted}>No matching connectors.</Text>}
       {selected && (
         <Sheet
-          title={selected === "google" ? "Google connections" : "OpenBot"}
-          subtitle={selected === "google" ? google?.account : "A computer for your agent"}
+          title="Google connections"
+          subtitle={google?.account}
           onClose={() => setSelected(undefined)}
         >
-          {selected === "google" ? (
+          {selected === "google" && (
             <View style={{ gap: 18 }}>
               <Text style={s.muted}>
-                Bring Gmail and Google Calendar into your conversations. Choose read access, then
-                enable sending and editing when you need it.
+                Bring Gmail and Google Calendar into your conversations. Debo can only read at first.
+                You choose when it may send or edit.
               </Text>
               <View style={[s.row, { gap: 7, flexWrap: "wrap" }]}>
                 {google?.capabilities.map((cap) => (
@@ -1394,15 +1386,15 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
                 label="Assistant"
                 value={
                   w.runtime.provider === "sample"
-                    ? "Guided workflows"
+                    ? "Example answers only"
                     : w.runtime.configured
-                      ? "Model connected"
-                      : "Model not configured"
+                      ? "AI helper connected"
+                      : "AI helper not set up"
                 }
               />
               <SettingsLine
-                label="Rich Threads"
-                value={w.runtime.richThreads ? "Saved in your Debo database" : "Not connected"}
+                label="Conversations"
+                value={w.runtime.richThreads ? "Saved in your Debo account" : "Not saved"}
               />
               <Button
                 small
@@ -1411,17 +1403,6 @@ export function ConnectionsScreen({ query = "" }: { query?: string }) {
               >
                 Refresh connections
               </Button>
-            </View>
-          ) : (
-            <View style={{ gap: 14 }}>
-              <Text style={s.text}>
-                The OpenBot adapter is available in this open-source project. A live OpenBot backend
-                has not been configured.
-              </Text>
-              <Text style={s.muted}>
-                Your current computer uses Debo’s persistent Chromium worker. OpenBot integration
-                will expand the execution backend while keeping this interface.
-              </Text>
             </View>
           )}
         </Sheet>
