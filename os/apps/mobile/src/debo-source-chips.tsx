@@ -1,7 +1,7 @@
 import { BookOpen, FileText, Search } from "lucide-react-native";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { entryFocus, readDeboTool, type SourceChip } from "./debo-data";
-import { Button, Card, colors, ErrorNotice, s } from "./ui";
+import { Button, Card, colors, ErrorNotice, fontSize, radius, s } from "./ui";
 import { useWorkspace } from "./workspace";
 
 /** Open the journal on one entry. Used by every source chip. */
@@ -33,13 +33,13 @@ export function SourceChips({ sources }: { sources: SourceChip[] }) {
               gap: 6,
               minHeight: 44,
               paddingHorizontal: 12,
-              borderRadius: 22,
+              borderRadius: radius.full,
               backgroundColor: pressed ? colors.blue : colors.sky,
               maxWidth: "100%",
             })}
           >
-            <BookOpen size={14} color={colors.blueDark} />
-            <Text style={[s.text, { fontSize: 13, color: colors.blueDark, flexShrink: 1 }]}>
+            <BookOpen size={14} color={colors.blueText} />
+            <Text style={[s.text, { fontSize: fontSize.supporting, color: colors.blueText, flexShrink: 1 }]}>
               {source.label}
             </Text>
           </Pressable>
@@ -72,7 +72,7 @@ export function DeboToolCard({
         ? "Searching your journal…"
         : "Getting your entry ready…";
   return (
-    <Card style={{ padding: 16, gap: 12, backgroundColor: "#EEEEF0", maxWidth: 440, width: "100%" }}>
+    <Card style={{ padding: 16, gap: 12, backgroundColor: colors.subtle, maxWidth: 440, width: "100%" }}>
       <View style={[s.row, { gap: 10 }]}>
         {loading ? (
           <ActivityIndicator size="small" color={colors.blueDark} />

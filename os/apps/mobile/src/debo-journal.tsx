@@ -149,7 +149,7 @@ export function JournalScreen() {
       </View>
 
       {focus && !focused && (
-        <Card style={{ backgroundColor: "#FDF0DF" }}>
+        <Card style={{ backgroundColor: colors.orange }}>
           <Text style={s.text}>That entry is gone. It may have been deleted.</Text>
           <Button small style={{ alignSelf: "flex-start", marginTop: 10 }} onPress={() => entryFocus.set(undefined)}>
             Close this note
