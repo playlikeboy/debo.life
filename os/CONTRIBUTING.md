@@ -5,7 +5,7 @@ OpenFuse is an MIT-licensed alpha. Contributions should make delegated work reli
 ## Local development
 
 1. Fork and clone the repository. Use Node 24 LTS and pnpm 11.19.0.
-2. Run `pnpm install --frozen-lockfile`, copy `.env.example` to `.env`, and use `npx copilotkit@latest login` then `npx copilotkit@latest project select` to set the required Intelligence key.
+2. Run `pnpm install --frozen-lockfile`, and copy `.env.example` to `.env`. No CopilotKit account or key is needed.
 3. Run `pnpm dev` and, in another terminal, `pnpm dev:web`.
 4. Use the fictional sample workspace for development and recordings. See [native setup](apps/mobile/README.md) for simulator/emulator builds.
 

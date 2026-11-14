@@ -1,116 +1,30 @@
-# Intelligence signup and OpenFuse usage tracking
+# Telemetry
 
-OpenFuse uses the CopilotKit SDK's existing telemetry transport. There is no
-separate PostHog SDK or PostHog key to configure in this application.
+Telemetry is **off by default**. Debo sends nothing about its users or their usage to anyone unless the person running the server turns it on.
 
-## Configure the server
+## How it is controlled
 
-Run these commands from the OpenFuse root:
-
-```sh
-npx copilotkit@latest login
-npx copilotkit@latest project select
-```
-
-Keep both generated values in the server environment:
-
-| Variable | Purpose |
+| Setting | Effect |
 | --- | --- |
-| `CPK_INTELLIGENCE_API_KEY` | Server-only project key for Rich Threads. |
-| `CPK_TELEMETRY_ID` | CLI-issued project binding that the telemetry sink can resolve to an Intelligence account. |
+| nothing set | Off. `config.ts` sets `COPILOTKIT_TELEMETRY_DISABLED=true` before the CopilotKit SDK loads, and removes `CPK_TELEMETRY_ID` from the process environment. |
+| `DEBO_TELEMETRY=on` (also `true` or `1`) | On. The only way to turn it on. |
+| `DO_NOT_TRACK=1` or `true` | Off, even when `DEBO_TELEMETRY=on`. |
 
-Deploy the values for the selected project together. Do not generate your own
-telemetry ID, reuse another project's ID, or put either value in public Expo
-variables. An API key alone does not give runtime telemetry a resolvable identity.
-If the CLI reports an identity provisioning failure, resolve that failure and
-run project selection again before claiming account attribution works.
+The old settings (`COPILOTKIT_TELEMETRY_DISABLED=false`, `COPILOTKIT_TELEMETRY_SAMPLE_RATE`, `CPK_TELEMETRY_ID`) no longer turn anything on by themselves.
 
-The Render Blueprint prompts for both values. For an existing Render service,
-add `CPK_TELEMETRY_ID` in the API service's Environment settings and redeploy the
-tracking commit; adding it to the Blueprint does not populate an existing service.
+## What opting in sends
 
-The SDK sends existing runtime events to
-`https://telemetry.copilotkit.ai/ingest`. OpenFuse adds
-`accessibility_title: "OpenFuse"` and defaults
-`COPILOTKIT_TELEMETRY_SAMPLE_RATE` to `1` so setup and usage events are not
-randomly sampled away. It respects an explicit sampling override.
+The CopilotKit SDK posts two kinds of events to `https://telemetry.copilotkit.ai/ingest`, tagged `accessibility_title: "Debo"`:
 
-Remove old deployment settings that disable telemetry if tracking is desired.
-To opt out, set either `COPILOTKIT_TELEMETRY_DISABLED=true` or `DO_NOT_TRACK=1`
-and restart the API. Both variables accept `true` or `1`. The isolated demo
-and automated test fixtures disable telemetry.
+- `oss.runtime.instance_created`: the server started its runtime.
+- `oss.runtime.copilot_request_created`: a request reached the runtime (a count, not the request).
 
-## What the events measure
+Package name and version are included. Conversation text, journal content, file contents, keys and user ids are not part of these events. Sampling defaults to every event when opted in; set `COPILOTKIT_TELEMETRY_SAMPLE_RATE` (0 to 1) to lower it. Debo removes `CPK_TELEMETRY_ID` from the environment only while telemetry is off; if you opt in and set it, the SDK attaches that identity header, so leave it unset to stay anonymous.
 
-- `intelligence_signup`: an Intelligence account created in Clerk, emitted by
-  the existing backend sync with the Clerk user ID as its PostHog `distinct_id`.
-- `oss.runtime.instance_created`: the OpenFuse runtime handler was created.
-- `oss.runtime.copilot_request_created`: a request reached the runtime; this is
-  usage evidence, not proof of a successful model answer.
+This is operator-level server telemetry. Debo does not ask individual users, so do not turn it on for a hosted service without telling them in your privacy notice.
 
-The sink enriches runtime events with `telemetry_id`, and with `clerk_user_id`
-when that identity resolves. Runtime and signup events can have different
-PostHog `distinct_id` values: join the runtime `clerk_user_id` property to the
-signup `distinct_id` rather than assuming a standard person funnel joins them.
+## Tests
 
-This connects completed signups to OpenFuse usage. It does not prove OpenFuse
-was the acquisition source: the account might predate OpenFuse. Measuring
-acquisition requires carrying a source through the Intelligence signup flow.
-OpenFuse does not emit a duplicate signup event on startup, login or key entry.
+`tests/telemetry.test.ts` starts fresh processes with `fetch` replaced before the SDK loads. It checks that nothing is sent by default, with or without a leftover CopilotKit identity or project key; that old opt-out-style settings cannot turn it on; that `DEBO_TELEMETRY=on` sends the tagged event with no key in it; and that `DO_NOT_TRACK` still wins. `tests/config.test.ts` checks the opt-in parsing. `tests/threads.test.ts` records every global `fetch` made while exercising conversations and asserts there are none.
 
-## Validate in PostHog
-
-After deploying, restart the API and make one chat request. In
-[PostHog project 26816](https://eu.posthog.com/project/26816), run:
-
-```sql
-SELECT event, timestamp, distinct_id,
-       properties.accessibility_title AS app,
-       properties.telemetry_id AS telemetry_id,
-       properties.clerk_user_id AS clerk_user_id
-FROM events
-WHERE event IN (
-    'oss.runtime.instance_created',
-    'oss.runtime.copilot_request_created'
-  )
-  AND properties.accessibility_title = 'OpenFuse'
-  AND timestamp >= now() - INTERVAL 1 DAY
-ORDER BY timestamp DESC
-LIMIT 20
-```
-
-Confirm the tag, the expected telemetry identity and the resolved Clerk subject.
-Then find that subject's `intelligence_signup` event. To count accounts signed
-up in the last 30 days that also used OpenFuse in that period:
-
-```sql
-SELECT count(DISTINCT signup.distinct_id) AS signups_with_openfuse_usage
-FROM events AS signup
-INNER JOIN (
-  SELECT DISTINCT properties.clerk_user_id AS clerk_user_id
-  FROM events
-  WHERE event = 'oss.runtime.copilot_request_created'
-    AND properties.accessibility_title = 'OpenFuse'
-    AND timestamp >= now() - INTERVAL 30 DAY
-    AND notEmpty(toString(properties.clerk_user_id))
-) AS usage ON signup.distinct_id = usage.clerk_user_id
-WHERE signup.event = 'intelligence_signup'
-  AND signup.timestamp >= now() - INTERVAL 30 DAY
-```
-
-For OpenDots, use the same runtime configuration with the app tag `OpenDots`
-and its own CLI-issued project identity, then change the tag filter.
-
-An HTTP `202` from ingest alone does not prove PostHog delivery. If the event
-or identity enrichment is missing, check the deployed server environment and
-the `TelemetrySinkIngest` / `TelemetrySinkFanout` CloudWatch logs. The canonical
-reporting surface is [dashboard 664553](https://eu.posthog.com/project/26816/dashboard/664553).
-
-## Local verification
-
-`pnpm test` disables production telemetry for ordinary fixtures. The telemetry
-tests start fresh processes, intercept SDK fetch calls before importing it,
-and check the OpenFuse tag, CLI-issued identity header, full sampling, explicit
-sampling override, both opt-outs and absence of the project key in the payload.
-These checks prove the local SDK contract; production delivery and identity
-resolution require the PostHog checks above.
+Not verified: delivery to the real telemetry endpoint when opted in (tests intercept the request).
