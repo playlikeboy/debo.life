@@ -253,7 +253,8 @@ test("text inside a tool result is wrapped as data and cannot steer the agent", 
   f.backend.respond = () => ({ messages: [{ subject: "Invoice", body: injected }] });
   // A gullible model: it obeys an instruction that arrives in a tool result UNLESS the result is
   // clearly labelled as untrusted data. This shows the label is doing its job.
-  const requests = (
+  let requests: { path: string; body: string }[] = [];
+  requests = (
     await modelFixture(t, (i) => {
       if (i === 0)
         return { name: "use_app_tool", arguments: { tool: "GMAIL_FETCH_EMAILS", arguments: { query: "invoice" } } };

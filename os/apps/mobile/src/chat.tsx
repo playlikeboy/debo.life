@@ -41,6 +41,7 @@ import { JevInteractionContext, JevToolCard } from "./jev-tool-card";
 import { MailToolCard } from "./mail-tool-card";
 import { useChatMood } from "./debo-mood-hooks";
 import { deboMood } from "./debo-mood-store";
+import { ConnectorToolCard } from "./connectors-ui";
 import { DeboToolCard } from "./debo-source-chips";
 import { SearchToolCard } from "./search-tool-card";
 import { FileThreadCard, TaskThreadCard } from "./thread-artifacts";
@@ -93,6 +94,16 @@ export function WorkspaceTools() {
       parameters: displayParameters,
       render: ({ result, status }) => (
         <DeboToolCard name={name} result={result} loading={status !== "complete"} />
+      ),
+    });
+  // Apps the person connected (Slack, Notion...): which app was used, and any change waiting for a yes.
+  for (const name of ["find_app_tools", "use_app_tool"] as const)
+    useRenderTool({
+      name,
+      description: "Show which connected app Debo used",
+      parameters: displayParameters,
+      render: ({ args, result, status }) => (
+        <ConnectorToolCard name={name} args={args} result={result} loading={status !== "complete"} />
       ),
     });
   useRenderTool({

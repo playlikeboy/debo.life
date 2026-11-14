@@ -35,6 +35,7 @@ import type {
   RunEvent,
 } from "../../../packages/domain/src/agent";
 import { useAgentWorkspace } from "./agent-workspace";
+import { ConnectAppsSection } from "./connectors-ui";
 import { ActivityScreen, ConnectionsScreen } from "./screens";
 import {
   Button,
@@ -1822,6 +1823,7 @@ export function AppsScreen() {
         placeholder="Search connectors"
       />
       <ConnectionsScreen query={query} />
+      <ConnectAppsSection query={query} />
       <Text style={s.heading}>More from Debo</Text>
       <Card style={{ paddingVertical: 3, backgroundColor: colors.subtle }}>
         {shortcuts

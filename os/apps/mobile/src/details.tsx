@@ -596,13 +596,19 @@ function ReviewDetail({ initial }: { initial: ActionProposal }) {
   }
   const email = action.kind === "email.send";
   const journal = action.kind === "journal.add";
+  // A change in an app the person connected (Slack, Notion...). The server wrote the lines.
+  const connector = action.kind === "connector.call";
+  const appName = String(d.toolkitName || "your app");
+  const appLines = connector && Array.isArray(d.lines) ? (d.lines as { label: string; value: string }[]) : [];
   return (
     <Sheet
       title={pending ? "One last look" : action.title}
       subtitle={
         journal
           ? "Debo only saves this to your journal if you say yes."
-          : w.mode === "sample"
+          : connector
+            ? `Debo only does this in ${appName} if you say yes.`
+            : w.mode === "sample"
             ? "This action stays in your local workspace."
             : "Review this exact action before it changes your connected account."
       }
@@ -614,7 +620,9 @@ function ReviewDetail({ initial }: { initial: ActionProposal }) {
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={s.heading}>{action.title}</Text>
-          <Text style={s.small}>{action.kind.replace(".", " · ")}</Text>
+          <Text style={s.small}>
+            {connector ? `In ${appName}` : action.kind.replace(".", " · ")}
+          </Text>
         </View>
         <Chip tint={pending ? colors.lavender : colors.green}>
           {action.status.replace(/_/g, " ")}
@@ -622,7 +630,22 @@ function ReviewDetail({ initial }: { initial: ActionProposal }) {
       </View>
       <Card style={{ gap: 13 }}>
         <ReviewLine label="Account" value={action.account || w.profile.email} />
-        {journal ? (
+        {connector ? (
+          <>
+            {appLines.length ? (
+              appLines.map((line, index) => (
+                <ReviewLine key={`${line.label}-${index}`} label={line.label} value={line.value} />
+              ))
+            ) : (
+              <Text style={s.muted}>This needs no further details.</Text>
+            )}
+            <Text style={s.small}>
+              {d.risk === "destructive"
+                ? `This can delete something in ${appName}, and it may not be possible to undo.`
+                : `This changes something in ${appName}.`}
+            </Text>
+          </>
+        ) : journal ? (
           <>
             <Text style={s.label}>Entry</Text>
             <Text selectable style={[s.text, { lineHeight: 25 }]}>
@@ -720,13 +743,15 @@ function ReviewDetail({ initial }: { initial: ActionProposal }) {
             <Button primary icon={Check} busy={busy} onPress={() => void decide("approve")}>
               {journal
                 ? "Save to my journal"
-                : w.mode === "sample"
+                : connector
+                  ? `Yes, do it in ${appName}`
+                  : w.mode === "sample"
                 ? "Approve locally"
                 : email
                   ? "Approve & send"
                   : "Approve change"}
             </Button>
-            {action.kind !== "calendar.delete" && !journal && (
+            {action.kind !== "calendar.delete" && !journal && !connector && (
               <Button icon={Edit3} disabled={busy} onPress={() => void edit()}>
                 Edit details
               </Button>
