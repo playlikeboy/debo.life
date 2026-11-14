@@ -1,5 +1,5 @@
 # Deploy Debo OS (os/) to Cloudflare Workers + Containers on workers.dev preview URLs.
-# Manual only. Separate from deploy.yml: it never touches the debo-web Worker or debo.life.
+# Runs on a push to the debo-os branch, or by hand. Separate from deploy.yml: it never touches the debo-web Worker or debo.life.
 # Deploys three Workers: debo-os-browser (private), debo-os-api, debo-os-app.
 # Secrets used (names only; set in GitHub repo settings > Secrets). See
 # os/infra/cloudflare/README.md for how to create each one.
@@ -18,6 +18,11 @@
 name: Deploy OS (preview)
 
 on:
+  # GitHub only offers the manual button for workflows that are on main. Until
+  # this file is there, a push to the debo-os branch deploys the preview.
+  push:
+    branches: [debo-os]
+    paths: ["os/**", "packages/**", ".github/workflows/deploy-os.yml", ".dockerignore"]
   workflow_dispatch:
 
 concurrency:
