@@ -91,6 +91,9 @@ importers:
       '@copilotkit/runtime':
         specifier: 1.85.0
         version: 1.85.0(7605f63a3d75874c2c689df338e247de)
+      '@debo/brain':
+        specifier: workspace:*
+        version: link:../../packages/brain
       '@debo/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -170,6 +173,15 @@ importers:
       wrangler:
         specifier: 4.159.0
         version: 4.159.0(@cloudflare/workers-types@4.20260702.1)(@types/node@22.20.5)
+
+  packages/brain:
+    dependencies:
+      '@debo/db':
+        specifier: workspace:*
+        version: link:../db
+      '@debo/llm':
+        specifier: workspace:*
+        version: link:../llm
 
   packages/connectors:
     dependencies:

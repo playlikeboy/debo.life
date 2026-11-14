@@ -16,6 +16,7 @@
   "dependencies": {
     "@copilotkit/react-core": "1.85.0",
     "@copilotkit/runtime": "1.85.0",
+    "@debo/brain": "workspace:*",
     "@debo/db": "workspace:*",
     "@debo/ingest": "workspace:*",
     "@debo/llm": "workspace:*",
