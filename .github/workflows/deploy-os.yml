@@ -3,13 +3,18 @@
 # Deploys three Workers: debo-os-browser (private), debo-os-api, debo-os-app.
 # Secrets used (names only; set in GitHub repo settings > Secrets). See
 # os/infra/cloudflare/README.md for how to create each one.
-#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID   - already exist (needs Workers + Containers edit)
-#   DEBO_OS_DATABASE_URL                          - Postgres URL for the API (use its own Neon database)
-#   DEBO_OS_ACCESS_KEY                            - sign-in key, 24+ characters
-#   DEBO_OS_TOKEN_ENCRYPTION_KEY                  - 32 random bytes, base64
-#   DEBO_OS_SESSION_SIGNING_KEY                   - 32 random bytes, base64
-#   DEBO_OS_WORKER_TOKEN                          - 32+ characters, shared API <-> browser
-#   OPENAI_API_KEY                                - model provider key (MODEL defaults to openai/gpt-5)
+#   Already exist:
+#     CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID   - needs Workers + Containers edit
+#     DATABASE_URL_UNPOOLED                         - Debo's Neon database (os keeps its rows in schema "os")
+#     MEM0_API_KEY, LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, VOICE_AGENT_SECRET
+#   Must be created (required):
+#     NEON_AUTH_BASE_URL, NEON_AUTH_JWKS_URL        - same values the web app uses
+#     ANTHROPIC_API_KEY                             - answers and the agent (MODEL is anthropic/claude-haiku-5-5)
+#     DEBO_OS_TOKEN_ENCRYPTION_KEY                  - 32 random bytes, base64
+#     DEBO_OS_SESSION_SIGNING_KEY                   - 32 random bytes, base64
+#     DEBO_OS_WORKER_TOKEN                          - 32+ characters, shared API <-> browser
+#   Optional:
+#     NEON_AI_GATEWAY_BASE_URL, NEON_AI_GATEWAY_TOKEN - search by meaning (keyword search works without)
 name: Deploy OS (preview)
 
 on:
@@ -34,17 +39,18 @@ jobs:
 
       - name: Check required secrets are set
         env:
-          DEBO_OS_DATABASE_URL: ${{ secrets.DEBO_OS_DATABASE_URL }}
-          DEBO_OS_ACCESS_KEY: ${{ secrets.DEBO_OS_ACCESS_KEY }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          NEON_AUTH_BASE_URL: ${{ secrets.NEON_AUTH_BASE_URL }}
+          NEON_AUTH_JWKS_URL: ${{ secrets.NEON_AUTH_JWKS_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DEBO_OS_TOKEN_ENCRYPTION_KEY: ${{ secrets.DEBO_OS_TOKEN_ENCRYPTION_KEY }}
           DEBO_OS_SESSION_SIGNING_KEY: ${{ secrets.DEBO_OS_SESSION_SIGNING_KEY }}
           DEBO_OS_WORKER_TOKEN: ${{ secrets.DEBO_OS_WORKER_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           missing=""
-          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID DEBO_OS_DATABASE_URL DEBO_OS_ACCESS_KEY \
-            DEBO_OS_TOKEN_ENCRYPTION_KEY DEBO_OS_SESSION_SIGNING_KEY DEBO_OS_WORKER_TOKEN \
-            OPENAI_API_KEY; do
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID DATABASE_URL_UNPOOLED \
+            NEON_AUTH_BASE_URL NEON_AUTH_JWKS_URL ANTHROPIC_API_KEY \
+            DEBO_OS_TOKEN_ENCRYPTION_KEY DEBO_OS_SESSION_SIGNING_KEY DEBO_OS_WORKER_TOKEN; do
             [ -n "${!name}" ] || missing="$missing $name"
           done
           if [ -n "$missing" ]; then echo "::error::Missing GitHub secrets:$missing"; exit 1; fi
@@ -79,7 +85,10 @@ jobs:
         working-directory: os
         env:
           EXPO_PUBLIC_API_URL: ${{ steps.urls.outputs.api }}
-        run: pnpm build:web
+        run: |
+          pnpm build:web
+          # Guard: the API address must be inside the exported JavaScript (a stale cache would hide it).
+          grep -rlF "$EXPO_PUBLIC_API_URL" apps/mobile/dist/web/_expo >/dev/null
 
       - name: Deploy the browser (private)
         working-directory: os/infra/cloudflare
@@ -92,15 +101,26 @@ jobs:
       - name: Deploy the API
         working-directory: os/infra/cloudflare
         env:
-          DATABASE_URL: ${{ secrets.DEBO_OS_DATABASE_URL }}
-          OPENFUSE_ACCESS_KEY: ${{ secrets.DEBO_OS_ACCESS_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          NEON_AUTH_BASE_URL: ${{ secrets.NEON_AUTH_BASE_URL }}
+          NEON_AUTH_JWKS_URL: ${{ secrets.NEON_AUTH_JWKS_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NEON_AI_GATEWAY_BASE_URL: ${{ secrets.NEON_AI_GATEWAY_BASE_URL }}
+          NEON_AI_GATEWAY_TOKEN: ${{ secrets.NEON_AI_GATEWAY_TOKEN }}
+          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+          LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+          VOICE_AGENT_SECRET: ${{ secrets.VOICE_AGENT_SECRET }}
           TOKEN_ENCRYPTION_KEY: ${{ secrets.DEBO_OS_TOKEN_ENCRYPTION_KEY }}
           SESSION_SIGNING_KEY: ${{ secrets.DEBO_OS_SESSION_SIGNING_KEY }}
           WORKER_TOKEN: ${{ secrets.DEBO_OS_WORKER_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          jq -n 'env | {DATABASE_URL, OPENFUSE_ACCESS_KEY, TOKEN_ENCRYPTION_KEY, SESSION_SIGNING_KEY,
-                  WORKER_TOKEN, OPENAI_API_KEY}
+          # Empty values are dropped, so an optional secret that is not set just turns its feature off.
+          jq -n 'env | {DATABASE_URL, NEON_AUTH_BASE_URL, NEON_AUTH_JWKS_URL, ANTHROPIC_API_KEY,
+                  NEON_AI_GATEWAY_BASE_URL, NEON_AI_GATEWAY_TOKEN, MEM0_API_KEY,
+                  LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, VOICE_AGENT_SECRET,
+                  TOKEN_ENCRYPTION_KEY, SESSION_SIGNING_KEY, WORKER_TOKEN}
                  | with_entries(select(.value != null and .value != ""))' \
             > "$RUNNER_TEMP/api-secrets.json"
           npx wrangler deploy -c api/wrangler.jsonc \
@@ -126,6 +146,9 @@ jobs:
           [ -n "$ok" ] || { echo "::error::$api/api/health never returned ok"; exit 1; }
           echo "API health: $body"
           echo "$body" | jq -e '.browserConfigured == true' >/dev/null || { echo "::error::browser not configured"; exit 1; }
+          echo "$body" | jq -e '.auth.mode == "neon"' >/dev/null || { echo "::error::API is not in Neon Auth mode"; exit 1; }
+          # The journal route must answer 401 (it needs sign-in), not 404 or a crash.
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$api/api/debo/status")" = "401"
           test "$(curl -s -o /dev/null -w '%{http_code}' "$app/")" = "200"
           # Single-page-app fallback: a deep link must serve the app shell.
           test "$(curl -s -o /dev/null -w '%{http_code}' "$app/some/deep/link")" = "200"

@@ -20,8 +20,9 @@
     {
       "class_name": "DeboApi",
       "image": "./Dockerfile",
-      "image_build_context": "../../..",
-      // basic = 1/4 vCPU, 1 GiB. The API does not load PGlite when DATABASE_URL is set.
+      // The repo root: the API imports TypeScript packages from ../packages.
+      "image_build_context": "../../../..",
+      // basic = 1/4 vCPU, 1 GiB. The API is one bundled file and does not start PGlite when DATABASE_URL is set.
       // If it runs out of memory, use "standard-1" (1/2 vCPU, 4 GiB).
       "instance_type": "basic",
       // Run one API instance (upstream rule). The Worker always addresses the same one.
@@ -45,7 +46,11 @@
   "vars": {
     "WORKSPACE_MODE": "live",
     "AGENT_BACKEND": "model",
-    "MODEL": "openai/gpt-5",
+    // An Anthropic model, so no OpenAI key is needed. Same family the journal uses.
+    "MODEL": "anthropic/claude-haiku-5-5",
+    "AUTH_MODE": "neon",
+    // os keeps its own table, os.records, in this schema of Debo's Neon database.
+    "OS_DB_SCHEMA": "os",
     "TASK_WORKER_ENABLED": "true",
     "TRUST_PROXY": "true",
     "API_SLEEP_AFTER": "10m",

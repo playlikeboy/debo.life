@@ -10,6 +10,7 @@ interface Env {
 
 /** Everything the API reads from its environment. Unset values are skipped. */
 const PASSED = [
+  // Plain settings
   "WORKSPACE_MODE",
   "AGENT_BACKEND",
   "MODEL",
@@ -18,17 +19,35 @@ const PASSED = [
   "PUBLIC_API_URL",
   "ALLOWED_ORIGINS",
   "WEB_SEARCH_ENABLED",
-  // Secrets
+  "AUTH_MODE",
+  "OS_DB_SCHEMA",
+  "DAILY_TOKEN_LIMIT",
+  // Sign-in (Neon Auth). Public addresses, not secrets, but passed the same way.
+  "NEON_AUTH_BASE_URL",
+  "NEON_AUTH_JWKS_URL",
+  // Database
   "DATABASE_URL",
-  "OPENFUSE_ACCESS_KEY",
+  "DEBO_DATABASE_URL",
+  // Debo's journal: answers, meaning search, memory
+  "ANTHROPIC_API_KEY",
+  "NEON_AI_GATEWAY_BASE_URL",
+  "NEON_AI_GATEWAY_TOKEN",
+  "MEM0_API_KEY",
+  // Voice
+  "LIVEKIT_URL",
+  "LIVEKIT_API_KEY",
+  "LIVEKIT_API_SECRET",
+  "VOICE_AGENT_SECRET",
+  // Keys for the API itself
   "TOKEN_ENCRYPTION_KEY",
   "SESSION_SIGNING_KEY",
+  "WORKER_TOKEN",
+  // Optional
+  "OPENFUSE_ACCESS_KEY", // only for AUTH_MODE=access-key; not used with Neon Auth
   "OPENAI_API_KEY",
-  "ANTHROPIC_API_KEY",
   "GOOGLE_GENERATIVE_AI_API_KEY",
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
-  "WORKER_TOKEN",
 ];
 
 /** Fixed made-up host the API uses to reach the browser; see outboundByHost below. */
