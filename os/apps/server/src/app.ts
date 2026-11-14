@@ -99,6 +99,7 @@ export async function createApp(
     cors({
       origin: (origin) => (origins.has(origin) ? origin : undefined),
       allowHeaders: ["Content-Type", "Authorization"],
+      exposeHeaders: ["ETag"],
       allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       credentials: true,
     }),
@@ -182,6 +183,8 @@ export async function createApp(
     options.voiceBrain ??
     (debo.status().ask ? new JournalVoiceBrain(debo) : new EngineVoiceBrain(config, agent));
   app.route("/api/voice", voiceAgentRoutes(voiceBrain, options.voiceEnv));
+  // Sample mode only: the in-memory stand-in for the recordings bucket. Its links carry their own one-time token.
+  if (debo.devStore) app.route("/api/dev-r2", debo.devStore);
   app.use("/api/*", async (c, next) => {
     // A signed URL grants only the requests its page makes: reads, and the console's input.
     const method = c.req.method === "HEAD" ? "GET" : c.req.method;

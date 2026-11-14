@@ -5,6 +5,7 @@ import { UNKNOWN_MESSAGE } from "@debo/brain";
 import { Hono } from "hono";
 import { z } from "zod";
 import { AppError } from "../errors.ts";
+import { DICTATION_MAX_BYTES } from "./media-limits.ts";
 import type { DeboService } from "./service.ts";
 
 const ErrorBody = (message: string) => ({ error: message });
@@ -37,6 +38,29 @@ export function deboRoutes(debo: DeboService) {
   app.delete("/entries/:id", async (c) => {
     await debo.deleteEntry(c.get("owner"), c.req.param("id"));
     return c.json({ ok: true });
+  });
+
+  // ---- Voice notes and videos ----
+  // 1. POST /media/uploads        -> links to upload to (straight to the private bucket)
+  // 2. PUT the file to those links from the app
+  // 3. POST /media/uploads/:id/complete -> the entry is saved; the words come in the background
+  app.post("/media/uploads", async (c) => c.json(await debo.startUpload(c.get("owner"), await c.req.json()), 201));
+  app.post("/media/uploads/:id/complete", async (c) =>
+    c.json({ entry: await debo.completeUpload(c.get("owner"), c.req.param("id"), await c.req.json().catch(() => ({}))) }),
+  );
+  /** A link that plays this entry's recording for an hour. Only its owner gets one. */
+  app.get("/entries/:id/playback", async (c) => c.json(await debo.playback(c.get("owner"), c.req.param("id"))));
+  app.get("/entries/:id/transcript", async (c) => c.json(await debo.transcript(c.get("owner"), c.req.param("id"))));
+  app.post("/entries/:id/transcript/retry", async (c) =>
+    c.json(await debo.retryTranscript(c.get("owner"), c.req.param("id"))),
+  );
+  /** Speaking into the text box: a short audio clip in, words out. The clip is not kept. */
+  app.post("/transcribe", async (c) => {
+    const length = Number(c.req.header("content-length") ?? 0);
+    if (length > DICTATION_MAX_BYTES) throw new AppError("That clip is too long. Speak in shorter parts.", 413);
+    const language = c.req.query("language");
+    const clip = new Uint8Array(await c.req.arrayBuffer());
+    return c.json(await debo.dictate(c.get("owner"), clip, language));
   });
 
   // ---- Ask ----

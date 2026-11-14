@@ -10,12 +10,14 @@ const db = await createStore({
   schema: config.dbSchema,
 });
 await db.recoverInterruptedActions();
-const { app, agent } = await createApp(db, config);
+const { app, agent, debo } = await createApp(db, config);
 if (config.taskWorkerEnabled) agent.start();
+debo.startBackground();
 const server = serve({ fetch: app.fetch, port: config.port, hostname: config.host }, () =>
   console.log(`Debo ${config.mode} API ready at ${config.publicUrl}`),
 );
 const shutdown = () => {
+  debo.stopBackground();
   server.close(() => {
     void agent
       .stop()

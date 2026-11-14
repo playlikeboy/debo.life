@@ -6,7 +6,7 @@
 // memories, export and delete all keep working the same as for written text.
 // The file itself is in a private R2 bucket, never here.
 // Every function takes userId and filters by it. Never log transcript text.
-import { and, desc, eq, gte, inArray, isNotNull, isNull, lt, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { withDb } from "./client";
 import { splitIntoChunks, titleFrom } from "./journal";
 import { chunks, media, type SourceKind, sources, type TranscriptSegment, type TranscriptStatus } from "./schema";
@@ -390,6 +390,18 @@ export async function listJournalItems(
   });
 }
 
+/** The words of one voice or video entry (its transcript). Only this person's. */
+export async function getTranscriptText(connectionString: string, userId: string, sourceId: string): Promise<string> {
+  return withDb(connectionString, async (db) => {
+    const [row] = await db
+      .select({ text: sources.text })
+      .from(sources)
+      .where(and(eq(sources.id, sourceId), eq(sources.userId, userId)))
+      .limit(1);
+    return row?.text ?? "";
+  });
+}
+
 /** Every recording this person has, including unfinished uploads. For delete-everything. */
 export async function listMediaKeys(
   connectionString: string,
@@ -429,20 +441,22 @@ export async function staleUploads(
   );
 }
 
-/** Milliseconds of recordings this person added since midnight UTC (declared lengths), for the daily limit. */
-export async function recordedMsToday(connectionString: string, userId: string): Promise<number> {
+/** How many recordings this person started since midnight UTC, and their declared length, for the daily limit. */
+export async function mediaToday(connectionString: string, userId: string): Promise<{ count: number; ms: number }> {
   return withDb(connectionString, async (db) => {
     const [row] = await db
-      .select({ total: sql<number>`coalesce(sum(${media.durationMs}), 0)::bigint` })
+      .select({
+        count: sql<number>`count(*)::int`,
+        total: sql<number>`coalesce(sum(${media.durationMs}), 0)::bigint`,
+      })
       .from(media)
       .where(
         and(
           eq(media.userId, userId),
-          isNotNull(media.durationMs),
           gte(media.createdAt, sql`date_trunc('day', now() at time zone 'utc') at time zone 'utc'`),
         ),
       );
-    return Number(row?.total ?? 0);
+    return { count: row?.count ?? 0, ms: Number(row?.total ?? 0) };
   });
 }
 

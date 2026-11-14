@@ -147,10 +147,11 @@ export function createBrain(options: BrainOptions) {
     // person's own (searchPieces filters by userId), and the model can only
     // name ids from those pieces. So no second read is needed.
     const days = new Map(pieces.map((p) => [p.sourceId, p.happenedAt]));
+    const kinds = new Map(pieces.map((p) => [p.sourceId, p.kind]));
     const chipsFor = (ids: string[]): SourceChip[] =>
       ids.flatMap((id) => {
         const day = days.get(id);
-        return day ? [{ id, label: `Journal, ${formatDay(day)}` }] : [];
+        return day ? [{ id, label: `${chipName(kinds.get(id))}, ${formatDay(day)}` }] : [];
       });
 
     const stream = llm.streamAnswerFromSources(
@@ -235,6 +236,11 @@ export function createBrain(options: BrainOptions) {
 }
 
 export type Brain = ReturnType<typeof createBrain>;
+
+/** What a source chip calls where the words came from. Pieces from before kinds existed are journal entries. */
+function chipName(kind?: string) {
+  return kind === "voice" ? "Voice note" : kind === "video" ? "Video" : "Journal";
+}
 
 function formatDay(date: Date) {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: "UTC" });

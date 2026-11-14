@@ -72,7 +72,7 @@ export function fakeBackend(
     async search(owner, query, limit) {
       return matching(owner, query)
         .slice(0, limit)
-        .map((e) => ({ chunkId: e.id, sourceId: e.id, title: e.title, happenedAt: e.happenedAt, text: e.text }));
+        .map((e) => ({ chunkId: e.id, sourceId: e.id, kind: "journal" as const, title: e.title, happenedAt: e.happenedAt, text: e.text }));
     },
     async *ask(owner, question): AsyncGenerator<AskEvent, void> {
       asked.push({ owner, question });

@@ -9,28 +9,88 @@ import {
   type ActivityAction,
   type ActivityItem,
   chunksForSource,
+  claimTranscript,
   createEntry,
   deleteEntry,
+  deleteMediaRecord,
   type Entry,
+  exportMedia,
+  failTranscript,
+  findTranscriptByHash,
+  finishUpload,
   type FoundPiece,
+  getMedia,
+  getMediaForSource,
   getSources,
+  getTranscriptText,
   listActivity,
-  listEntries,
+  listJournalItems,
+  listMediaKeys,
+  type MediaRecord,
+  mediaToday,
+  type NewMedia,
+  pendingTranscripts,
   recordActivity,
   recordUsage,
+  requeueTranscript,
+  saveTranscript,
   searchPieces,
   setChunkEmbeddings,
+  type SourceKind,
+  staleUploads,
+  startMedia,
+  type Transcript,
   updateEntry,
 } from "@debo/db";
 import { createLlm } from "@debo/llm";
 import { createMemory, type Memory } from "@debo/memory";
 
-export type { ActivityAction, ActivityItem, AskEvent, Entry, FoundPiece, Memory };
+export type { ActivityAction, ActivityItem, AskEvent, Entry, FoundPiece, MediaRecord, Memory, NewMedia, SourceKind, Transcript };
+
+/** An entry in the journal list: written (no kind), or a voice note or video with its recording. */
+export type Item = Entry & { kind?: SourceKind; media?: MediaRecord | null };
+
+/**
+ * What is known about recordings. Every call is for one owner and one
+ * recording. A backend without this has no recordings.
+ */
+export interface DeboMediaDb {
+  start(owner: string, input: NewMedia): Promise<MediaRecord>;
+  get(owner: string, id: string): Promise<MediaRecord | null>;
+  forSource(owner: string, sourceId: string): Promise<MediaRecord | null>;
+  /** The words of a voice or video entry. */
+  text(owner: string, sourceId: string): Promise<string>;
+  /** Creates the entry for a finished upload. Null when it is not this person's. */
+  finish(
+    owner: string,
+    id: string,
+    input: { sizeBytes: number; happenedAt: Date; title: string },
+  ): Promise<{ record: MediaRecord; created: boolean } | null>;
+  /** Take the transcript job. Null when it is not waiting, or someone else has it. */
+  claim(owner: string, id: string): Promise<MediaRecord | null>;
+  /** The jobs that are waiting or stuck, across people, for the recovery sweep. */
+  pending(): Promise<{ id: string; userId: string }[]>;
+  requeue(owner: string, id: string): Promise<boolean>;
+  fail(owner: string, id: string, reason: string): Promise<void>;
+  /** Save the words. False when the entry was deleted meanwhile. */
+  save(owner: string, id: string, transcript: Transcript): Promise<boolean>;
+  findByHash(
+    owner: string,
+    hash: string,
+    exceptId: string,
+  ): Promise<{ text: string; language: string | null; segments: Transcript["segments"] } | null>;
+  keys(owner: string): Promise<{ id: string; objectKey: string; uploadId: string | null }[]>;
+  remove(owner: string, id: string): Promise<boolean>;
+  /** Uploads nobody finished, for cleanup. */
+  stale(): Promise<{ id: string; userId: string; objectKey: string; uploadId: string | null }[]>;
+  today(owner: string): Promise<{ count: number; ms: number }>;
+  export(owner: string): Promise<MediaRecord[]>;
+}
 
 export interface DeboBackend {
   entries: {
-    list(owner: string, options: { limit: number; contains?: string }): Promise<Entry[]>;
-    create(owner: string, text: string): Promise<Entry>;
+    list(owner: string, options: { limit: number; contains?: string }): Promise<Item[]>;
+    create(owner: string, text: string, happenedAt?: Date): Promise<Entry>;
     /** False when the entry is not this person's. */
     update(owner: string, id: string, text: string): Promise<boolean>;
     /** False when the entry is not this person's. */
@@ -41,13 +101,15 @@ export interface DeboBackend {
   /** The one brain: the same pipeline the web app uses. */
   ask(owner: string, question: string, signal?: AbortSignal): AsyncGenerator<AskEvent, void>;
   /** Entries by id, only among this person's own. */
-  sources(owner: string, ids: string[]): Promise<{ id: string; title: string; happenedAt: Date }[]>;
+  sources(owner: string, ids: string[]): Promise<{ id: string; kind?: SourceKind; title: string; happenedAt: Date }[]>;
   /** Null when hosted memory (Mem0) is not set up. */
   memories: {
     list(owner: string): Promise<Memory[]>;
     update(owner: string, id: string, text: string): Promise<Memory | null>;
     forget(owner: string, id: string): Promise<Memory | null>;
   } | null;
+  /** Voice notes and videos. Missing when recordings are not available. */
+  media?: DeboMediaDb;
   activity: {
     list(owner: string, limit: number): Promise<ActivityItem[]>;
     record(owner: string, item: { actor: "you" | "debo"; action: ActivityAction; sourceIds?: string[] }): Promise<void>;
@@ -88,8 +150,8 @@ export function realBackend(url: string, env: Env): DeboBackend {
 
   return {
     entries: {
-      list: (owner, { limit, contains }) => listEntries(url, owner, limit, contains),
-      create: (owner, text) => createEntry(url, owner, { text }),
+      list: (owner, { limit, contains }) => listJournalItems(url, owner, limit, contains),
+      create: (owner, text, happenedAt) => createEntry(url, owner, { text, happenedAt }),
       update: (owner, id, text) => updateEntry(url, owner, id, { text }),
       remove: (owner, id) => deleteEntry(url, owner, id),
     },
@@ -116,6 +178,24 @@ export function realBackend(url: string, env: Env): DeboBackend {
           forget: (owner, id) => memory.forget(owner, id),
         }
       : null,
+    media: {
+      start: (owner, input) => startMedia(url, owner, input),
+      get: (owner, id) => getMedia(url, owner, id),
+      forSource: (owner, sourceId) => getMediaForSource(url, owner, sourceId),
+      text: (owner, sourceId) => getTranscriptText(url, owner, sourceId),
+      finish: (owner, id, input) => finishUpload(url, owner, id, input),
+      claim: (owner, id) => claimTranscript(url, owner, id),
+      pending: () => pendingTranscripts(url),
+      requeue: (owner, id) => requeueTranscript(url, owner, id),
+      fail: (owner, id, reason) => failTranscript(url, owner, id, reason),
+      save: (owner, id, transcript) => saveTranscript(url, owner, id, transcript),
+      findByHash: (owner, hash, exceptId) => findTranscriptByHash(url, owner, hash, exceptId),
+      keys: (owner) => listMediaKeys(url, owner),
+      remove: (owner, id) => deleteMediaRecord(url, owner, id),
+      stale: () => staleUploads(url),
+      today: (owner) => mediaToday(url, owner),
+      export: (owner) => exportMedia(url, owner),
+    },
     activity: {
       list: (owner, limit) => listActivity(url, owner, limit),
       record: (owner, item) => recordActivity(url, owner, item),

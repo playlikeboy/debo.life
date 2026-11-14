@@ -8,7 +8,9 @@ import { type AskOutcome, UNKNOWN_MESSAGE } from "@debo/brain";
 import { speakToPerson } from "@debo/memory";
 import { z } from "zod";
 import { AppError } from "../errors.ts";
-import type { ActivityAction, ActivityItem, AskEvent, DeboBackend } from "./backend.ts";
+import type { ActivityAction, ActivityItem, AskEvent, DeboBackend, Item, SourceKind } from "./backend.ts";
+import { MEDIA_LIMITS, type MediaLimits } from "./media-limits.ts";
+import { type MediaDeps, MediaService, type MediaView } from "./media-service.ts";
 
 export const NOT_SET_UP =
   "Your journal is not set up yet. Whoever runs this Debo needs to turn it on. Until then, nothing can be saved here.";
@@ -31,6 +33,8 @@ export const Question = z
   .trim()
   .min(1, "Write something first.")
   .max(500, "Keep your question under 500 characters.");
+/** The day the person says it happened. Not more than a day ahead (time zones). */
+const HappenedAt = z.coerce.date().refine((d) => d.getTime() < Date.now() + 86_400_000, "Pick a day that is not in the future.");
 export const FindText = z.string().trim().max(200, "Keep what you search for under 200 characters.");
 export const MemoryText = z
   .string()
@@ -38,7 +42,16 @@ export const MemoryText = z
   .min(1, "Write what Debo should remember.")
   .max(1000, "Keep it under 1,000 characters.");
 
-export type EntryView = { id: string; title: string; text: string; happenedAt: string };
+export type EntryView = {
+  id: string;
+  /** What it is: something written, a voice note or a video. */
+  kind: "journal" | "voice" | "video";
+  title: string;
+  text: string;
+  happenedAt: string;
+  /** The recording, for a voice note or video. */
+  media: MediaView | null;
+};
 export type SourceChipView = { id: string; label: string };
 export type MemoryView = {
   id: string;
@@ -67,14 +80,25 @@ export type DeboStatus = {
   journal: boolean;
   ask: boolean;
   memories: boolean;
+  /** Voice notes and videos can be added (the bucket is set up). */
+  recordings: boolean;
+  /** Speaking into the text works (the speech service is set up). */
+  speaking: boolean;
+  limits: MediaLimits;
 };
 
 const dayFormat = (date: Date) =>
   date.toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: "UTC" });
-const chipLabel = (date: Date) => `Journal, ${dayFormat(date)}`;
+/** "Journal, 11 November", "Voice note, 11 November" or "Video, 11 November". */
+export const chipLabel = (date: Date, kind: SourceKind = "journal") =>
+  `${kind === "voice" ? "Voice note" : kind === "video" ? "Video" : "Journal"}, ${dayFormat(date)}`;
 
 export class DeboService {
   private readonly pending = new Set<Promise<unknown>>();
+  private readonly recordings: MediaService | null;
+  private sweeper?: ReturnType<typeof setInterval>;
+  /** Sample mode only: the in-memory bucket, to be served at /api/dev-r2. Never set in a live workspace. */
+  devStore?: import("hono").Hono;
 
   /**
    * `backend` is null when there is no Debo database. `localOwners` are extra
@@ -84,7 +108,39 @@ export class DeboService {
   constructor(
     private readonly backend: DeboBackend | null,
     private readonly localOwners: readonly string[] = [],
-  ) {}
+    mediaDeps?: MediaDeps,
+  ) {
+    const media = backend?.media;
+    this.recordings =
+      backend && media && mediaDeps
+        ? new MediaService(media, mediaDeps, {
+            afterTranscript: (owner, sourceId) => backend.afterChange(owner, sourceId, "saved"),
+            later: (work) => this.later(work),
+          })
+        : null;
+  }
+
+  /** Start the background upkeep: finish transcripts a stopped server left, clear unfinished uploads. */
+  startBackground(everyMs = 5 * 60_000) {
+    if (!this.recordings || this.sweeper) return;
+    const recordings = this.recordings;
+    void recordings.sweep();
+    this.sweeper = setInterval(() => void recordings.sweep(), everyMs);
+    this.sweeper.unref?.();
+  }
+
+  stopBackground() {
+    if (this.sweeper) clearInterval(this.sweeper);
+    this.sweeper = undefined;
+  }
+
+  /** The recordings part, or the plain "not set up" error. */
+  private recordingsFor(owner: string): MediaService {
+    this.ready(owner);
+    if (!this.recordings)
+      throw new AppError("Voice notes and videos are not set up yet. Whoever runs this Debo needs to turn them on. You can still write entries.", 503);
+    return this.recordings;
+  }
 
   get configured() {
     return this.backend !== null;
@@ -92,12 +148,15 @@ export class DeboService {
 
   status(): DeboStatus {
     if (!this.backend)
-      return { configured: false, message: NOT_SET_UP, journal: false, ask: false, memories: false };
+      return { configured: false, message: NOT_SET_UP, journal: false, ask: false, memories: false, recordings: false, speaking: false, limits: MEDIA_LIMITS };
     return {
       configured: true,
       journal: true,
       ask: this.backend.askConfigured,
       memories: this.backend.memories !== null,
+      recordings: this.recordings !== null,
+      speaking: this.recordings?.engineName !== undefined,
+      limits: MEDIA_LIMITS,
       ...(this.backend.askConfigured ? {} : { message: ASK_OFF }),
     };
   }
@@ -139,8 +198,15 @@ export class DeboService {
     this.pending.add(tracked);
   }
 
-  private entryView(e: { id: string; title: string; text: string; happenedAt: Date }): EntryView {
-    return { id: e.id, title: e.title, text: e.text, happenedAt: e.happenedAt.toISOString() };
+  private entryView(e: Item): EntryView {
+    return {
+      id: e.id,
+      kind: e.kind ?? "journal",
+      title: e.title,
+      text: e.text,
+      happenedAt: e.happenedAt.toISOString(),
+      media: e.media && this.recordings ? this.recordings.view(e.media) : null,
+    };
   }
 
   // ---- The person's whole journal: download it, delete it ----
@@ -152,12 +218,16 @@ export class DeboService {
   }
 
   /** Every entry and memory this person has, for "Download my data". Null when there is no journal. */
-  async exportMine(owner: string): Promise<{ entries: EntryView[]; memories: MemoryView[] } | null> {
+  async exportMine(
+    owner: string,
+  ): Promise<{ entries: EntryView[]; memories: MemoryView[]; recordings: unknown[] } | null> {
     const backend = this.journalOf(owner);
     if (!backend) return null;
     const entries = (await backend.entries.list(owner, { limit: 100_000 })).map((e) => this.entryView(e));
     const memories = backend.memories ? await this.listMemories(owner) : [];
-    return { entries, memories };
+    // Each recording: its details and transcript, and a link that downloads the file for 24 hours.
+    const recordings = this.recordings ? await this.recordings.exportFor(owner, entries) : [];
+    return { entries, memories, recordings };
   }
 
   /** Deletes every entry this person wrote, and what Debo learned from each. Returns how many entries went. */
@@ -166,8 +236,12 @@ export class DeboService {
     if (!backend) return 0;
     const entries = await backend.entries.list(owner, { limit: 100_000 });
     for (const entry of entries) {
+      // The file goes first: if it cannot be deleted, the entry stays and the person can try again.
+      if (entry.media) await this.recordings?.deleteFor(owner, entry.id);
       if (await backend.entries.remove(owner, entry.id)) await backend.afterChange(owner, entry.id, "deleted");
     }
+    // Unfinished uploads and anything else under this person's folder.
+    await this.recordings?.deleteAllFor(owner);
     // Anything Debo still remembers that no longer has an entry goes too.
     if (backend.memories)
       for (const memory of await backend.memories.list(owner)) await backend.memories.forget(owner, memory.id);
@@ -185,8 +259,8 @@ export class DeboService {
 
   async createEntry(owner: string, input: unknown, actor: "you" | "debo" = "you"): Promise<EntryView> {
     const backend = this.ready(owner);
-    const { text } = z.object({ text: EntryText }).parse(input);
-    const entry = await backend.entries.create(owner, text);
+    const { text, happenedAt } = z.object({ text: EntryText, happenedAt: HappenedAt.optional() }).parse(input);
+    const entry = await backend.entries.create(owner, text, happenedAt);
     await this.record(backend, owner, actor, "saved", [entry.id]);
     this.later(backend.afterChange(owner, entry.id, "saved"));
     return this.entryView(entry);
@@ -204,6 +278,8 @@ export class DeboService {
   async deleteEntry(owner: string, id: string): Promise<void> {
     const backend = this.ready(owner);
     if (!Uuid.safeParse(id).success) throw new AppError(ENTRY_GONE, 404);
+    // The recording's file first: if that fails, nothing is half deleted.
+    await this.recordings?.deleteFor(owner, id);
     if (!(await backend.entries.remove(owner, id))) throw new AppError(ENTRY_GONE, 404);
     await this.record(backend, owner, "you", "deleted", [id]);
     this.later(backend.afterChange(owner, id, "deleted"));
@@ -215,11 +291,50 @@ export class DeboService {
     const q = z.string().trim().min(1, "Write what to look for.").max(500).parse(query);
     const found = await backend.search(owner, q, Math.min(Math.max(limit, 1), 10));
     return found.map((p) => ({
-      source: { id: p.sourceId, label: chipLabel(p.happenedAt) } satisfies SourceChipView,
+      source: { id: p.sourceId, label: chipLabel(p.happenedAt, p.kind) } satisfies SourceChipView,
       title: p.title,
       date: p.happenedAt.toISOString().slice(0, 10),
       excerpt: p.text.slice(0, 600),
     }));
+  }
+
+  // ---- Voice notes and videos ----
+
+  /** Step 1 of adding a recording: get links to upload to. Nothing is saved as an entry yet. */
+  async startUpload(owner: string, input: unknown) {
+    return this.recordingsFor(owner).startUpload(owner, input);
+  }
+
+  /** Step 2: the file is uploaded. Saves the entry now; the words come a little later. */
+  async completeUpload(owner: string, mediaId: string, input: unknown): Promise<EntryView> {
+    const recordings = this.recordingsFor(owner);
+    const backend = this.ready(owner);
+    const { record, created } = await recordings.completeUpload(owner, mediaId, input);
+    if (created && record.sourceId) await this.record(backend, owner, "you", "saved", [record.sourceId]);
+    if (!record.sourceId) throw new AppError(ENTRY_GONE, 404);
+    const [source] = await backend.sources(owner, [record.sourceId]);
+    if (!source) throw new AppError(ENTRY_GONE, 404);
+    const text = (await backend.media?.text(owner, source.id)) ?? "";
+    return this.entryView({ ...source, kind: record.kind, text, media: record });
+  }
+
+  async playback(owner: string, entryId: string) {
+    return this.recordingsFor(owner).playback(owner, entryId);
+  }
+
+  async transcript(owner: string, entryId: string) {
+    const recordings = this.recordingsFor(owner);
+    const text = (await this.backend?.media?.text(owner, entryId)) ?? "";
+    return recordings.transcript(owner, entryId, text);
+  }
+
+  async retryTranscript(owner: string, entryId: string) {
+    return this.recordingsFor(owner).retry(owner, entryId);
+  }
+
+  /** Words for a short clip spoken into the text box. Nothing is kept. */
+  async dictate(owner: string, clip: Uint8Array, language?: string) {
+    return this.recordingsFor(owner).dictate(owner, clip, language);
   }
 
   // ---- Ask ----
@@ -252,7 +367,7 @@ export class DeboService {
     // Show a memory only while its entry is still this person's.
     const ids = [...new Set(memories.map((m) => m.sourceId))].filter((id) => Uuid.safeParse(id).success);
     const sources = await backend.sources(owner, ids);
-    const labels = new Map(sources.map((s) => [s.id, chipLabel(s.happenedAt)]));
+    const labels = new Map(sources.map((s) => [s.id, chipLabel(s.happenedAt, s.kind)]));
     return memories.flatMap((m) => {
       const label = labels.get(m.sourceId);
       if (!label) return [];
