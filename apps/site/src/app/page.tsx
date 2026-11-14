@@ -2,6 +2,7 @@ import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
 import { Apps } from "../components/apps";
 import { Ask } from "../components/ask";
 import { Closing } from "../components/closing";
+import { Demo } from "../components/demo";
 import { Faq, QUESTIONS } from "../components/faq";
 import { Hero } from "../components/hero";
 import { Knows } from "../components/knows";
@@ -46,6 +47,7 @@ export default function Home() {
         content={
           <LayoutContent role="main" label="Debo" isScrollable={false} padding={0}>
             <Hero />
+            <Demo />
             <WriteOrSay />
             <Ask />
             <Knows />
