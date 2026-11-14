@@ -14,7 +14,7 @@ Debo should feel like a small, kind friend who keeps your things safe. Two words
 
 A small, round, slightly squat red tomato with a soft highlight, a green leafy top with a short stem, two friendly dark eyes with small highlights, light blush cheeks and a small smile. It is drawn in flat SVG shapes with no outline. The master drawing is `docs/assets/debo.svg`; the landing page (`apps/site`), the app (`os/apps/mobile`) and the share image use copies of it. The older `apps/web` page still draws the earlier yellow character in `apps/web/src/components/debo-art.tsx` and is being replaced.
 
-The new landing page and the app take their colours from Astryx's default Neutral theme (`@astryxdesign/theme-neutral`), not from the table below, which describes `apps/web`. Debo is the one red thing on those screens.
+The new landing page and the app take their colours from Astryx's default Neutral theme (`@astryxdesign/theme-neutral`), not from the table below, which describes `apps/web`. Debo is the one red thing on those screens. The landing page loads the theme's typeface, Figtree, from our own domain through `@fontsource/figtree` (no request to Google), and uses only Astryx components and props for layout; the one style value outside them is the 44px touch height, taken from the spacing token in `apps/site/src/touch.ts`.
 
 - Its eyes follow the pointer. This is the one playful moment on a screen. Do not add a second.
 - Debo appears once per screen at most. It is a character, not a pattern.
