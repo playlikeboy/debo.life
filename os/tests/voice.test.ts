@@ -48,7 +48,6 @@ before(async () => {
     publicUrl: "http://localhost:8787",
     dataDir: directory,
     agentBackend: "sample",
-    intelligenceApiKey: "test-project-key-never-sent",
     googleRedirectUri: "http://localhost:8787/api/google/callback",
     allowedOrigins: ["http://localhost:8081"],
   };
@@ -218,7 +217,6 @@ test("brain route turns a crashing brain into a spoken apology and a done event"
     publicUrl: "http://localhost:8787",
     dataDir: directory,
     agentBackend: "sample",
-    intelligenceApiKey: "test-project-key-never-sent",
     googleRedirectUri: "http://localhost:8787/api/google/callback",
     allowedOrigins: [],
   }, { voiceBrain: crash, voiceEnv: () => env });
@@ -250,7 +248,6 @@ test("the default brain answers through Debo's conversation engine", async () =>
     publicUrl: "http://localhost:8787",
     dataDir: directory,
     agentBackend: "sample",
-    intelligenceApiKey: "test-project-key-never-sent",
     googleRedirectUri: "http://localhost:8787/api/google/callback",
     allowedOrigins: [],
   }, { voiceEnv: () => env });
