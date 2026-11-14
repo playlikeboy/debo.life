@@ -1,5 +1,5 @@
-// Where the buttons go. The app address is the future app; sign-in and the
-// privacy page live on debo.life today.
+// Where the buttons go. The app, with its own sign-in, is at my.debo.life.
+// The privacy page lives on debo.life.
 export const START_URL = "https://my.debo.life";
-export const SIGN_IN_URL = "https://debo.life/auth/sign-in";
+export const SIGN_IN_URL = "https://my.debo.life";
 export const PRIVACY_URL = "https://debo.life/privacy";

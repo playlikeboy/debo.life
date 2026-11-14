@@ -1,5 +1,5 @@
 # Deploy the landing page (apps/site) to Cloudflare Workers as "debo-site".
-# It runs on its workers.dev address only: debo.life is still served by debo-web.
+# It is served at about.debo.life. debo.life is still served by debo-web.
 # Runs on a push to main that touches the landing page, or by hand.
 # Secrets used (names only): CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
 name: Deploy site
@@ -46,13 +46,10 @@ jobs:
 
       - name: Live check
         run: |
-          sub=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | jq -r '.result.subdomain')
-          url="https://debo-site.$sub.workers.dev/"
-          for i in $(seq 1 10); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "$url")
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' https://about.debo.life/)
             echo "attempt $i: $code"
             [ "$code" = "200" ] && exit 0
-            sleep 6
+            sleep 10
           done
-          echo "::error::The landing page did not answer 200"; exit 1
+          echo "::error::about.debo.life did not answer 200"; exit 1

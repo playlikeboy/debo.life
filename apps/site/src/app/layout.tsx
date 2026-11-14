@@ -11,7 +11,7 @@ const DESCRIPTION =
   "Write things down or say them out loud. Ask Debo about your own life and see the source of every answer. You can see, fix, download and delete everything.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://debo.life"),
+  metadataBase: new URL("https://about.debo.life"),
   title: { default: TITLE, template: "%s | Debo" },
   description: DESCRIPTION,
   applicationName: "Debo",

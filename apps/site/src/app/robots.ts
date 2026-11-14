@@ -3,6 +3,6 @@ import type { MetadataRoute } from "next";
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: { userAgent: "*", allow: "/" },
-    sitemap: "https://debo.life/sitemap.xml",
+    sitemap: "https://about.debo.life/sitemap.xml",
   };
 }
