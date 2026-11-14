@@ -1,18 +1,64 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { link, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { createRemoteJWKSet, type JWTVerifyGetKey, jwtVerify } from "jose";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
 
 const digest = (value: string) => createHash("sha256").update(value).digest();
+const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Checks a Neon Auth JWT. Neon Auth signs with EdDSA, sets `iss` and `aud` to the
+ * origin of the auth URL, and `sub` to the user's id. Tokens last 15 minutes.
+ * See https://neon.com/docs/auth/guides/plugins/jwt
+ */
+export class NeonVerifier {
+  private readonly origin: string;
+  constructor(
+    baseUrl: string,
+    private readonly keys: JWTVerifyGetKey,
+  ) {
+    this.origin = new URL(baseUrl).origin;
+  }
+  async owner(token: string): Promise<string> {
+    let payload: Awaited<ReturnType<typeof jwtVerify>>["payload"];
+    try {
+      ({ payload } = await jwtVerify(token, this.keys, {
+        algorithms: ["EdDSA"],
+        issuer: this.origin,
+        requiredClaims: ["exp", "sub"],
+        clockTolerance: 5,
+      }));
+    } catch (error) {
+      // Never log the token or the reason text: it can echo the token's claims.
+      const expired = (error as { code?: string }).code === "ERR_JWT_EXPIRED";
+      throw new AppError(expired ? "Session expired. Sign in again." : "Sign in to Debo", 401);
+    }
+    const audience = [payload.aud ?? []].flat();
+    if (audience.length && !audience.includes(this.origin))
+      throw new AppError("Sign in to Debo", 401);
+    // Reserved owners ("system", "local-user") are not uuids, so no account can ever claim them.
+    if (typeof payload.sub !== "string" || !userId.test(payload.sub))
+      throw new AppError("Sign in to Debo", 401);
+    return payload.sub.toLowerCase();
+  }
+}
+
 export class Auth {
   constructor(
     private readonly db: Store,
     private readonly config: Config,
     private readonly signingKey: string,
+    private readonly neon?: NeonVerifier,
   ) {}
+  /** True when each person signs in with their own Neon Auth account. */
+  get perUser() {
+    return Boolean(this.neon);
+  }
   async session(accessKey?: string) {
+    if (this.neon) throw new AppError("Sign in with your Debo account", 400);
     if (
       this.config.mode === "live" &&
       (!accessKey ||
@@ -30,6 +76,7 @@ export class Auth {
   }
   async owner(authorization?: string) {
     if (!authorization?.startsWith("Bearer ")) throw new AppError("Sign in to Debo", 401);
+    if (this.neon) return this.neon.owner(authorization.slice(7).trim());
     const id = digest(authorization.slice(7)).toString("hex");
     const session = await this.db.get<{ owner: string; expiresAt: number }>(
       "system",
@@ -45,6 +92,8 @@ export class Auth {
     return session.owner;
   }
   async revoke(authorization?: string) {
+    // Neon Auth owns the session. The app signs out there, and a JWT expires on its own.
+    if (this.neon) return;
     if (authorization?.startsWith("Bearer "))
       await this.db.remove("system", "sessions", digest(authorization.slice(7)).toString("hex"));
   }
@@ -74,7 +123,11 @@ export class Auth {
     return owner;
   }
 }
-export async function createAuth(db: Store, config: Config) {
+export async function createAuth(
+  db: Store,
+  config: Config,
+  options: { jwks?: JWTVerifyGetKey } = {},
+) {
   await mkdir(config.dataDir, { recursive: true, mode: 0o700 });
   // Hosts without a persistent disk (Cloudflare Containers) set SESSION_SIGNING_KEY,
   // otherwise every restart would mint a new key and sign everyone out.
@@ -83,7 +136,17 @@ export async function createAuth(db: Store, config: Config) {
     (await readOrCreate(join(config.dataDir, "session-signing-key"), () =>
       randomBytes(32).toString("base64"),
     ));
-  return new Auth(db, config, key);
+  let neon: NeonVerifier | undefined;
+  if (config.authMode === "neon") {
+    if (!config.neonAuthBaseUrl) throw new Error("Neon sign-in needs NEON_AUTH_BASE_URL");
+    const keys =
+      options.jwks ??
+      createRemoteJWKSet(
+        new URL(config.neonAuthJwksUrl ?? `${config.neonAuthBaseUrl}/.well-known/jwks.json`),
+      );
+    neon = new NeonVerifier(config.neonAuthBaseUrl, keys);
+  }
+  return new Auth(db, config, key, neon);
 }
 /** Reads a private file, or creates it without replacing another process's value. */
 export async function readOrCreate(path: string, create: () => string) {

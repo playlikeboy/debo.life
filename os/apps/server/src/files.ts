@@ -113,6 +113,12 @@ export class Files {
     if (!file) throw new AppError("File not found", 404);
     return file;
   }
+  /** Deletes the PDF bytes of every file one person owns. The rows go with the owner's wipe. */
+  async removeAll(owner: string): Promise<number> {
+    const owned = await this.db.list<Artifact>(owner, "files");
+    for (const file of owned) await rm(this.pathFor(file.id), { force: true });
+    return owned.length;
+  }
   private pathFor(id: string): string {
     assertFileId(id);
     const directory = resolve(this.config.dataDir, "files");

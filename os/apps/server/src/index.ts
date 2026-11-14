@@ -7,6 +7,7 @@ const config = readConfig();
 const db = await createStore({
   dataDir: `${config.dataDir}/postgres`,
   databaseUrl: config.databaseUrl,
+  schema: config.dbSchema,
 });
 await db.recoverInterruptedActions();
 const { app, agent } = await createApp(db, config);

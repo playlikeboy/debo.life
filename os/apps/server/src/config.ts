@@ -54,6 +54,13 @@ export interface Config {
   dataDir: string;
   databaseUrl?: string;
   accessKey?: string;
+  /** How requests prove who they are. Missing means "access-key" (one shared key, one owner). */
+  authMode?: AuthMode;
+  /** Neon Auth origin and key set; set when authMode is "neon". */
+  neonAuthBaseUrl?: string;
+  neonAuthJwksUrl?: string;
+  /** Postgres schema for the records table. Missing means the default schema. */
+  dbSchema?: string;
   encryptionKey?: string;
   model?: string;
   jevMode?: "off" | "sample" | "live";
@@ -80,6 +87,8 @@ export interface Config {
   allowedOrigins: string[];
   trustProxy?: boolean;
 }
+
+export type AuthMode = "neon" | "access-key";
 
 export type ComputerProvider = "docker" | "e2b-desktop";
 
@@ -121,6 +130,38 @@ export function accessKeyFromEnv(env: Record<string, string | undefined> = proce
 // writes never re-fire here: they are dispatched outside the model loop through
 // reviewed, idempotency-keyed actions.
 export const MODEL_MAX_RETRIES = 2;
+/**
+ * Which sign-in the API uses. Neon Auth gives every person their own account.
+ * The shared access key is one owner for a local or demo install.
+ */
+export function resolveAuth(
+  mode: "sample" | "live",
+  env: Record<string, string | undefined> = process.env,
+): Pick<Config, "authMode" | "neonAuthBaseUrl" | "neonAuthJwksUrl" | "dbSchema"> {
+  const requested = env.AUTH_MODE?.trim();
+  if (requested && requested !== "neon" && requested !== "access-key")
+    throw new Error("AUTH_MODE must be neon or access-key");
+  const base = env.NEON_AUTH_BASE_URL?.trim().replace(/\/$/, "") || undefined;
+  const jwks = env.NEON_AUTH_JWKS_URL?.trim() || undefined;
+  if (mode === "live" && jwks && requested === "access-key")
+    throw new Error(
+      "NEON_AUTH_JWKS_URL is set, so live mode must use Neon Auth. Remove AUTH_MODE=access-key.",
+    );
+  const authMode: AuthMode =
+    (requested as AuthMode | undefined) ?? (mode === "live" && jwks ? "neon" : "access-key");
+  const schema = env.OS_DB_SCHEMA?.trim() || (authMode === "neon" ? "os" : undefined);
+  if (schema && !/^[a-z_][a-z0-9_]{0,62}$/.test(schema))
+    throw new Error("OS_DB_SCHEMA must be a lowercase Postgres schema name");
+  if (authMode === "access-key") return { authMode, dbSchema: schema };
+  if (!base) throw new Error("AUTH_MODE=neon requires NEON_AUTH_BASE_URL");
+  return {
+    authMode,
+    neonAuthBaseUrl: base,
+    neonAuthJwksUrl: jwks ?? `${base}/.well-known/jwks.json`,
+    dbSchema: schema,
+  };
+}
+
 export function readConfig(): Config {
   const mode = process.env.WORKSPACE_MODE ?? "sample";
   if (mode !== "sample" && mode !== "live")
@@ -160,6 +201,7 @@ export function readConfig(): Config {
     dataDir: resolve(process.env.DATA_DIR ?? defaultDataDir()),
     databaseUrl: process.env.DATABASE_URL,
     accessKey: accessKeyFromEnv(),
+    ...resolveAuth(mode),
     encryptionKey: process.env.TOKEN_ENCRYPTION_KEY,
     model: process.env.MODEL,
     jevMode,
@@ -191,7 +233,8 @@ export function readConfig(): Config {
   };
   if (
     mode === "live" &&
-    (!config.accessKey || config.accessKey.length < 24 || !config.encryptionKey)
+    (!config.encryptionKey ||
+      (config.authMode !== "neon" && (!config.accessKey || config.accessKey.length < 24)))
   )
     throw new Error(
       "Live mode requires OPENFUSE_ACCESS_KEY (24+ characters) and TOKEN_ENCRYPTION_KEY (32-byte base64)",

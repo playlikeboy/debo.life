@@ -4,12 +4,14 @@ import { MessageSchema } from "@ag-ui/core";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
+import type { JWTVerifyGetKey } from "jose";
 import { z } from "zod";
 import {
   calendarRangeSchema,
   emailDraftSchema,
   proposalSchema,
 } from "../../../packages/domain/src/index.ts";
+import { accountRoutes } from "./account.ts";
 import { ActionService } from "./actions.ts";
 import { agentConfigured, makeRuntime } from "./agent.ts";
 import { createAuth } from "./auth.ts";
@@ -35,6 +37,7 @@ export async function createApp(
   config: Config,
   options: {
     docker?: DockerRunner;
+    jwks?: JWTVerifyGetKey;
     /** Answers voice questions. Swap this one line to change Debo's voice brain. */
     voiceBrain?: VoiceBrain;
     /** Where voice settings are read from. Tests pass their own. */
@@ -42,7 +45,7 @@ export async function createApp(
   } = {},
 ) {
   await resolveComputerDeployment(config);
-  const auth = await createAuth(db, config),
+  const auth = await createAuth(db, config, { jwks: options.jwks }),
     files = new Files(db, config, auth),
     google = new GoogleAuth(db, config),
     workspace = new WorkspaceService(db, config, files, google);
@@ -108,6 +111,8 @@ export async function createApp(
     c.json({
       ok: true,
       mode: config.mode,
+      // The app reads this to choose between the access-key and email sign-in screens.
+      auth: { mode: config.authMode ?? "access-key", neonAuthUrl: config.neonAuthBaseUrl },
       agentConfigured: agentConfigured(config),
       browserConfigured: Boolean(config.workerUrl && config.workerToken),
     }),
@@ -177,6 +182,7 @@ export async function createApp(
     return c.json(snapshot);
   });
   app.route("/api/voice", voiceTokenRoutes(options.voiceEnv));
+  app.route("/api/account", accountRoutes(db, files));
   app.route("/api/agent", agentRoutes(agent));
   app.route("/api/computer", computerRoutes(computer, files));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));

@@ -7,7 +7,7 @@ if (!config.databaseUrl)
   throw new Error(
     "A separate task worker requires DATABASE_URL. Embedded PGlite runs inside the API process.",
   );
-const db = await createStore({ databaseUrl: config.databaseUrl });
+const db = await createStore({ databaseUrl: config.databaseUrl, schema: config.dbSchema });
 const { agent } = await createApp(db, config);
 agent.start();
 console.log("Debo task worker running");
