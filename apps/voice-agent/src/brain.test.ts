@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readEvents, recentHistory } from "./brain.ts";
+import { EMOTIONS, readEvents, recentHistory } from "./brain.ts";
 
 function streamOf(chunks: string[]) {
   const encoder = new TextEncoder();
@@ -20,6 +20,19 @@ describe("readEvents", () => {
       events.push(event);
     }
     expect(events.map((e) => e.type)).toEqual(["sources", "text", "done"]);
+  });
+});
+
+describe("emotion hint", () => {
+  it("is read as its own event and only known feelings are allowed", async () => {
+    const events = [];
+    for await (const event of readEvents(
+      streamOf(['{"type":"emotion","emotion":"happy"}\n{"type":"done","status":"answered"}\n']),
+    ))
+      events.push(event);
+    expect(events[0]).toEqual({ type: "emotion", emotion: "happy" });
+    expect(EMOTIONS.has("happy")).toBe(true);
+    expect(EMOTIONS.has("laughter")).toBe(false);
   });
 });
 

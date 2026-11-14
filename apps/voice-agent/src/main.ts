@@ -4,7 +4,7 @@
 // person's user id as the participant identity, and asks LiveKit to send this
 // agent ("debo-voice") into the room. The agent hears the person (Deepgram
 // Nova-3 through LiveKit Inference, English and Hindi mixed), asks Debo's
-// brain for the answer, and speaks it (Cartesia Sonic-3 through LiveKit
+// brain for the answer (the same agent as chat), and speaks it (Cartesia Sonic-3 through LiveKit
 // Inference). Interrupting stops the answer at once.
 //
 // Audio is never stored by Debo. Based on livekit-examples/agent-starter-node (MIT).
@@ -15,10 +15,14 @@ import { z } from "zod";
 import { DeboVoiceAgent } from "./agent.ts";
 
 const Env = z.object({
-  DEBO_URL: z.string().url().default("https://debo.life"),
+  // The Debo app's server. Voice runs through the same agent as chat there.
+  DEBO_URL: z.string().url().default("https://api.debo.life"),
   VOICE_AGENT_SECRET: z.string().min(32),
   VOICE_TTS_VOICE: z.string().min(1).default("9626c31c-bec5-4cca-baa8-f8ba9e84c8bc"),
   VOICE_TTS_LANGUAGE: z.string().min(2).default("hi"),
+  // "off" stops Debo from changing her feeling per reply (if the voice service ever rejects it).
+  VOICE_EMOTION: z.enum(["on", "off"]).default("on"),
+  VOICE_TTS_SPEED: z.coerce.number().min(0.6).max(1.5).optional(),
 });
 
 const UserId = z.string().uuid();
@@ -37,17 +41,28 @@ export default defineAgent({
     }
     const sessionId = randomUUID();
 
+    const tts = new inference.TTS({
+      model: "cartesia/sonic-3",
+      voice: env.VOICE_TTS_VOICE,
+      language: env.VOICE_TTS_LANGUAGE,
+      ...(env.VOICE_TTS_SPEED ? { modelOptions: { speed: env.VOICE_TTS_SPEED } } : {}),
+    });
     const session = new voice.AgentSession({
       stt: new inference.STT({ model: "deepgram/nova-3", language: "multi" }),
       // Never used for answers: DeboVoiceAgent.llmNode asks Debo's brain.
       // The framework needs an LLM object to run the reply pipeline.
       llm: new inference.LLM({ model: "google/gemma-4-31b-it" }),
-      tts: new inference.TTS({
-        model: "cartesia/sonic-3",
-        voice: env.VOICE_TTS_VOICE,
-        language: env.VOICE_TTS_LANGUAGE,
-      }),
-      turnHandling: { turnDetection: new inference.TurnDetector() },
+      tts,
+      turnHandling: {
+        turnDetection: new inference.TurnDetector(),
+        // Answer sooner than the 500 ms default after the person stops talking.
+        endpointing: { minDelay: 350, maxDelay: 2500 },
+        // Do not give up a reply for a cough or "mm-hm", and carry on after one.
+        interruption: { falseInterruptionTimeout: 1500, resumeFalseInterruption: true },
+        // Off on purpose: the brain can run tools (save, search, apps), and a
+        // guessed-early run would repeat them if the person kept talking.
+        preemptiveGeneration: { enabled: false },
+      },
     });
 
     await session.start({
@@ -57,6 +72,9 @@ export default defineAgent({
         userId: userId.data,
         sessionId,
         room: ctx.room,
+        tts,
+        emotion: env.VOICE_EMOTION === "on",
+        speed: env.VOICE_TTS_SPEED,
       }),
       room: ctx.room,
     });
@@ -71,7 +89,7 @@ export default defineAgent({
       return "ok";
     });
 
-    session.say("Hi, I'm listening. Ask me about anything you've written in Debo.");
+    session.say("Hey! I'm here. What's on your mind?");
   },
 });
 

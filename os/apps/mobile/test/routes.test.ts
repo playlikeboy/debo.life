@@ -59,7 +59,7 @@ test("each screen has a page title", () => {
 });
 test("Talk is not a tab in the bottom bar, but /talk still opens it", async () => {
   const { readFileSync } = await import("node:fs");
-  const app = readFileSync(new URL("../App.tsx", import.meta.url), "utf8");
+  const app = readFileSync(`${import.meta.dirname}/../App.tsx`, "utf8");
   const start = app.indexOf("const nav:");
   const nav = app.slice(start, app.indexOf("];", start));
   assert.ok(nav.includes('id: "chat"'));

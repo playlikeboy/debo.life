@@ -15,6 +15,7 @@ export const BrainEvent = z.discriminatedUnion("type", [
   z.object({ type: z.literal("sources"), sources: z.array(z.object({ id: z.string(), label: z.string() })) }),
   z.object({ type: z.literal("text"), delta: z.string() }),
   z.object({ type: z.literal("say"), text: z.string() }),
+  z.object({ type: z.literal("emotion"), emotion: z.string() }),
   z.object({ type: z.literal("done"), status: z.string() }),
 ]);
 export type BrainEvent = z.infer<typeof BrainEvent>;
@@ -25,6 +26,16 @@ export type BrainRequest = {
   question: string;
   history: Turn[];
 };
+
+/**
+ * The feelings Cartesia Sonic-3 accepts that Debo's brain may ask for. The brain
+ * already limits itself to these; this is a second check so a bad word can
+ * never reach the voice service.
+ */
+export const EMOTIONS = new Set([
+  "neutral", "calm", "content", "happy", "excited", "enthusiastic", "curious", "affectionate",
+  "sympathetic", "sad", "apologetic", "surprised", "grateful", "wistful",
+]);
 
 /** Split a byte stream of newline-delimited JSON into parsed events. Bad lines are skipped. */
 export async function* readEvents(body: ReadableStream<Uint8Array>): AsyncGenerator<BrainEvent> {
