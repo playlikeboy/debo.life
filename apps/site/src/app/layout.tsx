@@ -1,9 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-// The only stylesheets in this app: the three Astryx imports. No custom CSS.
+// No custom CSS in this app: the three Astryx stylesheets, plus the font files below.
 import "@astryxdesign/core/reset.css";
 import "@astryxdesign/core/astryx.css";
 import "@astryxdesign/theme-neutral/theme.css";
+// The theme names the typeface Figtree but never loads it. These four files are
+// Figtree served from our own domain (self-hosted through Next), so a visitor's
+// browser makes no request to Google. The family name is exactly "Figtree",
+// which is what the theme's font tokens already point at.
+import "@fontsource/figtree/latin-400.css";
+import "@fontsource/figtree/latin-500.css";
+import "@fontsource/figtree/latin-600.css";
+import "@fontsource/figtree/latin-700.css";
 import { Providers } from "./providers";
 
 const TITLE = "Debo: a friendly assistant that remembers your life";
