@@ -390,6 +390,7 @@ export class WorkspaceService {
     };
   }
   async prepare(owner: string, input: ProposalInput, connectionId?: string) {
+    if (input.kind === "journal.add") return { input }; // Debo's own journal, not the workspace
     if (input.kind === "email.send") {
       for (const id of input.data.attachmentIds) await this.files.get(owner, id);
       return { input };
@@ -414,6 +415,8 @@ export class WorkspaceService {
     connectionId?: string,
     targetVersion?: string,
   ): Promise<string> {
+    // Journal entries are saved by Debo's brain (see debo/), never by the workspace.
+    if (input.kind === "journal.add") throw new AppError("Journal entries are not saved here", 400);
     if (this.config.mode === "sample") {
       if (input.kind === "email.send") {
         const id = randomUUID();

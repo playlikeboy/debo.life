@@ -32,6 +32,7 @@ import { AppError } from "../errors.ts";
 import type { Files } from "../files.ts";
 import { backgroundFailure } from "../log.ts";
 import { SearchService } from "../search.ts";
+import type { DeboService } from "../debo/service.ts";
 import type { WorkspaceService } from "../workspace.ts";
 import { analyzeSpending } from "./finance.ts";
 import { executeModelTask, taskAnswers } from "./model.ts";
@@ -50,6 +51,8 @@ type MonitorPage = { id: string; hash?: string; timelessHash?: string; lines: st
 const date = () => new Date().toISOString();
 const terminal = new Set(["succeeded", "failed", "cancelled"]);
 export class AgentService {
+  /** Debo's personal brain (journal, answers, memories). Set by createApp; unset in bare test fixtures. */
+  debo?: DeboService;
   readonly worker: TaskWorker;
   readonly search: SearchService;
   private maintenance?: ReturnType<typeof setInterval>;

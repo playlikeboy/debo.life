@@ -51,17 +51,21 @@ export class ActionService {
       if (existing) return existing;
     }
     const parsed = proposalSchema.parse(raw);
-    const connection = await this.options.connection?.(owner);
-    if (this.options.connection && !connection)
+    // Debo's own actions (the journal) need no Google account.
+    const own = parsed.kind === "journal.add";
+    const connection = own ? null : await this.options.connection?.(owner);
+    if (this.options.connection && !connection && !own)
       throw new AppError("Connect Google before preparing an action", 409);
-    const prepared = await this.options.prepare?.(owner, parsed, connection?.id);
+    const prepared = own ? undefined : await this.options.prepare?.(owner, parsed, connection?.id);
     const input = proposalSchema.parse(prepared?.input ?? parsed);
     const title =
-      input.kind === "email.send"
-        ? `Send “${input.data.subject}”`
-        : input.kind === "calendar.delete"
-          ? `Delete ${input.data.title}`
-          : `${input.kind === "calendar.create" ? "Create" : "Update"} ${input.data.title}`;
+      input.kind === "journal.add"
+        ? "Add to your journal"
+        : input.kind === "email.send"
+          ? `Send “${input.data.subject}”`
+          : input.kind === "calendar.delete"
+            ? `Delete ${input.data.title}`
+            : `${input.kind === "calendar.create" ? "Create" : "Update"} ${input.data.title}`;
     const createdAt = new Date(this.now()).toISOString();
     const proposal: ActionProposal = {
       id,
@@ -69,7 +73,7 @@ export class ActionService {
       title,
       kind: input.kind,
       data: input.data,
-      account: connection?.account,
+      account: own ? "Your Debo journal" : connection?.account,
       connectionId: connection?.id,
       target: prepared?.target,
       targetVersion: prepared?.targetVersion,
@@ -133,9 +137,10 @@ export class ActionService {
       }
       throw new AppError("This review expired. Create a fresh proposal.", 409);
     }
-    if (decision === "approve" && !(await this.options.connected(owner)))
+    const own = proposal.kind === "journal.add";
+    if (decision === "approve" && !own && !(await this.options.connected(owner)))
       throw new AppError("Google is disconnected. Reconnect before approving this action.", 409);
-    if (decision === "approve" && this.options.connection) {
+    if (decision === "approve" && !own && this.options.connection) {
       const connection = await this.options.connection(owner);
       if (
         !connection ||

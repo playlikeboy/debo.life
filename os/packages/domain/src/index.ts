@@ -132,6 +132,11 @@ export const eventDraftSchema = z
   });
 export const proposalSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("email.send"), data: emailDraftSchema }),
+  // Saving to the person's Debo journal. Lives inside Debo, so it needs no Google account.
+  z.object({
+    kind: z.literal("journal.add"),
+    data: z.object({ text: z.string().trim().min(1).max(20000) }),
+  }),
   z.object({ kind: z.literal("calendar.create"), data: eventDraftSchema }),
   z.object({
     kind: z.literal("calendar.update"),

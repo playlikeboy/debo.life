@@ -20,6 +20,7 @@ import { ComputerService, type DockerRunner, resolveComputerDeployment } from ".
 import { computerRoutes } from "./computer-routes.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
+import { createDebo, deboRoutes } from "./debo/index.ts";
 import { agentRoutes } from "./engine/routes.ts";
 import { AgentService } from "./engine/service.ts";
 import { AppError } from "./errors.ts";
@@ -49,9 +50,12 @@ export async function createApp(
     files = new Files(db, config, auth),
     google = new GoogleAuth(db, config),
     workspace = new WorkspaceService(db, config, files, google);
+  const debo = createDebo(config);
   const actions = new ActionService(db, {
     execute: (owner, input, connectionId, targetVersion) =>
-      workspace.execute(owner, input, connectionId, targetVersion),
+      input.kind === "journal.add"
+        ? debo.executeProposal(owner, input.data.text)
+        : workspace.execute(owner, input, connectionId, targetVersion),
     prepare: (owner, input, connectionId) => workspace.prepare(owner, input, connectionId),
     connected: (owner) => workspace.connected(owner),
     connection: (owner) => workspace.connection(owner),
@@ -59,6 +63,7 @@ export async function createApp(
   const browser = new BrowserService(db, config, auth, files);
   const computer = new ComputerService(db, config, options.docker);
   const agent = new AgentService(db, config, workspace, files, actions, browser, computer);
+  agent.debo = debo;
   const threads = new ThreadStore(db);
   const runtime = makeRuntime(config, agent, auth, new DatabaseAgentRunner(threads));
   const app = new Hono<{ Variables: { owner: string } }>();
@@ -184,6 +189,7 @@ export async function createApp(
   app.route("/api/voice", voiceTokenRoutes(options.voiceEnv));
   app.route("/api/account", accountRoutes(db, files));
   app.route("/api/agent", agentRoutes(agent));
+  app.route("/api/debo", deboRoutes(debo));
   app.route("/api/computer", computerRoutes(computer, files));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
   app.get("/api/calendar/events", async (c) => {
@@ -382,5 +388,5 @@ export async function createApp(
   app.get("/", (c) =>
     c.json({ name: "Debo", app: "http://localhost:8081", health: "/api/health" }),
   );
-  return { app, auth, files, actions, workspace, agent, computer };
+  return { app, auth, files, actions, workspace, agent, computer, debo };
 }
