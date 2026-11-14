@@ -595,13 +595,16 @@ function ReviewDetail({ initial }: { initial: ActionProposal }) {
     }
   }
   const email = action.kind === "email.send";
+  const journal = action.kind === "journal.add";
   return (
     <Sheet
       title={pending ? "One last look" : action.title}
       subtitle={
-        w.mode === "sample"
-          ? "This action stays in your local workspace."
-          : "Review this exact action before it changes your connected account."
+        journal
+          ? "Debo only saves this to your journal if you say yes."
+          : w.mode === "sample"
+            ? "This action stays in your local workspace."
+            : "Review this exact action before it changes your connected account."
       }
       onClose={close}
     >
@@ -619,7 +622,17 @@ function ReviewDetail({ initial }: { initial: ActionProposal }) {
       </View>
       <Card style={{ gap: 13 }}>
         <ReviewLine label="Account" value={action.account || w.profile.email} />
-        {email ? (
+        {journal ? (
+          <>
+            <Text style={s.label}>Entry</Text>
+            <Text selectable style={[s.text, { lineHeight: 25 }]}>
+              {String(d.text || "")}
+            </Text>
+            <Text style={s.small}>
+              This is saved as a new entry in your journal. You can change or delete it there.
+            </Text>
+          </>
+        ) : email ? (
           <>
             <ReviewLine label="To" value={arrayText(d.to)} />
             <ReviewLine label="Cc" value={arrayText(d.cc) || "None"} />
@@ -685,7 +698,7 @@ function ReviewDetail({ initial }: { initial: ActionProposal }) {
       {!!action.result && (
         <Card style={{ marginTop: 16, backgroundColor: colors.green, padding: 18 }}>
           <Text selectable style={s.text}>
-            {resultSummary(action.result)}
+            {journal ? "Saved to your journal." : resultSummary(action.result)}
           </Text>
         </Card>
       )}
@@ -705,13 +718,15 @@ function ReviewDetail({ initial }: { initial: ActionProposal }) {
           </Text>
           <View style={[s.row, { gap: 10, flexWrap: "wrap" }]}>
             <Button primary icon={Check} busy={busy} onPress={() => void decide("approve")}>
-              {w.mode === "sample"
+              {journal
+                ? "Save to my journal"
+                : w.mode === "sample"
                 ? "Approve locally"
                 : email
                   ? "Approve & send"
                   : "Approve change"}
             </Button>
-            {action.kind !== "calendar.delete" && (
+            {action.kind !== "calendar.delete" && !journal && (
               <Button icon={Edit3} disabled={busy} onPress={() => void edit()}>
                 Edit details
               </Button>

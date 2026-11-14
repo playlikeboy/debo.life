@@ -38,6 +38,8 @@ import { ChatScreen, WorkspaceTools } from "./src/chat";
 import { TalkScreen } from "./src/debo-talk";
 import { ComputerEntry } from "./src/computer";
 import { ComputerDraftProvider } from "./src/computer-drafts";
+import { JournalScreen } from "./src/debo-journal";
+import { KnowsScreen } from "./src/debo-knows";
 import { Details } from "./src/details";
 import { BrowserScreen, CalendarScreen, FilesScreen, MailScreen } from "./src/screens";
 import { AccountCard, NeonGate, useAuthInfo } from "./src/neon-gate";
@@ -82,6 +84,8 @@ const titles: Partial<Record<Section, { title: string; subtitle: string }>> = {
   calendar: { title: "Calendar", subtitle: "Time for what matters." },
   browser: { title: "Browser", subtitle: "Your connected browsing sessions." },
   files: { title: "Files", subtitle: "Documents, forms and filled copies." },
+  journal: { title: "Your journal", subtitle: "Write about your day. Only you can read it." },
+  knows: { title: "What Debo knows", subtitle: "Memories, each with its source." },
 };
 /**
  * Asks the API how people sign in. Neon Auth (one account per person) shows email
@@ -337,14 +341,18 @@ function WorkspaceShell({
           ? BrowserScreen
           : section === "files"
             ? FilesScreen
-            : section === "activity"
+            : section === "journal"
+              ? JournalScreen
+              : section === "knows"
+                ? KnowsScreen
+                : section === "activity"
               ? AgentActivityScreen
               : section === "ideas"
                 ? IdeasScreen
                 : section === "goals"
                   ? GoalsScreen
                   : AppsScreen;
-  const utility = ["mail", "calendar", "browser", "files"].includes(section);
+  const utility = ["mail", "calendar", "browser", "files", "journal", "knows"].includes(section);
   return (
     <>
       <WorkspaceTools />

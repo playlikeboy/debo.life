@@ -1,6 +1,8 @@
 import {
   ArrowRight,
   Bell,
+  BookOpen,
+  Brain,
   CalendarDays,
   ChevronRight,
   CircleDollarSign,
@@ -1774,6 +1776,18 @@ export function AppsScreen() {
     }
   }
   const shortcuts = [
+    {
+      section: "journal" as const,
+      title: "Your journal",
+      detail: "Write, find and fix your entries",
+      icon: BookOpen,
+    },
+    {
+      section: "knows" as const,
+      title: "What Debo knows",
+      detail: "Memories, each with the entry it came from",
+      icon: Brain,
+    },
     {
       section: "mail" as const,
       title: "Mail",

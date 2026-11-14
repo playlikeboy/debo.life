@@ -14,6 +14,7 @@ The native and web agent core runs locally. This inventory describes the current
 | Gmail / Calendar | Google OAuth; complete threads; saved drafts; calendar/event CRUD with reviewed versions | Live Google acceptance, recurrence editing, other connectors |
 | PDF job | Durable import, typed input request, filled-copy preview, reviewed reply, receipt | OCR/scanned forms and additional PDF field types |
 | Generated results | Plans/reports/comparisons, finance CSV metrics, and scripts in the private Linux workspace | Managed tool installation/versioning and image/audio generation |
+| Debo journal / What Debo knows | Journal (write, find, edit, delete), questions answered only from the person's entries with source chips that open the entry, memories from hosted Mem0 each linked to its entry with fix and forget, activity record. Agent tools `search_my_journal`, `ask_my_life` (read) and `add_journal_entry` (prepares a review; saved only after approval). Uses the shared `@debo/brain`, `@debo/db`, `@debo/memory` packages; routes under `/api/debo` | Live acceptance against a real Debo database, native draft persistence across app restarts |
 | Notifications | Durable in-app inbox, source-linked change alerts, restart reconciliation | APNs/FCM/device push delivery |
 | Connectors | Searchable capability/status catalogue, Google connection, browser worker | Plaid, health, Instagram, WhatsApp and partner APIs |
 | OpenBot | Disabled adapter with pinned protocol/identity tests | Live session bridge, routines and computer backend wiring |

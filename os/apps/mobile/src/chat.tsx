@@ -39,6 +39,7 @@ import { DesktopToolCard } from "./desktop-tool-card";
 import { confirmedJevSelection, displayJevUserMessage, latestJevPanelId } from "./jev-actions";
 import { JevInteractionContext, JevToolCard } from "./jev-tool-card";
 import { MailToolCard } from "./mail-tool-card";
+import { DeboToolCard } from "./debo-source-chips";
 import { SearchToolCard } from "./search-tool-card";
 import { FileThreadCard, TaskThreadCard } from "./thread-artifacts";
 import { type Selection, useFuseThread } from "./threads";
@@ -82,6 +83,16 @@ export function WorkspaceTools() {
       <SearchToolCard result={result} loading={status !== "complete"} />
     ),
   });
+  // Debo's journal: answers show where they came from, as source chips that open the entry.
+  for (const name of ["ask_my_life", "search_my_journal", "add_journal_entry"] as const)
+    useRenderTool({
+      name,
+      description: "Show what Debo found in the journal, with its sources",
+      parameters: displayParameters,
+      render: ({ result, status }) => (
+        <DeboToolCard name={name} result={result} loading={status !== "complete"} />
+      ),
+    });
   useRenderTool({
     name: "browse_web",
     description: "Follow the agent as it reads a webpage",
