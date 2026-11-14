@@ -6,7 +6,7 @@ Use the repository's **Security → Report a vulnerability** form for private re
 
 ## Deployment boundary
 
-OpenFuse currently supports one owner per deployment. Live mode uses a shared access key; it is not multi-tenant account authentication. Sample mode binds to loopback and contains fictional data. Use HTTPS and restricted network access for a remote live deployment.
+A deployment runs in one of two modes. With `AUTH_MODE=access-key` (the default) there is one owner behind one shared access key; this is not multi-tenant authentication. With `AUTH_MODE=neon` each person signs in with a Neon Auth account and the API checks their JWT; every row is owned by that account's id. See [accounts](docs/AUTH.md). Sample mode binds to loopback and contains fictional data. Use HTTPS and restricted network access for a remote live deployment.
 
 The API holds provider credentials. Google tokens are encrypted at rest; short-lived signed URLs grant file and browser-console access. Protect `.env`, `.openfuse`, database backups, and browser profiles as private data. A signed URL is a credential until it expires.
 
