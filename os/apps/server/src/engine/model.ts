@@ -38,7 +38,7 @@ export async function executeModelTask(
     return {
       status: "waiting_input",
       question:
-        "A model is required for this open-ended task. Configure MODEL and its provider key on the server, then reply ‘continue’. The document, monitor and finance workflows can run without a model.",
+        "I can't answer open questions yet, because my AI helper is not turned on. Whoever runs this Debo can turn it on. Your documents and watches still work.",
     };
   let task = initial;
   let outcome: Partial<AgentTask> | undefined;

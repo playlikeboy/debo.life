@@ -478,7 +478,7 @@ export class ConversationAgent extends AbstractAgent {
     if (/what can|help|hello|^hi[!. ]*$/i.test(prompt) && prompt.length < 70)
       return {
         content:
-          "What would you like to take off your plate? I can prepare the permission slip, keep an eye on a website, or organize your spending. For open-ended requests, connect a model in Apps.",
+          "Hi, I'm Debo. In this practice workspace my answers are examples only. Tasks and watches still work. Open-ended questions need my AI helper, which whoever runs this Debo can turn on.",
       };
     if (/permission|pdf|form/i.test(prompt)) {
       const w = await this.service.workspace.snapshot(this.owner);

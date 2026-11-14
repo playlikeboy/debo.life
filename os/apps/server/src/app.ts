@@ -20,7 +20,7 @@ import { ComputerService, type DockerRunner, resolveComputerDeployment } from ".
 import { computerRoutes } from "./computer-routes.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
-import { createDebo, deboRoutes } from "./debo/index.ts";
+import { createDebo, type DeboService, deboRoutes } from "./debo/index.ts";
 import { agentRoutes } from "./engine/routes.ts";
 import { AgentService } from "./engine/service.ts";
 import { AppError } from "./errors.ts";
@@ -44,6 +44,8 @@ export async function createApp(
     voiceBrain?: VoiceBrain;
     /** Where voice settings are read from. Tests pass their own. */
     voiceEnv?: () => Record<string, string | undefined>;
+    /** The personal journal. Tests pass a fake one. */
+    debo?: DeboService;
   } = {},
 ) {
   await resolveComputerDeployment(config);
@@ -51,7 +53,7 @@ export async function createApp(
     files = new Files(db, config, auth),
     google = new GoogleAuth(db, config),
     workspace = new WorkspaceService(db, config, files, google);
-  const debo = createDebo(config);
+  const debo = options.debo ?? createDebo(config);
   const actions = new ActionService(db, {
     execute: (owner, input, connectionId, targetVersion) =>
       input.kind === "journal.add"
@@ -192,7 +194,7 @@ export async function createApp(
     return c.json(snapshot);
   });
   app.route("/api/voice", voiceTokenRoutes(options.voiceEnv));
-  app.route("/api/account", accountRoutes(db, files));
+  app.route("/api/account", accountRoutes(db, files, debo));
   app.route("/api/agent", agentRoutes(agent));
   app.route("/api/debo", deboRoutes(debo));
   app.route("/api/computer", computerRoutes(computer, files));

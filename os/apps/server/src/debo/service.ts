@@ -11,14 +11,14 @@ import { AppError } from "../errors.ts";
 import type { ActivityAction, ActivityItem, AskEvent, DeboBackend } from "./backend.ts";
 
 export const NOT_SET_UP =
-  "Your journal is not set up on this server yet. Add DEBO_DATABASE_URL, then try again.";
+  "Your journal is not set up yet. Whoever runs this Debo needs to turn it on. Until then, nothing can be saved here.";
 export const NOT_A_DEBO_ACCOUNT =
-  "Sign in with your Debo account to use your journal. This workspace is signed in as a local test user.";
+  "You are using a test sign-in. Sign in with your Debo account to use your journal.";
 export const MEMORY_OFF =
   "Debo is not keeping memories right now. Your entries are safe, and you can still ask about them.";
 const MEMORY_GONE = "I couldn't find that memory. It may already be forgotten.";
 const ENTRY_GONE = "I couldn't find that entry. It may have been deleted.";
-export const ASK_OFF = "Answers are not set up on this server yet. Add an AI key, then try again.";
+export const ASK_OFF = "Answers are not set up yet. Whoever runs this Debo needs to turn them on. Your entries are still safe.";
 
 const Uuid = z.string().uuid();
 export const EntryText = z
@@ -141,6 +141,37 @@ export class DeboService {
 
   private entryView(e: { id: string; title: string; text: string; happenedAt: Date }): EntryView {
     return { id: e.id, title: e.title, text: e.text, happenedAt: e.happenedAt.toISOString() };
+  }
+
+  // ---- The person's whole journal: download it, delete it ----
+
+  /** The backend, only when this owner has a journal here. Never throws. */
+  private journalOf(owner: string): DeboBackend | null {
+    if (!this.backend) return null;
+    return Uuid.safeParse(owner).success || this.localOwners.includes(owner) ? this.backend : null;
+  }
+
+  /** Every entry and memory this person has, for "Download my data". Null when there is no journal. */
+  async exportMine(owner: string): Promise<{ entries: EntryView[]; memories: MemoryView[] } | null> {
+    const backend = this.journalOf(owner);
+    if (!backend) return null;
+    const entries = (await backend.entries.list(owner, { limit: 100_000 })).map((e) => this.entryView(e));
+    const memories = backend.memories ? await this.listMemories(owner) : [];
+    return { entries, memories };
+  }
+
+  /** Deletes every entry this person wrote, and what Debo learned from each. Returns how many entries went. */
+  async deleteMine(owner: string): Promise<number> {
+    const backend = this.journalOf(owner);
+    if (!backend) return 0;
+    const entries = await backend.entries.list(owner, { limit: 100_000 });
+    for (const entry of entries) {
+      if (await backend.entries.remove(owner, entry.id)) await backend.afterChange(owner, entry.id, "deleted");
+    }
+    // Anything Debo still remembers that no longer has an entry goes too.
+    if (backend.memories)
+      for (const memory of await backend.memories.list(owner)) await backend.memories.forget(owner, memory.id);
+    return entries.length;
   }
 
   // ---- Journal ----
