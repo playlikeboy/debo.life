@@ -76,8 +76,15 @@ const chipLabel = (date: Date) => `Journal, ${dayFormat(date)}`;
 export class DeboService {
   private readonly pending = new Set<Promise<unknown>>();
 
-  /** `backend` is null when there is no Debo database. */
-  constructor(private readonly backend: DeboBackend | null) {}
+  /**
+   * `backend` is null when there is no Debo database. `localOwners` are extra
+   * owner names allowed without being a Debo account; only the dev-only
+   * in-memory journal passes any.
+   */
+  constructor(
+    private readonly backend: DeboBackend | null,
+    private readonly localOwners: readonly string[] = [],
+  ) {}
 
   get configured() {
     return this.backend !== null;
@@ -113,7 +120,8 @@ export class DeboService {
 
   private ready(owner: string): DeboBackend {
     if (!this.backend) throw new AppError(NOT_SET_UP, 503);
-    if (!Uuid.safeParse(owner).success) throw new AppError(NOT_A_DEBO_ACCOUNT, 403);
+    if (!Uuid.safeParse(owner).success && !this.localOwners.includes(owner))
+      throw new AppError(NOT_A_DEBO_ACCOUNT, 403);
     return this.backend;
   }
 

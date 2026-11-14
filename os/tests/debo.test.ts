@@ -363,3 +363,21 @@ test("tools report 'not set up' and bad input as plain results, never as crashes
   const local = toolsFor("local-user", fakeBackend());
   assert.deepEqual(await local.byName("ask_my_life")({ question: "hi" }), { error: NOT_A_DEBO_ACCOUNT });
 });
+
+test("DEBO_DEV_MEMORY gives a sample workspace an in-memory journal, and a live one refuses it", async () => {
+  const env = { DEBO_DEV_MEMORY: "1" };
+  const debo = createDebo({ mode: "sample" }, env);
+  assert.equal(debo.configured, true);
+  const app = appFor(debo);
+  const made = await call(app, "POST", "/entries", "local-user", { text: "Walked by the sea today" });
+  assert.equal(made.status, 201);
+  const mine = await (await call(app, "GET", "/entries", "local-user")).json();
+  assert.equal(mine.entries.length, 1);
+  // Two people never see each other's entries, even in dev.
+  const other = await (await call(app, "GET", "/entries", BOB)).json();
+  assert.equal(other.entries.length, 0);
+  // Without the switch nothing changes: no database means "not set up".
+  assert.equal(createDebo({ mode: "sample" }, {}).configured, false);
+  // A live workspace must never run the dev journal.
+  assert.throws(() => createDebo({ mode: "live" }, env), /sample workspaces only/);
+});
